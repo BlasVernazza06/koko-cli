@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "{{.ProjectName}}",
+  title: "[[.ProjectName]]",
   description: "Bootstrapped with Claw-CLI",
 };
 
