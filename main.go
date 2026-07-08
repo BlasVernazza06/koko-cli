@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/BlasVernazza06/claw/cmd"
+	"github.com/BlasVernazza06/koko-cli/cmd"
 )
 
 func main() {

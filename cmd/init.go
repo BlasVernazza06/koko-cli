@@ -6,6 +6,8 @@ import (
 
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
+
+	"github.com/BlasVernazza06/koko-cli/internal/scaffold"
 )
 
 var autoApprove bool
@@ -13,10 +15,24 @@ var initCmd = &cobra.Command{
 	Use:   "init [project-name]",
 	Short: "Initialize a new software project starter",
 	Long:  `Run an interactive wizard to configure and generate a software project template.`,
+	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		projectName := "my-project"
 		if len(args) > 0 {
 			projectName = args[0]
+		} else if !autoApprove {
+			nameForm := huh.NewForm(
+				huh.NewGroup(
+					huh.NewInput().
+						Title("¿Cuál es el nombre de tu proyecto?").
+						Placeholder("my-project").
+						Value(&projectName),
+				),
+			)
+			if err := nameForm.Run(); err != nil {
+				fmt.Println("Error ejecutando formulario:", err)
+				os.Exit(1)
+			}
 		}
 
 		fmt.Println(`
@@ -26,8 +42,23 @@ var initCmd = &cobra.Command{
 			\___ |_|\__,_|  \_/\_/  v0.1.0
 		`)
 
+		// Flujo 1: Inicialización automática con configuración por defecto (Next + Express + Postgres + Docker)
 		if autoApprove {
-			fmt.Printf("🚀 Inicializando '%s' con configuración por defecto (SaaS Starter: Next.js + Go Fiber + PostgreSQL + Docker Compose)...\n", projectName)
+			fmt.Printf("🚀 Inicializando '%s' con configuración por defecto (Next.js, Express, pnpm, PostgreSQL, Drizzle, Turborepo, Docker)...\n", projectName)
+			config := scaffold.ScaffoldConfig{
+				ProjectName:   projectName,
+				Frontend:      scaffold.FrontendNext,
+				Backend:       scaffold.BackendExpress,
+				Database:      scaffold.DatabasePostgres,
+				Docker:        true,
+				GithubActions: true,
+			}
+			err := scaffold.RunScaffold(projectName, config)
+			if err != nil {
+				fmt.Printf("❌ Error al inicializar el proyecto: %v\n", err)
+				os.Exit(1)
+			}
+			fmt.Printf("✓ ¡Proyecto '%s' inicializado con éxito!\n", projectName)
 			return
 		}
 
@@ -50,6 +81,10 @@ var initCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
+		var config scaffold.ScaffoldConfig
+		config.ProjectName = projectName
+
+		// Flujo 2: Setup Rápido (Recetas)
 		if setupMode == "quick" {
 			var recipe string
 			recipeForm := huh.NewForm(
@@ -57,8 +92,8 @@ var initCmd = &cobra.Command{
 					huh.NewSelect[string]().
 						Title("Selecciona una receta de producción:").
 						Options(
-							huh.NewOption("💻 Fullstack SaaS Starter (Next.js + Go Fiber + PostgreSQL + Docker Compose)", "saas"),
-							huh.NewOption("⚡ API Moderna limpia (Fastify + Prisma + PostgreSQL)", "api"),
+							huh.NewOption("💻 Fullstack SaaS Starter (Next.js + Express + PostgreSQL + Docker)", "saas"),
+							huh.NewOption("⚡ API Moderna limpia (Express + PostgreSQL + Docker)", "api"),
 							huh.NewOption("🎨 Single Page App (React SPA + Vite + Tailwind CSS)", "spa"),
 						).
 						Value(&recipe),
@@ -68,9 +103,32 @@ var initCmd = &cobra.Command{
 				fmt.Println("Error ejecutando formulario:", err)
 				os.Exit(1)
 			}
+
+			switch recipe {
+			case "saas":
+				config.Frontend = scaffold.FrontendNext
+				config.Backend = scaffold.BackendExpress
+				config.Database = scaffold.DatabasePostgres
+				config.Docker = true
+				config.GithubActions = true
+			case "api":
+				config.Frontend = scaffold.FrontendNone
+				config.Backend = scaffold.BackendExpress
+				config.Database = scaffold.DatabasePostgres
+				config.Docker = true
+				config.GithubActions = false
+			case "spa":
+				config.Frontend = scaffold.FrontendReact
+				config.Backend = scaffold.BackendNone
+				config.Database = scaffold.DatabaseNone
+				config.Docker = false
+				config.GithubActions = false
+			}
+
 			fmt.Printf("\n¡Inicializando '%s' con receta '%s'...\n", projectName, recipe)
-			// Scaffolding behavior will be integrated here for v0.1.0
+
 		} else {
+			// Flujo 3: Configuración Manual paso a paso
 			var frontend, backend, database string
 			var docker, githubActions bool
 
@@ -93,10 +151,11 @@ var initCmd = &cobra.Command{
 						).
 						Value(&backend),
 					huh.NewSelect[string]().
-						Title("Selecciona tu ORM y Base de Datos:").
+						Title("Selecciona tu Base de Datos:").
 						Options(
-							huh.NewOption("PostgreSQL + Prisma", "postgres_prisma"),
-							huh.NewOption("PostgreSQL + SQLx (Go)", "postgres_sqlx"),
+							huh.NewOption("PostgreSQL", "postgres"),
+							huh.NewOption("MySQL", "mysql"),
+							huh.NewOption("MongoDB", "mongodb"),
 							huh.NewOption("Ninguno", "none"),
 						).
 						Value(&database),
@@ -116,10 +175,23 @@ var initCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
+			// Mapeamos los strings a los tipos fuertemente tipados de scaffold
+			config.Frontend = scaffold.FrontendType(frontend)
+			config.Backend = scaffold.BackendType(backend)
+			config.Database = scaffold.DatabaseType(database)
+			config.Docker = docker
+			config.GithubActions = githubActions
+
 			fmt.Printf("\n¡Inicializando '%s' con configuración manual...\n", projectName)
-			fmt.Printf("Frontend: %s, Backend: %s, Database: %s, Docker: %t, Github Actions: %t\n", frontend, backend, database, docker, githubActions)
-			// Scaffolding behavior will be integrated here for v0.1.0
 		}
+
+		// Ejecutamos el scaffolding físico en el disco
+		err = scaffold.RunScaffold(projectName, config)
+		if err != nil {
+			fmt.Printf("❌ Error al generar estructura de archivos: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("✓ ¡Proyecto '%s' inicializado con éxito!\n", projectName)
 	},
 }
 

@@ -1,4 +1,4 @@
-module github.com/BlasVernazza06/claw
+module github.com/BlasVernazza06/koko-cli
 
 go 1.22.4
 
