@@ -6,7 +6,7 @@ function App() {
   return (
     <div className="container">
       <header>
-        <h1>{{.ProjectName}}</h1>
+        <h1>[[.ProjectName]]</h1>
         <p>Welcome to your React + Vite + TypeScript frontend, bootstrapped with Claw-CLI.</p>
       </header>
       <main>
