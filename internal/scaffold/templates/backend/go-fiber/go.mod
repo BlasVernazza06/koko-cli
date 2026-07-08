@@ -1,4 +1,4 @@
-module {{.ProjectName}}-backend
+module [[.ProjectName]]-backend
 
 go 1.22.4
 
