@@ -65,6 +65,16 @@ Una vez instalado, ejecuta el comando interactivo:
 crear-proyecto
 ```
 
+### 🛠️ Desarrollo Local (Go)
+Si estás desarrollando o modificando el CLI directamente en Go, puedes compilar y ejecutar el binario local:
+```bash
+# Compilar el binario
+go build -o koko.exe main.go
+
+# Ejecutar el comando de inicialización
+./koko.exe init
+```
+
 ---
 
 ## 💻 Ejemplo del Flujo en Terminal
