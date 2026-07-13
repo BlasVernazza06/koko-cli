@@ -139,6 +139,7 @@ var initCmd = &cobra.Command{
 						Options(
 							huh.NewOption("Next.js (App Router, TS)", "next"),
 							huh.NewOption("React SPA (Vite, TS)", "react"),
+							huh.NewOption("Vue.js (Vite, TS)", "vue"),
 							huh.NewOption("Ninguno", "none"),
 						).
 						Value(&frontend),
@@ -147,6 +148,7 @@ var initCmd = &cobra.Command{
 						Options(
 							huh.NewOption("Go Fiber (REST API)", "fiber"),
 							huh.NewOption("Node.js Express (TS)", "express"),
+							huh.NewOption("Hono (Node.js Server)", "hono"),
 							huh.NewOption("Ninguno", "none"),
 						).
 						Value(&backend),

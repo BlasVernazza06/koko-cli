@@ -20,6 +20,7 @@ type FrontendType string
 const (
 	FrontendNext  FrontendType = "next"
 	FrontendReact FrontendType = "react"
+	FrontendVue   FrontendType = "vue"
 	FrontendNone  FrontendType = "none"
 )
 
@@ -28,6 +29,7 @@ type BackendType string
 const (
 	BackendFiber   BackendType = "fiber"
 	BackendExpress BackendType = "express"
+	BackendHono    BackendType = "hono"
 	BackendNone    BackendType = "none"
 )
 
@@ -142,6 +144,13 @@ func evaluatePath(path string, config ScaffoldConfig) (string, bool) {
 		dest, _ := filepath.Rel("frontend/next-app-router", rel)
 		return filepath.Join("apps", "frontend", dest), true
 
+	case strings.HasPrefix(rel, "frontend/vue-vite-ts/"):
+		if config.Frontend != FrontendVue {
+			return "", false
+		}
+		dest, _ := filepath.Rel("frontend/vue-vite-ts", rel)
+		return filepath.Join("apps", "frontend", dest), true
+
 	case strings.HasPrefix(rel, "backend/go-fiber/"):
 		if config.Backend != BackendFiber {
 			return "", false
@@ -154,6 +163,13 @@ func evaluatePath(path string, config ScaffoldConfig) (string, bool) {
 			return "", false
 		}
 		dest, _ := filepath.Rel("backend/node-express", rel)
+		return filepath.Join("apps", "backend", dest), true
+
+	case strings.HasPrefix(rel, "backend/hono-node/"):
+		if config.Backend != BackendHono {
+			return "", false
+		}
+		dest, _ := filepath.Rel("backend/hono-node", rel)
 		return filepath.Join("apps", "backend", dest), true
 
 	case strings.HasPrefix(rel, "db/postgres/"):
