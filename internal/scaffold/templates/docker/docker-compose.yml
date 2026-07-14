@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+[[- if eq .Database "postgres" ]]
   postgres:
     image: postgres:15-alpine
     container_name: [[.ProjectName]]-postgres
@@ -12,6 +13,26 @@ services:
       POSTGRES_DB: [[.ProjectName]]
     volumes:
       - postgres_data:/var/lib/postgresql/data
+[[- end ]]
+[[- if eq .Database "mysql" ]]
+  mysql:
+    image: mysql:8
+    container_name: [[.ProjectName]]-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: [[.ProjectName]]
+      MYSQL_USER: mysql
+      MYSQL_PASSWORD: password
+    volumes:
+      - mysql_data:/var/lib/mysql
+[[- end ]]
 
 volumes:
+[[- if eq .Database "postgres" ]]
   postgres_data:
+[[- end ]]
+[[- if eq .Database "mysql" ]]
+  mysql_data:
+[[- end ]]

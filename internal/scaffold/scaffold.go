@@ -36,7 +36,7 @@ const (
 type DatabaseType string
 
 const (
-	DatabasePostgres DatabaseType = "postgresql"
+	DatabasePostgres DatabaseType = "postgres"
 	DatabaseMySQL    DatabaseType = "mysql"
 	DatabaseNone     DatabaseType = "none"
 )
