@@ -38,7 +38,17 @@ type DatabaseType string
 const (
 	DatabasePostgres DatabaseType = "postgres"
 	DatabaseMySQL    DatabaseType = "mysql"
+	DatabaseMongoDB  DatabaseType = "mongodb"
 	DatabaseNone     DatabaseType = "none"
+)
+
+type ORMType string
+
+const (
+	ORMPrisma  ORMType = "prisma"
+	ORMSqlx    ORMType = "sqlx"
+	ORMDrizzle ORMType = "drizzle"
+	ORMNone    ORMType = "none"
 )
 
 type ScaffoldConfig struct {
@@ -46,6 +56,7 @@ type ScaffoldConfig struct {
 	Frontend      FrontendType
 	Backend       BackendType
 	Database      DatabaseType
+	ORM           ORMType
 	Docker        bool
 	GithubActions bool
 }
@@ -68,6 +79,10 @@ func RunScaffold(targetDir string, config ScaffoldConfig) error {
 		destSubPath, shouldCopy := evaluatePath(path, config)
 		if !shouldCopy {
 			return nil
+		}
+
+		if strings.HasSuffix(destSubPath, ".tmpl") {
+			destSubPath = strings.TrimSuffix(destSubPath, ".tmpl")
 		}
 
 		destPath := filepath.Join(targetDir, destSubPath)
@@ -130,72 +145,107 @@ func evaluatePath(path string, config ScaffoldConfig) (string, bool) {
 
 	// 3. Filtramos los archivos según la configuración del usuario y ruteamos al monorepo:
 	switch {
-	case strings.HasPrefix(rel, "frontend/react-vite-ts/"):
+	case strings.HasPrefix(rel, "frontend/react-vite/"):
 		if config.Frontend != FrontendReact {
 			return "", false
 		}
-		dest, _ := filepath.Rel("frontend/react-vite-ts", rel)
+		dest, _ := filepath.Rel("frontend/react-vite", rel)
 		return filepath.Join("apps", "frontend", dest), true
 
-	case strings.HasPrefix(rel, "frontend/next-app-router/"):
+	case strings.HasPrefix(rel, "frontend/next/"):
 		if config.Frontend != FrontendNext {
 			return "", false
 		}
-		dest, _ := filepath.Rel("frontend/next-app-router", rel)
+		dest, _ := filepath.Rel("frontend/next", rel)
 		return filepath.Join("apps", "frontend", dest), true
 
-	case strings.HasPrefix(rel, "frontend/vue-vite-ts/"):
+	case strings.HasPrefix(rel, "frontend/vue/"):
 		if config.Frontend != FrontendVue {
 			return "", false
 		}
-		dest, _ := filepath.Rel("frontend/vue-vite-ts", rel)
+		dest, _ := filepath.Rel("frontend/vue", rel)
 		return filepath.Join("apps", "frontend", dest), true
 
-	case strings.HasPrefix(rel, "backend/go-fiber/"):
+	case strings.HasPrefix(rel, "backend/fiber/"):
 		if config.Backend != BackendFiber {
 			return "", false
 		}
-		dest, _ := filepath.Rel("backend/go-fiber", rel)
+		dest, _ := filepath.Rel("backend/fiber", rel)
 		return filepath.Join("apps", "backend", dest), true
 
-	case strings.HasPrefix(rel, "backend/node-express/"):
+	case strings.HasPrefix(rel, "backend/express/"):
 		if config.Backend != BackendExpress {
 			return "", false
 		}
-		dest, _ := filepath.Rel("backend/node-express", rel)
+		dest, _ := filepath.Rel("backend/express", rel)
 		return filepath.Join("apps", "backend", dest), true
 
-	case strings.HasPrefix(rel, "backend/hono-node/"):
+	case strings.HasPrefix(rel, "backend/hono/"):
 		if config.Backend != BackendHono {
 			return "", false
 		}
-		dest, _ := filepath.Rel("backend/hono-node", rel)
+		dest, _ := filepath.Rel("backend/hono", rel)
 		return filepath.Join("apps", "backend", dest), true
 
-	case strings.HasPrefix(rel, "db/postgres/"):
-		if config.Database != DatabasePostgres {
+	case strings.HasPrefix(rel, "db/prisma/postgres/"):
+		if config.Database != DatabasePostgres || config.ORM != ORMPrisma {
 			return "", false
 		}
-		if strings.HasSuffix(rel, ".prisma") && config.Backend != BackendExpress {
-			return "", false
-		}
-		if strings.HasSuffix(rel, ".go") && config.Backend != BackendFiber {
-			return "", false
-		}
-		dest, _ := filepath.Rel("db/postgres", rel)
+		dest, _ := filepath.Rel("db/prisma/postgres", rel)
 		return filepath.Join("packages", "db", dest), true
 
-	case strings.HasPrefix(rel, "db/mysql/"):
-		if config.Database != DatabaseMySQL {
+	case strings.HasPrefix(rel, "db/prisma/mysql/"):
+		if config.Database != DatabaseMySQL || config.ORM != ORMPrisma {
 			return "", false
 		}
-		if strings.HasSuffix(rel, ".prisma") && config.Backend != BackendExpress {
+		dest, _ := filepath.Rel("db/prisma/mysql", rel)
+		return filepath.Join("packages", "db", dest), true
+
+	case strings.HasPrefix(rel, "db/prisma/mongodb/"):
+		if config.Database != DatabaseMongoDB || config.ORM != ORMPrisma {
 			return "", false
 		}
-		if strings.HasSuffix(rel, ".go") && config.Backend != BackendFiber {
+		dest, _ := filepath.Rel("db/prisma/mongodb", rel)
+		return filepath.Join("packages", "db", dest), true
+
+	case strings.HasPrefix(rel, "db/sqlx/postgres/"):
+		if config.Database != DatabasePostgres || config.ORM != ORMSqlx {
 			return "", false
 		}
-		dest, _ := filepath.Rel("db/mysql", rel)
+		dest, _ := filepath.Rel("db/sqlx/postgres", rel)
+		return filepath.Join("packages", "db", dest), true
+
+	case strings.HasPrefix(rel, "db/sqlx/mysql/"):
+		if config.Database != DatabaseMySQL || config.ORM != ORMSqlx {
+			return "", false
+		}
+		dest, _ := filepath.Rel("db/sqlx/mysql", rel)
+		return filepath.Join("packages", "db", dest), true
+
+	case rel == "db/drizzle/package.json":
+		if config.ORM != ORMDrizzle {
+			return "", false
+		}
+		return filepath.Join("packages", "db", "package.json"), true
+
+	case rel == "db/drizzle/drizzle.config.ts":
+		if config.ORM != ORMDrizzle {
+			return "", false
+		}
+		return filepath.Join("packages", "db", "drizzle.config.ts"), true
+
+	case strings.HasPrefix(rel, "db/drizzle/postgres/"):
+		if config.Database != DatabasePostgres || config.ORM != ORMDrizzle {
+			return "", false
+		}
+		dest, _ := filepath.Rel("db/drizzle/postgres", rel)
+		return filepath.Join("packages", "db", dest), true
+
+	case strings.HasPrefix(rel, "db/drizzle/mysql/"):
+		if config.Database != DatabaseMySQL || config.ORM != ORMDrizzle {
+			return "", false
+		}
+		dest, _ := filepath.Rel("db/drizzle/mysql", rel)
 		return filepath.Join("packages", "db", dest), true
 
 	case rel == "docker/docker-compose.yml":

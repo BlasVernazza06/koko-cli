@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
@@ -20,19 +21,6 @@ var initCmd = &cobra.Command{
 		projectName := "my-project"
 		if len(args) > 0 {
 			projectName = args[0]
-		} else if !autoApprove {
-			nameForm := huh.NewForm(
-				huh.NewGroup(
-					huh.NewInput().
-						Title("¿Cuál es el nombre de tu proyecto?").
-						Placeholder("my-project").
-						Value(&projectName),
-				),
-			)
-			if err := nameForm.Run(); err != nil {
-				fmt.Println("Error ejecutando formulario:", err)
-				os.Exit(1)
-			}
 		}
 
 		fmt.Println(`
@@ -42,14 +30,32 @@ var initCmd = &cobra.Command{
 			\___ |_|\__,_|  \_/\_/  v0.1.0
 		`)
 
-		// Flujo 1: Inicialización automática con configuración por defecto (Next + Express + Postgres + Docker)
+		// SIEMPRE preguntamos por el nombre al principio en modo interactivo
+		if !autoApprove {
+			nameForm := huh.NewForm(
+				huh.NewGroup(
+					huh.NewInput().
+						Title("¿Cuál es el nombre de tu proyecto?").
+						Value(&projectName),
+				),
+			)
+			if err := nameForm.Run(); err != nil {
+				fmt.Println("Error ejecutando formulario:", err)
+				os.Exit(1)
+			}
+		}
+
+		projectName = strings.TrimSpace(projectName)
+
+		// Flujo 1: Inicialización automática con configuración por defecto (Next + Express + Postgres + Prisma + Docker)
 		if autoApprove {
-			fmt.Printf("🚀 Inicializando '%s' con configuración por defecto (Next.js, Express, pnpm, PostgreSQL, Drizzle, Turborepo, Docker)...\n", projectName)
+			fmt.Printf("🚀 Inicializando '%s' con configuración por defecto (Next.js, Express, pnpm, PostgreSQL, Prisma, Turborepo, Docker)...\n", projectName)
 			config := scaffold.ScaffoldConfig{
 				ProjectName:   projectName,
 				Frontend:      scaffold.FrontendNext,
 				Backend:       scaffold.BackendExpress,
 				Database:      scaffold.DatabasePostgres,
+				ORM:           scaffold.ORMPrisma,
 				Docker:        true,
 				GithubActions: true,
 			}
@@ -92,8 +98,8 @@ var initCmd = &cobra.Command{
 					huh.NewSelect[string]().
 						Title("Selecciona una receta de producción:").
 						Options(
-							huh.NewOption("💻 Fullstack SaaS Starter (Next.js + Express + PostgreSQL + Docker)", "saas"),
-							huh.NewOption("⚡ API Moderna limpia (Express + PostgreSQL + Docker)", "api"),
+							huh.NewOption("💻 Fullstack SaaS Starter (Next.js + Express + PostgreSQL + Prisma + Docker)", "saas"),
+							huh.NewOption("⚡ API Moderna limpia (Express + PostgreSQL + Prisma + Docker)", "api"),
 							huh.NewOption("🎨 Single Page App (React SPA + Vite + Tailwind CSS)", "spa"),
 						).
 						Value(&recipe),
@@ -109,18 +115,21 @@ var initCmd = &cobra.Command{
 				config.Frontend = scaffold.FrontendNext
 				config.Backend = scaffold.BackendExpress
 				config.Database = scaffold.DatabasePostgres
+				config.ORM = scaffold.ORMPrisma
 				config.Docker = true
 				config.GithubActions = true
 			case "api":
 				config.Frontend = scaffold.FrontendNone
 				config.Backend = scaffold.BackendExpress
 				config.Database = scaffold.DatabasePostgres
+				config.ORM = scaffold.ORMPrisma
 				config.Docker = true
 				config.GithubActions = false
 			case "spa":
 				config.Frontend = scaffold.FrontendReact
 				config.Backend = scaffold.BackendNone
 				config.Database = scaffold.DatabaseNone
+				config.ORM = scaffold.ORMNone
 				config.Docker = false
 				config.GithubActions = false
 			}
@@ -128,8 +137,8 @@ var initCmd = &cobra.Command{
 			fmt.Printf("\n¡Inicializando '%s' con receta '%s'...\n", projectName, recipe)
 
 		} else {
-			// Flujo 3: Configuración Manual paso a paso
-			var frontend, backend, database string
+			// Flujo 3: Configuración Manual paso a paso (cada pregunta en su propio grupo para mostrarse una a la vez)
+			var frontend, backend, database, orm string
 			var docker, githubActions bool
 
 			manualForm := huh.NewForm(
@@ -143,6 +152,8 @@ var initCmd = &cobra.Command{
 							huh.NewOption("Ninguno", "none"),
 						).
 						Value(&frontend),
+				),
+				huh.NewGroup(
 					huh.NewSelect[string]().
 						Title("Selecciona tu framework de Backend:").
 						Options(
@@ -152,6 +163,8 @@ var initCmd = &cobra.Command{
 							huh.NewOption("Ninguno", "none"),
 						).
 						Value(&backend),
+				),
+				huh.NewGroup(
 					huh.NewSelect[string]().
 						Title("Selecciona tu Base de Datos:").
 						Options(
@@ -163,9 +176,22 @@ var initCmd = &cobra.Command{
 						Value(&database),
 				),
 				huh.NewGroup(
+					huh.NewSelect[string]().
+						Title("Selecciona tu ORM / Acceso a Datos:").
+						Options(
+							huh.NewOption("Prisma", "prisma"),
+							huh.NewOption("Drizzle ORM", "drizzle"),
+							huh.NewOption("SQLx (Go)", "sqlx"),
+							huh.NewOption("Ninguno", "none"),
+						).
+						Value(&orm),
+				),
+				huh.NewGroup(
 					huh.NewConfirm().
 						Title("¿Configurar entorno de desarrollo local con Docker Compose?").
 						Value(&docker),
+				),
+				huh.NewGroup(
 					huh.NewConfirm().
 						Title("¿Configurar Github Actions para CI/CD?").
 						Value(&githubActions),
@@ -181,6 +207,7 @@ var initCmd = &cobra.Command{
 			config.Frontend = scaffold.FrontendType(frontend)
 			config.Backend = scaffold.BackendType(backend)
 			config.Database = scaffold.DatabaseType(database)
+			config.ORM = scaffold.ORMType(orm)
 			config.Docker = docker
 			config.GithubActions = githubActions
 
