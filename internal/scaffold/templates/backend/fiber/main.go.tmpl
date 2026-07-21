@@ -1,0 +1,104 @@
+package main
+
+import (
+	"log"
+	"strconv"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+)
+
+type Todo struct {
+	ID    int    `json:"id"`
+	Title string `json:"title"`
+	Done  bool   `json:"done"`
+}
+
+var todos = []Todo{
+	{ID: 1, Title: "Aprender Go Fiber", Done: false},
+	{ID: 2, Title: "Configurar Monorepo", Done: true},
+}
+
+func main() {
+	app := fiber.New()
+
+	app.Use(cors.New())
+
+	// Health Check
+	app.Get("/api/health", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{
+			"status":  "ok",
+			"project": "[[.ProjectName]]-backend",
+		})
+	})
+
+	// 1. GET - Obtener todos los todos
+	app.Get("/api/todos", func(c *fiber.Ctx) error {
+		return c.JSON(todos)
+	})
+
+	// 2. POST - Crear un nuevo todo
+	app.Post("/api/todos", func(c *fiber.Ctx) error {
+		type Request struct {
+			Title string `json:"title"`
+		}
+		var req Request
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "invalid request body"})
+		}
+
+		newTodo := Todo{
+			ID:    len(todos) + 1,
+			Title: req.Title,
+			Done:  false,
+		}
+		todos = append(todos, newTodo)
+		return c.Status(218).JSON(newTodo)
+	})
+
+	// 3. PUT - Actualizar un todo existente
+	app.Put("/api/todos/:id", func(c *fiber.Ctx) error {
+		id, err := strconv.Atoi(c.Params("id"))
+		if err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "invalid ID"})
+		}
+
+		type Request struct {
+			Title string `json:"title"`
+			Done  bool   `json:"done"`
+		}
+		var req Request
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "invalid request body"})
+		}
+
+		for i, todo := range todos {
+			if todo.ID == id {
+				todos[i].Title = req.Title
+				todos[i].Done = req.Done
+				return c.JSON(todos[i])
+			}
+		}
+
+		return c.Status(404).JSON(fiber.Map{"error": "todo not found"})
+	})
+
+	// 4. DELETE - Eliminar un todo
+	app.Delete("/api/todos/:id", func(c *fiber.Ctx) error {
+		id, err := strconv.Atoi(c.Params("id"))
+		if err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "invalid ID"})
+		}
+
+		for i, todo := range todos {
+			if todo.ID == id {
+				todos = append(todos[:i], todos[i+1:]...)
+				return c.JSON(fiber.Map{"message": "todo deleted successfully"})
+			}
+		}
+
+		return c.Status(404).JSON(fiber.Map{"error": "todo not found"})
+	})
+
+	log.Fatal(app.Listen(":8080"))
+}
