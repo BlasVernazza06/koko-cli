@@ -1,0 +1,11 @@
+{
+  "name": "[[.ProjectName]]-monorepo",
+  "private": true,
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0"
+  }
+}
