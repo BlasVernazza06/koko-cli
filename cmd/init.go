@@ -98,9 +98,10 @@ var initCmd = &cobra.Command{
 					huh.NewSelect[string]().
 						Title("Selecciona una receta de producción:").
 						Options(
-							huh.NewOption("💻 Fullstack SaaS Starter (Next.js + Express + PostgreSQL + Prisma + Docker)", "saas"),
-							huh.NewOption("⚡ API Moderna limpia (Express + PostgreSQL + Prisma + Docker)", "api"),
-							huh.NewOption("🎨 Single Page App (React SPA + Vite + Tailwind CSS)", "spa"),
+							huh.NewOption("💻 MERN Stack (React + Express + MongoDB)", "mern"),
+							huh.NewOption("🚀 PERN Stack (React + Express + PostgreSQL)", "pern"),
+							huh.NewOption("⚡ SaaS Starter (Next.js + Drizzle + Better-Auth + Stripe)", "saas"),
+							huh.NewOption("🐍 FastAPI + React SPA", "fastapi_react"),
 						).
 						Value(&recipe),
 				),
@@ -111,21 +112,29 @@ var initCmd = &cobra.Command{
 			}
 
 			switch recipe {
-			case "saas":
-				config.Frontend = scaffold.FrontendNext
+			case "mern":
+				config.Frontend = scaffold.FrontendReact
 				config.Backend = scaffold.BackendExpress
-				config.Database = scaffold.DatabasePostgres
+				config.Database = scaffold.DatabaseMongoDB
 				config.ORM = scaffold.ORMPrisma
 				config.Docker = true
-				config.GithubActions = true
-			case "api":
-				config.Frontend = scaffold.FrontendNone
+				config.GithubActions = false
+			case "pern":
+				config.Frontend = scaffold.FrontendReact
 				config.Backend = scaffold.BackendExpress
 				config.Database = scaffold.DatabasePostgres
 				config.ORM = scaffold.ORMPrisma
 				config.Docker = true
 				config.GithubActions = false
-			case "spa":
+			case "saas":
+				config.Frontend = scaffold.FrontendNext
+				config.Backend = scaffold.BackendNone
+				config.Database = scaffold.DatabasePostgres
+				config.ORM = scaffold.ORMDrizzle
+				config.Docker = true
+				config.GithubActions = true
+			case "fastapi_react":
+				// FastAPI se agregará en futuros sprints, mapeamos lo básico por ahora
 				config.Frontend = scaffold.FrontendReact
 				config.Backend = scaffold.BackendNone
 				config.Database = scaffold.DatabaseNone
@@ -133,6 +142,8 @@ var initCmd = &cobra.Command{
 				config.Docker = false
 				config.GithubActions = false
 			}
+
+			config.Recipe = recipe
 
 			fmt.Printf("\n¡Inicializando '%s' con receta '%s'...\n", projectName, recipe)
 

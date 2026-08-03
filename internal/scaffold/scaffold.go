@@ -53,6 +53,7 @@ const (
 
 type ScaffoldConfig struct {
 	ProjectName   string
+	Recipe        string // "" if manual, or "mern", "pern", "saas", "fastapi_react"
 	Frontend      FrontendType
 	Backend       BackendType
 	Database      DatabaseType
@@ -145,6 +146,15 @@ func evaluatePath(path string, config ScaffoldConfig) (string, bool) {
 
 	// 3. Filtramos los archivos según la configuración del usuario y ruteamos al monorepo:
 	switch {
+	case strings.HasPrefix(rel, "recipes/"):
+		// Si es una receta, comprobamos si es la seleccionada
+		prefix := "recipes/" + config.Recipe + "/"
+		if config.Recipe != "" && strings.HasPrefix(rel, prefix) {
+			dest, _ := filepath.Rel(prefix, rel)
+			return dest, true
+		}
+		return "", false
+
 	case strings.HasPrefix(rel, "frontend/react-vite/"):
 		if config.Frontend != FrontendReact {
 			return "", false
