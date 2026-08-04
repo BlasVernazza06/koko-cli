@@ -1,21 +1,27 @@
-import React, { useEffect, useState } from 'react'
-import axios from 'axios'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import LoginPage from './pages/login';
+import RegisterPage from './pages/register';
+import DashboardPage from './pages/dashboard';
+import ProtectedRoute from './components/protected-route';
 
 function App() {
-  const [health, setHealth] = useState<any>(null)
-
-  useEffect(() => {
-    axios.get('http://localhost:8080/api/health')
-      .then(res => setHealth(res.data))
-      .catch(err => console.error(err))
-  }, [])
-
   return (
-    <div style={{ fontFamily: 'sans-serif', textAlign: 'center', padding: '2rem' }}>
-      <h1>[[.ProjectName]] (PERN Stack)</h1>
-      <p>API Status: {health ? health.status : 'Connecting...'}</p>
-    </div>
-  )
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
