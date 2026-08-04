@@ -1,0 +1,16 @@
+{
+  "name": "@repo/validators",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./auth": "./src/auth/index.ts"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "typescript": "5.9.2"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
+  }
+}

@@ -1,11 +1,26 @@
 {
-  "name": "[[.ProjectName]]-monorepo",
+  "name": "[[.ProjectName]]",
   "private": true,
   "scripts": {
-    "build": "turbo build",
-    "dev": "turbo dev"
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "check-types": "turbo run check-types"
   },
   "devDependencies": {
-    "turbo": "^2.0.0"
+    "@trivago/prettier-plugin-sort-imports": "^6.0.2",
+    "prettier": "^3.7.4",
+    "turbo": "^2.8.10",
+    "typescript": "5.9.2"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^3.9.1",
+    "better-auth": "^1.4.19",
+    "zod": "^4.3.6"
   }
 }
