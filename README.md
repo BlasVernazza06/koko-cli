@@ -112,6 +112,52 @@ mi-super-app/
 
 ---
 
+## ⚙️ Manifiesto de Configuración (koko.config.json)
+
+Al inicializar un proyecto, se genera un archivo `koko.config.json` en la raíz que actúa como el registro central del stack y permite futuras inyecciones de código en el "Día 2" (ej. mediante `koko add`):
+
+```json
+{
+  "$schema": "https://koko-cli.dev/schema.json",
+  "project": {
+    "name": "mi-super-app",
+    "cliVersion": "v0.1.0",
+    "createdAt": "2026-08-09T21:20:00Z"
+  },
+  "architecture": {
+    "layout": "monorepo",
+    "packageManager": "pnpm"
+  },
+  "stack": {
+    "frontend": {
+      "framework": "next",
+      "language": "typescript",
+      "styling": "tailwindcss"
+    },
+    "backend": {
+      "framework": "express",
+      "language": "typescript"
+    },
+    "database": {
+      "provider": "postgres",
+      "orm": "prisma"
+    }
+  },
+  "features": {
+    "auth": {
+      "provider": "better-auth",
+      "status": "installed"
+    },
+    "infrastructure": {
+      "dockerCompose": true,
+      "ciCd": "github-actions"
+    }
+  }
+}
+```
+
+---
+
 ## 🤝 Contribuir
 
 ¡Nos encantan las contribuciones! Consulta nuestra [Guía de Contribución](file:///c:/Users/USUARIO/Desktop/Programacion/Proyects/CLI%20repo%20ai%20setup/CONTRIBUTING.md) para saber cómo clonar el repositorio, configurar tu entorno local y enviar Pull Requests.
