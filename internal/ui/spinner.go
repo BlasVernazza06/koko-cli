@@ -28,7 +28,7 @@ func (s *Spinner) Start() {
 			case <-s.stop:
 				return
 			case <-ticker.C:
-				fmt.Printf("\r\033[36m%s\033[0m %s", frames[i%len(frames)], s.message)
+				fmt.Printf("\r\033[90m│\033[0m  \033[36m%s\033[0m  %s", frames[i%len(frames)], s.message)
 				i++
 			}
 		}
@@ -40,8 +40,8 @@ func (s *Spinner) Stop(success bool) {
 	// Clear line first
 	fmt.Print("\r\033[K")
 	if success {
-		fmt.Printf("\033[32m✓\033[0m %s\n", s.message)
+		fmt.Printf("\033[90m│\033[0m  \033[32m✓\033[0m  %s\n", s.message)
 	} else {
-		fmt.Printf("\033[31m✗\033[0m %s\n", s.message)
+		fmt.Printf("\033[90m│\033[0m  \033[31m✗\033[0m  %s\n", s.message)
 	}
 }
