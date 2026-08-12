@@ -6,6 +6,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var showVersion bool
+
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print the version number of Claw-CLI",
@@ -15,5 +17,6 @@ var versionCmd = &cobra.Command{
 }
 
 func init() {
+	versionCmd.Flags().BoolVarP(&showVersion, "version", "v", false, "Print version number")
 	rootCmd.AddCommand(versionCmd)
 }
