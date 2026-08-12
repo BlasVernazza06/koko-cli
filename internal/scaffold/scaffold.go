@@ -15,54 +15,34 @@ import (
 //go:embed all:templates
 var templateFs embed.FS
 
-type FrontendType string
-
-const (
-	FrontendNext  FrontendType = "next"
-	FrontendReact FrontendType = "react"
-	FrontendVue   FrontendType = "vue"
-	FrontendNone  FrontendType = "none"
-)
-
-type BackendType string
-
-const (
-	BackendFiber   BackendType = "fiber"
-	BackendExpress BackendType = "express"
-	BackendHono    BackendType = "hono"
-	BackendNone    BackendType = "none"
-)
-
-type DatabaseType string
-
-const (
-	DatabasePostgres DatabaseType = "postgres"
-	DatabaseMySQL    DatabaseType = "mysql"
-	DatabaseMongoDB  DatabaseType = "mongodb"
-	DatabaseNone     DatabaseType = "none"
-)
-
-type ORMType string
-
-const (
-	ORMPrisma  ORMType = "prisma"
-	ORMSqlx    ORMType = "sqlx"
-	ORMDrizzle ORMType = "drizzle"
-	ORMNone    ORMType = "none"
-)
-
 type ScaffoldConfig struct {
-	ProjectName   string
-	Recipe        string // "" if manual, or "mern", "pern", "saas", "fastapi_react"
-	Frontend      FrontendType
-	Backend       BackendType
-	Database      DatabaseType
-	ORM           ORMType
-	Docker        bool
-	GithubActions bool
+	ProjectName string
+	Recipe      string
 }
 
 func RunScaffold(targetDir string, config ScaffoldConfig) error {
+	if err := CopyTemplates(targetDir, config); err != nil {
+		return err
+	}
+	if err := GenerateDockerAndDB(targetDir, config); err != nil {
+		return err
+	}
+	return InitGit(targetDir)
+}
+
+func CopyTemplates(targetDir string, config ScaffoldConfig) error {
+	return walkAndCopy(targetDir, config, func(destPath string) bool {
+		return !isDockerOrDBFile(destPath)
+	})
+}
+
+func GenerateDockerAndDB(targetDir string, config ScaffoldConfig) error {
+	return walkAndCopy(targetDir, config, func(destPath string) bool {
+		return isDockerOrDBFile(destPath)
+	})
+}
+
+func walkAndCopy(targetDir string, config ScaffoldConfig, filterFn func(string) bool) error {
 	err := os.MkdirAll(targetDir, 0755)
 	if err != nil {
 		return fmt.Errorf("error al crear el directorio de destino: %w", err)
@@ -88,6 +68,10 @@ func RunScaffold(targetDir string, config ScaffoldConfig) error {
 
 		destPath := filepath.Join(targetDir, destSubPath)
 
+		if filterFn != nil && !filterFn(destPath) {
+			return nil
+		}
+
 		err = os.MkdirAll(filepath.Dir(destPath), 0755)
 		if err != nil {
 			return fmt.Errorf("error al crear subdirectorio para %s: %w", destPath, err)
@@ -96,6 +80,24 @@ func RunScaffold(targetDir string, config ScaffoldConfig) error {
 		content, err := templateFs.ReadFile(path)
 		if err != nil {
 			return fmt.Errorf("error al leer archivo virtual %s: %w", path, err)
+		}
+
+		// Si es un archivo binario, lo copiamos directamente sin pasarlo por el motor de plantillas
+		if bytes.IndexByte(content, 0) != -1 || isBinaryExtension(destPath) {
+			err = os.WriteFile(destPath, content, 0644)
+			if err != nil {
+				return fmt.Errorf("error al escribir archivo binario %s: %w", destPath, err)
+			}
+			return nil
+		}
+
+		// Si no contiene tags de plantilla válidos de Go, lo copiamos directamente sin parsearlo
+		if !shouldParseAsTemplate(content) {
+			err = os.WriteFile(destPath, content, 0644)
+			if err != nil {
+				return fmt.Errorf("error al escribir archivo %s: %w", destPath, err)
+			}
+			return nil
 		}
 
 		// Motor de Interpolación (Task 1.4):
@@ -116,20 +118,10 @@ func RunScaffold(targetDir string, config ScaffoldConfig) error {
 		if err != nil {
 			return fmt.Errorf("error al escribir archivo %s: %w", destPath, err)
 		}
-		fmt.Printf("✓ Generado: %s\n", destSubPath)
 		return nil
 	})
 
-	if err != nil {
-		return fmt.Errorf("error recorriendo las plantillas: %w", err)
-	}
-
-	// Inicializar repositorio Git aquí (fuera del bucle walk)
-	if err := initGit(targetDir); err != nil {
-		fmt.Printf("⚠️  Advertencia: %v\n", err)
-	}
-
-	return nil
+	return err
 }
 
 // evaluatePath decide si un archivo debe copiarse según la configuración
@@ -155,126 +147,36 @@ func evaluatePath(path string, config ScaffoldConfig) (string, bool) {
 		}
 		return "", false
 
-	case strings.HasPrefix(rel, "frontend/react-vite/"):
-		if config.Frontend != FrontendReact {
-			return "", false
-		}
-		dest, _ := filepath.Rel("frontend/react-vite", rel)
-		return filepath.Join("apps", "frontend", dest), true
-
-	case strings.HasPrefix(rel, "frontend/next/"):
-		if config.Frontend != FrontendNext {
-			return "", false
-		}
-		dest, _ := filepath.Rel("frontend/next", rel)
-		return filepath.Join("apps", "frontend", dest), true
-
-	case strings.HasPrefix(rel, "frontend/vue/"):
-		if config.Frontend != FrontendVue {
-			return "", false
-		}
-		dest, _ := filepath.Rel("frontend/vue", rel)
-		return filepath.Join("apps", "frontend", dest), true
-
-	case strings.HasPrefix(rel, "backend/fiber/"):
-		if config.Backend != BackendFiber {
-			return "", false
-		}
-		dest, _ := filepath.Rel("backend/fiber", rel)
-		return filepath.Join("apps", "backend", dest), true
-
-	case strings.HasPrefix(rel, "backend/express/"):
-		if config.Backend != BackendExpress {
-			return "", false
-		}
-		dest, _ := filepath.Rel("backend/express", rel)
-		return filepath.Join("apps", "backend", dest), true
-
-	case strings.HasPrefix(rel, "backend/hono/"):
-		if config.Backend != BackendHono {
-			return "", false
-		}
-		dest, _ := filepath.Rel("backend/hono", rel)
-		return filepath.Join("apps", "backend", dest), true
-
-	case strings.HasPrefix(rel, "db/prisma/postgres/"):
-		if config.Database != DatabasePostgres || config.ORM != ORMPrisma {
-			return "", false
-		}
-		dest, _ := filepath.Rel("db/prisma/postgres", rel)
-		return filepath.Join("packages", "db", dest), true
-
-	case strings.HasPrefix(rel, "db/prisma/mysql/"):
-		if config.Database != DatabaseMySQL || config.ORM != ORMPrisma {
-			return "", false
-		}
-		dest, _ := filepath.Rel("db/prisma/mysql", rel)
-		return filepath.Join("packages", "db", dest), true
-
-	case strings.HasPrefix(rel, "db/prisma/mongodb/"):
-		if config.Database != DatabaseMongoDB || config.ORM != ORMPrisma {
-			return "", false
-		}
-		dest, _ := filepath.Rel("db/prisma/mongodb", rel)
-		return filepath.Join("packages", "db", dest), true
-
-	case strings.HasPrefix(rel, "db/sqlx/postgres/"):
-		if config.Database != DatabasePostgres || config.ORM != ORMSqlx {
-			return "", false
-		}
-		dest, _ := filepath.Rel("db/sqlx/postgres", rel)
-		return filepath.Join("packages", "db", dest), true
-
-	case strings.HasPrefix(rel, "db/sqlx/mysql/"):
-		if config.Database != DatabaseMySQL || config.ORM != ORMSqlx {
-			return "", false
-		}
-		dest, _ := filepath.Rel("db/sqlx/mysql", rel)
-		return filepath.Join("packages", "db", dest), true
-
-	case rel == "db/drizzle/package.json":
-		if config.ORM != ORMDrizzle {
-			return "", false
-		}
-		return filepath.Join("packages", "db", "package.json"), true
-
-	case rel == "db/drizzle/drizzle.config.ts":
-		if config.ORM != ORMDrizzle {
-			return "", false
-		}
-		return filepath.Join("packages", "db", "drizzle.config.ts"), true
-
-	case strings.HasPrefix(rel, "db/drizzle/postgres/"):
-		if config.Database != DatabasePostgres || config.ORM != ORMDrizzle {
-			return "", false
-		}
-		dest, _ := filepath.Rel("db/drizzle/postgres", rel)
-		return filepath.Join("packages", "db", dest), true
-
-	case strings.HasPrefix(rel, "db/drizzle/mysql/"):
-		if config.Database != DatabaseMySQL || config.ORM != ORMDrizzle {
-			return "", false
-		}
-		dest, _ := filepath.Rel("db/drizzle/mysql", rel)
-		return filepath.Join("packages", "db", dest), true
-
 	case rel == "docker/docker-compose.yml":
-		if !config.Docker {
-			return "", false
+		if config.Recipe == "saas" || config.Recipe == "pern" || config.Recipe == "mern" {
+			return "docker-compose.yml", true
 		}
-		return "docker-compose.yml", true
+		return "", false
 
 	case rel == "github/ci.yml":
-		if !config.GithubActions {
-			return "", false
+		if config.Recipe == "saas" {
+			return ".github/workflows/ci.yml", true
 		}
-		return ".github/workflows/ci.yml", true
+		return "", false
 	}
 
 	return "", false
 }
 
-func initGit(targetDir string) error {
+func isDockerOrDBFile(path string) bool {
+	fullLower := strings.ToLower(path)
+	return strings.Contains(fullLower, "docker") ||
+		strings.Contains(fullLower, "db") ||
+		strings.Contains(fullLower, "drizzle") ||
+		strings.Contains(fullLower, "prisma") ||
+		strings.Contains(fullLower, "schema") ||
+		strings.Contains(fullLower, "database") ||
+		strings.Contains(fullLower, "mongodb") ||
+		strings.Contains(fullLower, "postgres") ||
+		strings.Contains(fullLower, "mysql")
+}
+
+func InitGit(targetDir string) error {
 	_, err := exec.LookPath("git")
 	if err != nil {
 		return nil
@@ -288,4 +190,24 @@ func initGit(targetDir string) error {
 	}
 
 	return nil
+}
+
+func isBinaryExtension(path string) bool {
+	ext := strings.ToLower(filepath.Ext(path))
+	switch ext {
+	case ".png", ".jpg", ".jpeg", ".gif", ".ico", ".pdf", ".woff", ".woff2", ".ttf", ".eot":
+		return true
+	}
+	return false
+}
+
+func shouldParseAsTemplate(content []byte) bool {
+	s := string(content)
+	return strings.Contains(s, "[[.") ||
+		strings.Contains(s, "[[if ") ||
+		strings.Contains(s, "[[range ") ||
+		strings.Contains(s, "[[with ") ||
+		strings.Contains(s, "[[define ") ||
+		strings.Contains(s, "[[template ") ||
+		strings.Contains(s, "[[/*")
 }
