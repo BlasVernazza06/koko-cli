@@ -4,14 +4,68 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 
+	kokoConfig "github.com/BlasVernazza06/koko-cli/internal/config"
 	"github.com/BlasVernazza06/koko-cli/internal/scaffold"
+	"github.com/BlasVernazza06/koko-cli/internal/ui"
 )
 
 var autoApprove bool
+
+func runInitSteps(projectName string, config scaffold.ScaffoldConfig) {
+	// Step 1: Estructurando directorios y copiando plantillas
+	s1 := ui.NewSpinner("[1/4] Estructurando directorios y copiando plantillas...")
+	s1.Start()
+	err := scaffold.CopyTemplates(projectName, config)
+	time.Sleep(400 * time.Millisecond) // Premium feel/micro-animation delay
+	if err != nil {
+		s1.Stop(false)
+		fmt.Printf("❌ Error al estructurar directorios: %v\n", err)
+		os.Exit(1)
+	}
+	s1.Stop(true)
+
+	// Step 2: Generando configuración de Docker y DB
+	s2 := ui.NewSpinner("[2/4] Generando configuración de Docker y DB...")
+	s2.Start()
+	err = scaffold.GenerateDockerAndDB(projectName, config)
+	time.Sleep(400 * time.Millisecond)
+	if err != nil {
+		s2.Stop(false)
+		fmt.Printf("❌ Error al generar configuración de Docker y DB: %v\n", err)
+		os.Exit(1)
+	}
+	s2.Stop(true)
+
+	// Step 3: Inicializando repositorio Git
+	s3 := ui.NewSpinner("[3/4] Inicializando repositorio Git...")
+	s3.Start()
+	err = scaffold.InitGit(projectName)
+	time.Sleep(400 * time.Millisecond)
+	if err != nil {
+		s3.Stop(false)
+		fmt.Printf("❌ Error al inicializar repositorio Git: %v\n", err)
+		os.Exit(1)
+	}
+	s3.Stop(true)
+
+	// Step 4: Creando manifiesto koko.config.json
+	s4 := ui.NewSpinner("[4/4] Creando manifiesto koko.config.json...")
+	s4.Start()
+	err = kokoConfig.GenerateConfig(projectName, config)
+	time.Sleep(400 * time.Millisecond)
+	if err != nil {
+		s4.Stop(false)
+		fmt.Printf("❌ Error al crear manifiesto: %v\n", err)
+		os.Exit(1)
+	}
+	s4.Stop(true)
+}
+
 var initCmd = &cobra.Command{
 	Use:   "init [project-name]",
 	Short: "Initialize a new software project starter",
@@ -47,191 +101,50 @@ var initCmd = &cobra.Command{
 
 		projectName = strings.TrimSpace(projectName)
 
-		// Flujo 1: Inicialización automática con configuración por defecto (Next + Express + Postgres + Prisma + Docker)
+		// Flujo 1: Inicialización automática con configuración por defecto (SaaS Starter)
 		if autoApprove {
-			fmt.Printf("🚀 Inicializando '%s' con configuración por defecto (Next.js, Express, pnpm, PostgreSQL, Prisma, Turborepo, Docker)...\n", projectName)
+			fmt.Printf("🚀 Inicializando '%s' con configuración por defecto (Next.js + Drizzle + Better-Auth + Stripe)...\n", projectName)
 			config := scaffold.ScaffoldConfig{
-				ProjectName:   projectName,
-				Frontend:      scaffold.FrontendNext,
-				Backend:       scaffold.BackendExpress,
-				Database:      scaffold.DatabasePostgres,
-				ORM:           scaffold.ORMPrisma,
-				Docker:        true,
-				GithubActions: true,
+				ProjectName: projectName,
+				Recipe:      "saas",
 			}
-			err := scaffold.RunScaffold(projectName, config)
-			if err != nil {
-				fmt.Printf("❌ Error al inicializar el proyecto: %v\n", err)
-				os.Exit(1)
-			}
-			fmt.Printf("✓ ¡Proyecto '%s' inicializado con éxito!\n", projectName)
+			runInitSteps(projectName, config)
+			fmt.Printf("\n✓ ¡Proyecto '%s' inicializado con éxito!\n", projectName)
 			return
 		}
 
-		var setupMode string
-		form := huh.NewForm(
+		// Flujo 2: Selección de Receta
+		var recipe string
+
+		recipeForm := huh.NewForm(
 			huh.NewGroup(
 				huh.NewSelect[string]().
-					Title("¿Cómo deseas inicializar tu proyecto?").
+					Title("Selecciona una receta de producción:").
 					Options(
-						huh.NewOption("🚀 Setup Rápido (Recetas de producción)", "quick"),
-						huh.NewOption("⚙️  Configuración Manual (Elegir stack paso a paso)", "manual"),
+						huh.NewOption("💻 MERN Stack (React + Express + MongoDB)", "mern"),
+						huh.NewOption("🚀 PERN Stack (React + Express + PostgreSQL)", "pern"),
+						huh.NewOption("⚡ SaaS Starter (Next.js + Drizzle + Better-Auth + Stripe)", "saas"),
+						huh.NewOption("🐍 FastAPI + React SPA", "fastapi_react"),
 					).
-					Value(&setupMode),
+					Value(&recipe),
 			),
 		)
 
-		err := form.Run()
-		if err != nil {
+		if err := recipeForm.Run(); err != nil {
 			fmt.Println("Error ejecutando formulario:", err)
 			os.Exit(1)
 		}
 
-		var config scaffold.ScaffoldConfig
-		config.ProjectName = projectName
-
-		// Flujo 2: Setup Rápido (Recetas)
-		if setupMode == "quick" {
-			var recipe string
-			recipeForm := huh.NewForm(
-				huh.NewGroup(
-					huh.NewSelect[string]().
-						Title("Selecciona una receta de producción:").
-						Options(
-							huh.NewOption("💻 MERN Stack (React + Express + MongoDB)", "mern"),
-							huh.NewOption("🚀 PERN Stack (React + Express + PostgreSQL)", "pern"),
-							huh.NewOption("⚡ SaaS Starter (Next.js + Drizzle + Better-Auth + Stripe)", "saas"),
-							huh.NewOption("🐍 FastAPI + React SPA", "fastapi_react"),
-						).
-						Value(&recipe),
-				),
-			)
-			if err := recipeForm.Run(); err != nil {
-				fmt.Println("Error ejecutando formulario:", err)
-				os.Exit(1)
-			}
-
-			switch recipe {
-			case "mern":
-				config.Frontend = scaffold.FrontendReact
-				config.Backend = scaffold.BackendExpress
-				config.Database = scaffold.DatabaseMongoDB
-				config.ORM = scaffold.ORMPrisma
-				config.Docker = true
-				config.GithubActions = false
-			case "pern":
-				config.Frontend = scaffold.FrontendReact
-				config.Backend = scaffold.BackendExpress
-				config.Database = scaffold.DatabasePostgres
-				config.ORM = scaffold.ORMPrisma
-				config.Docker = true
-				config.GithubActions = false
-			case "saas":
-				config.Frontend = scaffold.FrontendNext
-				config.Backend = scaffold.BackendNone
-				config.Database = scaffold.DatabasePostgres
-				config.ORM = scaffold.ORMDrizzle
-				config.Docker = true
-				config.GithubActions = true
-			case "fastapi_react":
-				// FastAPI se agregará en futuros sprints, mapeamos lo básico por ahora
-				config.Frontend = scaffold.FrontendReact
-				config.Backend = scaffold.BackendNone
-				config.Database = scaffold.DatabaseNone
-				config.ORM = scaffold.ORMNone
-				config.Docker = false
-				config.GithubActions = false
-			}
-
-			config.Recipe = recipe
-
-			fmt.Printf("\n¡Inicializando '%s' con receta '%s'...\n", projectName, recipe)
-
-		} else {
-			// Flujo 3: Configuración Manual paso a paso (cada pregunta en su propio grupo para mostrarse una a la vez)
-			var frontend, backend, database, orm string
-			var docker, githubActions bool
-
-			manualForm := huh.NewForm(
-				huh.NewGroup(
-					huh.NewSelect[string]().
-						Title("Selecciona tu framework de Frontend:").
-						Options(
-							huh.NewOption("Next.js (App Router, TS)", "next"),
-							huh.NewOption("React SPA (Vite, TS)", "react"),
-							huh.NewOption("Vue.js (Vite, TS)", "vue"),
-							huh.NewOption("Ninguno", "none"),
-						).
-						Value(&frontend),
-				),
-				huh.NewGroup(
-					huh.NewSelect[string]().
-						Title("Selecciona tu framework de Backend:").
-						Options(
-							huh.NewOption("Go Fiber (REST API)", "fiber"),
-							huh.NewOption("Node.js Express (TS)", "express"),
-							huh.NewOption("Hono (Node.js Server)", "hono"),
-							huh.NewOption("Ninguno", "none"),
-						).
-						Value(&backend),
-				),
-				huh.NewGroup(
-					huh.NewSelect[string]().
-						Title("Selecciona tu Base de Datos:").
-						Options(
-							huh.NewOption("PostgreSQL", "postgres"),
-							huh.NewOption("MySQL", "mysql"),
-							huh.NewOption("MongoDB", "mongodb"),
-							huh.NewOption("Ninguno", "none"),
-						).
-						Value(&database),
-				),
-				huh.NewGroup(
-					huh.NewSelect[string]().
-						Title("Selecciona tu ORM / Acceso a Datos:").
-						Options(
-							huh.NewOption("Prisma", "prisma"),
-							huh.NewOption("Drizzle ORM", "drizzle"),
-							huh.NewOption("SQLx (Go)", "sqlx"),
-							huh.NewOption("Ninguno", "none"),
-						).
-						Value(&orm),
-				),
-				huh.NewGroup(
-					huh.NewConfirm().
-						Title("¿Configurar entorno de desarrollo local con Docker Compose?").
-						Value(&docker),
-				),
-				huh.NewGroup(
-					huh.NewConfirm().
-						Title("¿Configurar Github Actions para CI/CD?").
-						Value(&githubActions),
-				),
-			)
-
-			if err := manualForm.Run(); err != nil {
-				fmt.Println("Error ejecutando formulario:", err)
-				os.Exit(1)
-			}
-
-			// Mapeamos los strings a los tipos fuertemente tipados de scaffold
-			config.Frontend = scaffold.FrontendType(frontend)
-			config.Backend = scaffold.BackendType(backend)
-			config.Database = scaffold.DatabaseType(database)
-			config.ORM = scaffold.ORMType(orm)
-			config.Docker = docker
-			config.GithubActions = githubActions
-
-			fmt.Printf("\n¡Inicializando '%s' con configuración manual...\n", projectName)
+		config := scaffold.ScaffoldConfig{
+			ProjectName: projectName,
+			Recipe:      recipe,
 		}
 
-		// Ejecutamos el scaffolding físico en el disco
-		err = scaffold.RunScaffold(projectName, config)
-		if err != nil {
-			fmt.Printf("❌ Error al generar estructura de archivos: %v\n", err)
-			os.Exit(1)
-		}
-		fmt.Printf("✓ ¡Proyecto '%s' inicializado con éxito!\n", projectName)
+		fmt.Printf("\n🚀 Inicializando '%s' con receta '%s'...\n", projectName, recipe)
+
+		runInitSteps(projectName, config)
+
+		fmt.Printf("\n✓ ¡Proyecto '%s' inicializado con éxito!\n", projectName)
 	},
 }
 
