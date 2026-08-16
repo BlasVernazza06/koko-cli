@@ -77,6 +77,15 @@ go build -o koko.exe main.go
 
 ---
 
+## ⚡ Comandos Disponibles
+
+* `koko init` — Inicializa un nuevo proyecto guiado paso a paso por Clawy.
+* `koko add <feature>` — Agrega herramientas o integraciones (auth, db, docker) a un proyecto existente.
+* `koko doctor` — Valida el entorno local (Go, Node, Docker, Git) para asegurar compatibilidad.
+* `koko --help` — Muestra la ayuda y opciones globales.
+
+---
+
 ## 💻 Ejemplo del Flujo en Terminal
 
 Al iniciar, **Clawy** te guiará paso a paso:
