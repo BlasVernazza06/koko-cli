@@ -1,49 +1,45 @@
 <div align="center">
 
-# 🦾 Claw CLI
+# 🦾 Koko CLI
 
 ### *Grab your stack, structure your project, and start building instantly.*
 
-[![npm version](https://img.shields.io/npm/v/cli-repo-setup?color=33cd5f&style=flat-flat)](https://www.npmjs.com/)
+[![npm version](https://img.shields.io/npm/v/koko-cli?color=33cd5f&style=flat-flat)](https://www.npmjs.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)](file:///c:/Users/USUARIO/Desktop/Programacion/Proyects/CLI%20repo%20ai%20setup/CONTRIBUTING.md)
 
 </div>
 
 ---
 
-**Claw CLI** (guiado por tu fiel asistente de andamiaje, **Clawy** 🦾) es un inicializador interactivo ultra veloz para la terminal. Olvídate de configurar a mano plantillas complejas de TypeScript, linters o contenedores Docker. Claw te permite seleccionar tu stack ideal y estructurará un proyecto profesional listo para producción en segundos.
+**Koko CLI** (guiado por tu fiel asistente de andamiaje 🦾) es un inicializador interactivo ultra veloz para la terminal escrito en Go. Olvídate de configurar a mano plantillas complejas de TypeScript, workspaces de monorrepos, bases de datos o contenedores Docker. Koko te permite seleccionar tu receta de producción ideal y estructurará tu proyecto listo para desarrollo en segundos de forma 100% offline.
 
 ```text
-     ▄███████▄
-    ██  • ◡ •  ██   🦾  { CLAWY }
-    █████████████
-    ██  ▀███▀  ██
-     ▀█████████▀
-     ▄█▀     ▀█▄
+     .---.   .---.
+    /  _  \_/  _  \       _  ______  _  ______
+   |  (o)     (o)  |     | |/ / __ \| |/ / __ \
+   |     (..)      |     | ' / /  | | ' / /  | |
+    \   (____)    /      | . \ \__| | . \ \__| |
+     '-----------'       |_|\_\____/|_|\_\____/  v1.0.0
 ```
 
 ---
 
 ## ✨ Características Principales
 
-*   🎨 **Experiencia Visual Premium**: Flujo interactivo elegante e intuitivo diseñado con `@clack/prompts`.
-*   🚀 **Configuración en Segundos**: Generación física y estructuración automática de archivos y carpetas directamente en el disco.
-*   📦 **Totalmente Personalizable**: Elige exactamente el frontend, backend y herramientas secundarias que necesitas.
-*   🛠️ **Listo para Producción**: Configura linters, monorrepositorios y esquemas de docker listos para levantar bases de datos.
+*   🎨 **Experiencia Visual Premium**: Interfaz TUI interactiva y animada construida con Bubble Tea y Lipgloss.
+*   🚀 **Instalación Instantánea**: Desempaquetado físico y estructuración en disco en milisegundos.
+*   📦 **Recetas de Producción**: Bootstrapping con configuraciones listas y optimizadas (ej. SaaS Starter con autenticación y base de datos).
+*   🐳 **Monorrepo e Infraestructura**: Configuración automática de workspaces de pnpm/npm, linters, TypeScript y contenedores Docker Compose locales.
 
 ---
 
-## 🛠️ Stack Tecnológico Soportado
+## 🛠️ Stack Tecnológico Soportado en Recetas (v1.0.0)
 
-Puedes combinar de forma flexible las siguientes tecnologías al inicializar tu proyecto:
-
-| Frontend 💻 | Backend 🔌 | Herramientas 🐳 | Librerías Útiles 🎨 |
+| Frontend 💻 | Backend 🔌 | Herramientas 🐳 | Base de Datos & ORM 🗄️ |
 | :--- | :--- | :--- | :--- |
-| **Next.js** (⚡ React) | **NestJS** (🦁 TypeScript) | **Docker Compose** | **Zod** (🛡️ Schema Validation) |
-| **React** (⚛️ Vite SPA) | **ExpressJS** (🚂 JS/TS) | **Turborepo** (Monorrepo) | **Better Auth** (🔑 Auth) |
-| **Angular** (🅰️ Google) | **FastAPI** (⚡ Python) | **ESLint & Prettier** | **Motion** (🎬 Animations) |
-| **Sin Frontend** (Solo API) | **Actix-web** (🦀 Rust) | **TailwindCSS** | **SVGL & Lucide** (Vector Icons) |
+| **Next.js** (App Router, TS) | **Node.js Express** (TS) | **Docker Compose** | **PostgreSQL** (Drizzle / Prisma) |
+| **React** (Vite SPA, TS) | **Go Fiber** (REST API) | **pnpm Workspaces** | **MySQL** (Drizzle / Prisma / SQLx) |
+| **Vue.js** (Vite, TS) | **Hono** (Node.js Server) | **ESLint & Prettier** | **MongoDB** (Mongoose) |
 
 ---
 
@@ -52,71 +48,51 @@ Puedes combinar de forma flexible las siguientes tecnologías al inicializar tu 
 ### Ejecutar Directamente (Sin Instalar)
 La manera más rápida de comenzar un nuevo proyecto es mediante `npx`:
 ```bash
-npx crear-proyecto
+npx koko-cli init
 ```
 
-### Instalación Global
-Si prefieres tenerlo disponible localmente como un comando global:
-```bash
-npm install -g cli-repo-setup
-```
-Una vez instalado, ejecuta el comando interactivo:
-```bash
-crear-proyecto
-```
-
-### 🛠️ Desarrollo Local (Go)
-Si estás desarrollando o modificando el CLI directamente en Go, puedes compilar y ejecutar el binario local:
+### 🛠️ Desarrollo y Compilación Local (Go)
+Si estás ejecutando o modificando el CLI desde el código fuente:
 ```bash
 # Compilar el binario
 go build -o koko.exe main.go
 
-# Ejecutar el comando de inicialización
+# Ejecutar el asistente interactivo
 ./koko.exe init
 ```
 
 ---
 
-## ⚡ Comandos Disponibles
+## 💻 Flujo en Terminal
 
-* `koko init` — Inicializa un nuevo proyecto guiado paso a paso por Clawy.
-* `koko add <feature>` — Agrega herramientas o integraciones (auth, db, docker) a un proyecto existente.
-* `koko doctor` — Valida el entorno local (Go, Node, Docker, Git) para asegurar compatibilidad.
-* `koko --help` — Muestra la ayuda y opciones globales.
-
----
-
-## 💻 Ejemplo del Flujo en Terminal
-
-Al iniciar, **Clawy** te guiará paso a paso:
+Al iniciar, **Koko** te guiará con indicadores de progreso interactivos:
 
 ```bash
-🦾 Clawy: "¡Hola! Soy tu asistente de andamiaje. Vamos a estructurar tu próximo proyecto."
+  ◇ Estructurando directorios y copiando plantillas...  ✓
+  ◇ Generando configuración de Docker y DB...          ✓
+  ◇ Inicializando repositorio Git...                   ✓
+  ◇ Creando manifiesto koko.config.json...             ✓
 
-? ¿Cómo se llamará el proyecto? mi-super-app
-? ¿Qué Frontend deseas usar? › ⚡ Next.js
-? ¿Qué tecnología para el Backend? › 🦁 NestJS
-? Selecciona herramientas adicionales › [x] Docker Compose, [x] ESLint + Prettier
-
-⠋ Generando la estructura real del proyecto en disco (esto puede tardar unos segundos)...
-✔ ¡Estructura de archivos y configuración creada con éxito!
+✨ ¡Proyecto 'mi-app' creado con éxito en 2.45s!
 ```
 
 ---
 
 ## 📁 Estructura del Repositorio Generado
 
-Dependiendo de tu elección, Claw creará una arquitectura modular y organizada:
+Dependiendo de tu elección, Koko estructurará una arquitectura monorrepo modular unificada:
 
 ```text
-mi-super-app/
-├── apps/               # Si seleccionaste Turborepo (Monorrepo)
-│   ├── web/            # Aplicación Frontend (ej. Next.js)
-│   └── api/            # Servidor Backend (ej. NestJS)
-├── docker-compose.yml  # Si seleccionaste Docker
-├── .gitignore
-├── package.json
-└── README.md           # Con instrucciones específicas para correr el stack seleccionado
+mi-app/
+├── apps/
+│   ├── frontend/         # Aplicación de Frontend (ej: Next.js)
+│   └── backend/          # Servidor de API (ej: Express / Go Fiber)
+├── packages/
+│   └── db/               # Esquemas y cliente de conexión (Prisma / Drizzle)
+├── docker-compose.yml    # Contenedor de PostgreSQL / MySQL local
+├── koko.config.json      # Manifiesto de configuración de Koko
+├── package.json          # Root package con workspaces configurados
+└── README.md
 ```
 
 ---
@@ -130,8 +106,8 @@ Al inicializar un proyecto, se genera un archivo `koko.config.json` en la raíz 
   "$schema": "https://koko-cli.dev/schema.json",
   "project": {
     "name": "mi-super-app",
-    "cliVersion": "v0.1.0",
-    "createdAt": "2026-08-09T21:20:00Z"
+    "cliVersion": "v1.0.0",
+    "createdAt": "2026-08-20T20:50:00Z"
   },
   "architecture": {
     "layout": "monorepo",
@@ -169,10 +145,10 @@ Al inicializar un proyecto, se genera un archivo `koko.config.json` en la raíz 
 
 ## 🤝 Contribuir
 
-¡Nos encantan las contribuciones! Consulta nuestra [Guía de Contribución](file:///c:/Users/USUARIO/Desktop/Programacion/Proyects/CLI%20repo%20ai%20setup/CONTRIBUTING.md) para saber cómo clonar el repositorio, configurar tu entorno local y enviar Pull Requests.
+¡Nos encantan las contribuciones! Consulta nuestra [Guía de Contribución](CONTRIBUTING.md) para saber cómo clonar el repositorio, configurar tu entorno local y enviar Pull Requests.
 
 ---
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT. Consulta el archivo [LICENSE](file:///c:/Users/USUARIO/Desktop/Programacion/Proyects/CLI%20repo%20ai%20setup/LICENSE) para obtener más detalles.
+Este proyecto está bajo la Licencia MIT. Consulta el archivo [LICENSE](LICENSE) para obtener más detalles.
