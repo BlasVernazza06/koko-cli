@@ -1,0 +1,150 @@
+@import "tailwindcss";
+
+@theme {
+  /* Expose our custom semantic color variables to Tailwind */
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-secondary: var(--brand-secondary);
+  --color-bg-base: var(--bg-base);
+  --color-bg-surface: var(--bg-surface);
+  --color-text-main: var(--text-main);
+  --color-text-muted: var(--text-muted);
+  --color-border-subtle: var(--border-subtle);
+  
+  --font-sans: "Plus Jakarta Sans", "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+/* -------------------------------------------------------------
+   COLOR SYSTEM
+   Theme: "Monochromatic Lavender & Periwinkle"
+   Cohesive, soft-contrast tech palette matching Koko the Koala.
+   ------------------------------------------------------------- */
+
+:root {
+  /* LIGHT MODE (Ice Lavender / Soft Studio) */
+  --brand-primary: #5a4fc4;      /* Deep Amethyst Purple (From Koala outlines, highly readable) */
+  --brand-secondary: #8095f8;    /* Luminous Periwinkle Blue (From Koala body, soft accent) */
+  --bg-base: #f6f7fc;            /* Ice lavender/cool white background */
+  --bg-surface: #ebedf7;         /* Very soft lavender-slate gray */
+  --text-main: #19162c;          /* Deep midnight purple-black */
+  --text-muted: #605c75;         /* Muted slate-purple gray */
+  --border-subtle: #dadde9;      /* Cool light lavender-gray border */
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* DARK MODE (Lavender Obsidian / Blackberry Slate) */
+    --brand-primary: #9b8df7;    /* Luminous Warm Wisteria */
+    --brand-secondary: #8095f8;  /* Luminous Periwinkle Blue */
+    --bg-base: #0a0911;          /* Deep Obsidian Purple-Black */
+    --bg-surface: #14131e;       /* Blackberry Charcoal Slate */
+    --text-main: #f1edf8;        /* Soft ash wisteria-white */
+    --text-muted: #88839d;       /* Muted slate-purple gray */
+    --border-subtle: #222031;    /* Deep wisteria-slate border */
+    color-scheme: dark;
+  }
+}
+
+/* Support for explicit user overrides using data-theme attribute */
+[data-theme="light"] {
+  --brand-primary: #5a4fc4;
+  --brand-secondary: #8095f8;
+  --bg-base: #f6f7fc;
+  --bg-surface: #ebedf7;
+  --text-main: #19162c;
+  --text-muted: #605c75;
+  --border-subtle: #dadde9;
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --brand-primary: #9b8df7;
+  --brand-secondary: #8095f8;
+  --bg-base: #0a0911;
+  --bg-surface: #14131e;
+  --text-main: #f1edf8;
+  --text-muted: #88839d;
+  --border-subtle: #222031;
+  color-scheme: dark;
+}
+
+/* Base Styles */
+body {
+  background-color: var(--bg-base);
+  color: var(--text-main);
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Translation visibility helper */
+html {
+  scroll-behavior: smooth;
+}
+
+html[data-lang="es"] .lang-en {
+  display: none !important;
+}
+html[data-lang="en"] .lang-es {
+  display: none !important;
+}
+
+/* Custom Scrollbar Styling */
+@supports (scrollbar-color: auto) {
+  html {
+    scrollbar-color: var(--brand-primary) transparent;
+    scrollbar-width: thin;
+  }
+}
+
+/* Webkit Scrollbar Styling (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+:root[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.01);
+}
+
+/* Elegant floating pill thumb with gradient */
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
+  border-radius: 9999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-secondary);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+/* Invert dark technology logos in dark mode to ensure high visibility */
+:root[data-theme="dark"] img[src*="nextjs"],
+:root[data-theme="dark"] img[src*="express"],
+:root[data-theme="dark"] img[src*="fastify"],
+:root[data-theme="dark"] img[src*="better-auth"],
+:root[data-theme="dark"] img[src*="resend"],
+:root[data-theme="dark"] img[src*="clerk"],
+:root[data-theme="dark"] img[src*="prisma"] {
+  filter: invert(1) brightness(1.25);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) img[src*="nextjs"],
+  :root:not([data-theme="light"]) img[src*="express"],
+  :root:not([data-theme="light"]) img[src*="fastify"],
+  :root:not([data-theme="light"]) img[src*="better-auth"],
+  :root:not([data-theme="light"]) img[src*="resend"],
+  :root:not([data-theme="light"]) img[src*="clerk"],
+  :root:not([data-theme="light"]) img[src*="prisma"] {
+    filter: invert(1) brightness(1.25);
+  }
+}
+
