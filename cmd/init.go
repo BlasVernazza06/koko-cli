@@ -37,9 +37,9 @@ var initCmd = &cobra.Command{
 func runDefaultInit(projectName string) {
 	fmt.Printf("\n\033[90m┌\033[0m  \033[1mCreating a new Koko project\033[0m\n")
 	fmt.Printf("\033[90m│\033[0m\n")
-	fmt.Printf("\033[90m│\033[0m  \033[38;2;90;79;196m◆\033[0m  \033[1mProject name\033[0m     \033[90m·\033[0m  \033[38;2;90;79;196m%s\033[0m\n", projectName)
-	fmt.Printf("\033[90m│\033[0m  \033[38;2;90;79;196m◆\033[0m  \033[1mRecipe\033[0m           \033[90m·\033[0m  \033[38;2;90;79;196mSaaS Starter\033[0m\n")
-	fmt.Printf("\033[90m│\033[0m  \033[38;2;90;79;196m◆\033[0m  \033[1mPackage Manager\033[0m  \033[90m·\033[0m  \033[38;2;90;79;196mpnpm\033[0m\n")
+	fmt.Printf("\033[90m│\033[0m  \033[38;2;0;255;127m◆\033[0m  \033[1mProject name\033[0m     \033[90m·\033[0m  \033[38;2;167;139;250m%s\033[0m\n", projectName)
+	fmt.Printf("\033[90m│\033[0m  \033[38;2;0;255;127m◆\033[0m  \033[1mRecipe\033[0m           \033[90m·\033[0m  \033[38;2;167;139;250mSaaS Starter\033[0m\n")
+	fmt.Printf("\033[90m│\033[0m  \033[38;2;0;255;127m◆\033[0m  \033[1mPackage Manager\033[0m  \033[90m·\033[0m  \033[38;2;167;139;250mpnpm\033[0m\n")
 	fmt.Printf("\033[90m│\033[0m\n")
 
 	startTime := time.Now()
@@ -75,7 +75,8 @@ func runDefaultInit(projectName string) {
 	fmt.Println("  \033[1mPróximos pasos:\033[0m")
 	fmt.Printf("  1. \033[38;2;90;79;196mcd %s\033[0m\n", projectName)
 	fmt.Println("  2. \033[38;2;90;79;196mpnpm install\033[0m")
-	fmt.Println("  3. \033[38;2;90;79;196mpnpm dev\033[0m\n")
+	fmt.Println("  3. \033[38;2;90;79;196mpnpm dev\033[0m")
+	fmt.Println()
 }
 
 func init() {
