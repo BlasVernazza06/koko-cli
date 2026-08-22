@@ -10,69 +10,11 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 
+	"github.com/BlasVernazza06/koko-cli/cmd/views"
 	kokoConfig "github.com/BlasVernazza06/koko-cli/internal/config"
 	"github.com/BlasVernazza06/koko-cli/internal/scaffold"
 )
-
-// Clack-style color & character tokens
-var (
-	colorIndigo = lipgloss.Color("#5a4fc4")
-	colorMuted  = lipgloss.Color("#7D7D7D")
-
-	// Glyphs
-	barSymbol        = lipgloss.NewStyle().Foreground(colorMuted).Render("│")
-	topSymbol        = lipgloss.NewStyle().Foreground(colorMuted).Render("┌")
-	bottomSymbol     = lipgloss.NewStyle().Foreground(colorMuted).Render("└")
-	activeDiamond    = lipgloss.NewStyle().Foreground(colorIndigo).Render("◇")    // Vacío sin relleno en #5a4fc4 cuando NO está completado
-	completedDiamond = lipgloss.NewStyle().Foreground(colorIndigo).Render("◆")   // Rellenado en #5a4fc4 cuando está completado
-	dotDivider       = lipgloss.NewStyle().Foreground(colorMuted).Render("·")
-	radioActive      = lipgloss.NewStyle().Foreground(colorIndigo).Render("●")   // Selección activa en #5a4fc4
-	radioInactive    = lipgloss.NewStyle().Foreground(colorMuted).Render("○")
-	checkSuccess     = lipgloss.NewStyle().Foreground(lipgloss.Color("#00FF7F")).Render("✓")
-	crossError       = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF4444")).Render("✗")
-	diamondPending   = lipgloss.NewStyle().Foreground(colorMuted).Render("◇")
-
-	// Lipgloss styles
-	styleHeader = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("#FFFFFF"))
-
-	stylePromptTitle = lipgloss.NewStyle().
-				Bold(true).
-				Foreground(lipgloss.Color("#FFFFFF"))
-
-	styleValue = lipgloss.NewStyle().
-			Foreground(colorIndigo)
-
-	styleActiveItem = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("#FFFFFF"))
-
-	styleInactiveItem = lipgloss.NewStyle().
-				Foreground(colorMuted)
-
-	styleHint = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#666666"))
-
-	styleMuted = lipgloss.NewStyle().
-			Foreground(colorMuted)
-
-	styleSuccess = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("#00FF7F"))
-
-	styleError = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("#FF4444"))
-)
-
-type SelectOption struct {
-	Value string
-	Label string
-	Hint  string
-}
 
 type sessionState int
 
@@ -93,31 +35,45 @@ type stepFinishedMsg struct {
 	err  error
 }
 
+// manualStepConfig representa la definición de un paso en la configuración manual
+type manualStepConfig struct {
+	title   string
+	label   string
+	options []views.SelectOption
+}
+
+// mainModel representa el estado global y contexto de la TUI
 type mainModel struct {
 	state       sessionState
 	prevState   sessionState
-	versionInfo []struct{ key, val string }
+	versionInfo []views.VersionItem
 
-	// Menu options
+	// Opciones del Menú Principal
 	menuCursor  int
-	menuOptions []SelectOption
+	menuOptions []views.SelectOption
 
-	// Mode options
+	// Opciones de Modo
 	modeCursor  int
-	modeOptions []SelectOption
+	modeOptions []views.SelectOption
 
-	// Recipe options
+	// Opciones de Receta (Setup Rápido)
 	recipeCursor  int
-	recipeOptions []SelectOption
+	recipeOptions []views.SelectOption
 
-	// Project init fields
+	// Configuración Manual Paso a Paso
+	manualSteps      []manualStepConfig
+	manualStepIdx    int
+	manualCursors    []int
+	manualSelections []views.SelectOption
+
+	// Campos de inicialización
 	projectNameInput textinput.Model
 	chosenName       string
 	chosenMode       string
 	chosenRecipe     string
 	cancelledMsg     string
 
-	// Progress tracking
+	// Estado y progreso del Scaffolding
 	currentStep int
 	stepNames   []string
 	stepStatus  []string // "pending", "running", "success", "error"
@@ -133,13 +89,13 @@ func initialModel(initialState sessionState, initialProjectName string) mainMode
 	ti.CharLimit = 64
 	ti.Width = 30
 	ti.Prompt = ""
-	ti.TextStyle = lipgloss.NewStyle().Foreground(colorIndigo).Bold(true)
-	ti.PlaceholderStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#555555"))
-	ti.Cursor.Style = lipgloss.NewStyle().Foreground(colorIndigo)
+	ti.TextStyle = views.StyleValue.Bold(true)
+	ti.PlaceholderStyle = views.StyleHint
+	ti.Cursor.Style = views.StyleValue
 
 	s := spinner.New()
 	s.Spinner = spinner.Dot
-	s.Style = lipgloss.NewStyle().Foreground(colorIndigo)
+	s.Style = views.StyleValue
 
 	if initialProjectName != "" {
 		ti.SetValue(initialProjectName)
@@ -148,30 +104,81 @@ func initialModel(initialState sessionState, initialProjectName string) mainMode
 		ti.Focus()
 	}
 
+	manualSteps := []manualStepConfig{
+		{
+			title: "Selecciona el Frontend Framework",
+			label: "Frontend",
+			options: []views.SelectOption{
+				{Value: "nextjs", Label: "Next.js (App Router)", Hint: "React framework con SSR y Server Components"},
+				{Value: "react", Label: "React + Vite", Hint: "Single Page Application ultrarrápida"},
+				{Value: "vue", Label: "Vue 3 + Vite", Hint: "Framework reactivo y progresivo"},
+				{Value: "svelte", Label: "SvelteKit", Hint: "Compilador reactivo sin virtual DOM"},
+				{Value: "none", Label: "Sin Frontend", Hint: "Solo Backend / API REST"},
+			},
+		},
+		{
+			title: "Selecciona el Backend Framework / Runtime",
+			label: "Backend",
+			options: []views.SelectOption{
+				{Value: "express", Label: "Node.js / Express", Hint: "API REST ligera con TypeScript"},
+				{Value: "fastapi", Label: "Python / FastAPI", Hint: "Asíncrono con validación Pydantic v2"},
+				{Value: "go_chi", Label: "Go / Chi Router", Hint: "Alto rendimiento y tipado estricto"},
+				{Value: "nestjs", Label: "NestJS", Hint: "Arquitectura empresarial modular con TypeScript"},
+				{Value: "none", Label: "Sin Backend dedicado", Hint: "Usar Server Actions o BaaS"},
+			},
+		},
+		{
+			title: "Selecciona la Base de Datos",
+			label: "Database",
+			options: []views.SelectOption{
+				{Value: "postgres", Label: "PostgreSQL", Hint: "Base de datos relacional estándar con Docker"},
+				{Value: "mongodb", Label: "MongoDB", Hint: "Base de datos de documentos NoSQL"},
+				{Value: "mysql", Label: "MySQL / MariaDB", Hint: "Base de datos SQL tradicional"},
+				{Value: "sqlite", Label: "SQLite", Hint: "Base de datos embebida en archivo local"},
+				{Value: "none", Label: "Ninguna", Hint: "Sin persistencia de datos"},
+			},
+		},
+		{
+			title: "Selecciona el ORM / Query Builder",
+			label: "ORM / Tool",
+			options: []views.SelectOption{
+				{Value: "drizzle", Label: "Drizzle ORM", Hint: "Type-safe y liviano con soporte SQL nativo"},
+				{Value: "prisma", Label: "Prisma", Hint: "ORM popular con auto-generación de tipos"},
+				{Value: "sqlalchemy", Label: "SQLAlchemy / SQLModel", Hint: "ORM estándar para Python"},
+				{Value: "gorm", Label: "GORM", Hint: "ORM completo para Go"},
+				{Value: "none", Label: "Ninguno / Raw SQL", Hint: "Conexión directa sin ORM"},
+			},
+		},
+	}
+
 	return mainModel{
 		state:     initialState,
 		prevState: stateMenu,
-		versionInfo: []struct{ key, val string }{
-			{"Koko CLI", "v0.1.0"},
-			{"OS / Arch", fmt.Sprintf("%s / %s", runtime.GOOS, runtime.GOARCH)},
-			{"Go Runtime", runtime.Version()},
-			{"Build Date", "2026-08-12"},
+		versionInfo: []views.VersionItem{
+			{Key: "Koko CLI", Val: "v0.1.0"},
+			{Key: "OS / Arch", Val: fmt.Sprintf("%s / %s", runtime.GOOS, runtime.GOARCH)},
+			{Key: "Go Runtime", Val: runtime.Version()},
+			{Key: "Build Date", Val: "2026-08-12"},
 		},
-		menuOptions: []SelectOption{
+		menuOptions: []views.SelectOption{
 			{Value: "init", Label: "Inicializar proyecto", Hint: "Crear una nueva aplicación con Koko"},
 			{Value: "version", Label: "Versión del sistema", Hint: "Ver detalles de entorno y CLI"},
 			{Value: "exit", Label: "Salir", Hint: "Cerrar la herramienta"},
 		},
-		modeOptions: []SelectOption{
+		modeOptions: []views.SelectOption{
 			{Value: "quick", Label: "Setup Rápido", Hint: "Recetas de producción listas para usar"},
-			{Value: "manual", Label: "Configuración Manual", Hint: "Elegir stack paso a paso (Próximamente)"},
+			{Value: "manual", Label: "Configuración Manual", Hint: "Elegir stack paso a paso (Frontend, Backend, DB, ORM)"},
 		},
-		recipeOptions: []SelectOption{
+		recipeOptions: []views.SelectOption{
 			{Value: "saas", Label: "⚡ SaaS Starter", Hint: "Next.js + Drizzle + Better-Auth + Stripe"},
 			{Value: "mern", Label: "💻 MERN Stack", Hint: "React + Express + MongoDB"},
 			{Value: "pern", Label: "🚀 PERN Stack", Hint: "React + Express + PostgreSQL"},
 			{Value: "fastapi_react", Label: "🐍 FastAPI + React", Hint: "FastAPI Backend + React SPA"},
 		},
+		manualSteps:      manualSteps,
+		manualStepIdx:    0,
+		manualCursors:    make([]int, len(manualSteps)),
+		manualSelections: make([]views.SelectOption, len(manualSteps)),
 		projectNameInput: ti,
 		stepNames: []string{
 			"Estructurando directorios y copiando plantillas...",
@@ -186,22 +193,6 @@ func initialModel(initialState sessionState, initialProjectName string) mainMode
 
 func (m mainModel) Init() tea.Cmd {
 	return textinput.Blink
-}
-
-func (m mainModel) getRecipeLabel(recipeVal string) string {
-	for _, r := range m.recipeOptions {
-		if r.Value == recipeVal {
-			return r.Label
-		}
-	}
-	return recipeVal
-}
-
-func (m mainModel) getPackageManager(recipeVal string) string {
-	if recipeVal == "saas" || recipeVal == "pern" || recipeVal == "mern" {
-		return "pnpm"
-	}
-	return "npm"
 }
 
 func runStepCmd(step int, projectName string, recipe string) tea.Cmd {
@@ -223,7 +214,7 @@ func runStepCmd(step int, projectName string, recipe string) tea.Cmd {
 			err = kokoConfig.GenerateConfig(projectName, cfg)
 		}
 
-		time.Sleep(450 * time.Millisecond) // micro-animation delay
+		time.Sleep(450 * time.Millisecond) // micro-animación
 		return stepFinishedMsg{step: step, err: err}
 	}
 }
@@ -309,13 +300,48 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.state = stateInitRecipe
 				} else {
 					m.state = stateInitManual
+					m.manualStepIdx = 0
 				}
 			}
 
 		case stateInitManual:
+			currentStep := m.manualSteps[m.manualStepIdx]
+			cursor := m.manualCursors[m.manualStepIdx]
+
 			switch msg.String() {
-			case "esc", "enter", "q":
-				m.state = stateInitMode
+			case "up", "k":
+				if cursor > 0 {
+					m.manualCursors[m.manualStepIdx]--
+				}
+			case "down", "j":
+				if cursor < len(currentStep.options)-1 {
+					m.manualCursors[m.manualStepIdx]++
+				}
+			case "enter":
+				// Guardar la selección actual
+				selectedOpt := currentStep.options[m.manualCursors[m.manualStepIdx]]
+				m.manualSelections[m.manualStepIdx] = selectedOpt
+
+				// Avanzar al siguiente paso o finalizar configuración
+				if m.manualStepIdx < len(m.manualSteps)-1 {
+					m.manualStepIdx++
+				} else {
+					// Todos los pasos completados -> Iniciar creación
+					m.chosenRecipe = "saas" // o configuración manual generada
+					m.state = stateInitRunning
+					m.currentStep = 1
+					m.stepStatus[0] = "running"
+					m.startTime = time.Now()
+					return m, tea.Batch(m.spinner.Tick, runStepCmd(1, m.chosenName, m.chosenRecipe))
+				}
+
+			case "esc":
+				// Retroceder paso sin perder la selección previa
+				if m.manualStepIdx > 0 {
+					m.manualStepIdx--
+				} else {
+					m.state = stateInitMode
+				}
 			}
 
 		case stateInitRecipe:
@@ -377,175 +403,43 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func renderOptions(options []SelectOption, cursor int) string {
-	var b strings.Builder
-	for i, opt := range options {
-		if i == cursor {
-			b.WriteString(fmt.Sprintf("%s  %s %s", barSymbol, radioActive, styleActiveItem.Render(opt.Label)))
-			if opt.Hint != "" {
-				b.WriteString(fmt.Sprintf("  %s", styleHint.Render(opt.Hint)))
-			}
-		} else {
-			b.WriteString(fmt.Sprintf("%s  %s %s", barSymbol, radioInactive, styleInactiveItem.Render(opt.Label)))
-			if opt.Hint != "" {
-				b.WriteString(fmt.Sprintf("  %s", styleHint.Render(opt.Hint)))
-			}
-		}
-		b.WriteString("\n")
-	}
-	return b.String()
-}
-
+// View actúa como enrutador central y delega a las funciones de cmd/views
 func (m mainModel) View() string {
 	switch m.state {
 	case stateCancelled:
-		var b strings.Builder
-		b.WriteString(fmt.Sprintf("\n%s  %s\n", topSymbol, styleHeader.Render("Koko CLI")))
-		b.WriteString(fmt.Sprintf("%s\n", barSymbol))
-		b.WriteString(fmt.Sprintf("%s  %s\n\n", bottomSymbol, styleMuted.Render(m.cancelledMsg)))
-		return b.String()
-
+		return views.RenderCancelled(m.cancelledMsg)
 	case stateMenu:
-		var b strings.Builder
-		b.WriteString(fmt.Sprintf("\n%s  %s\n", topSymbol, styleHeader.Render("Koko CLI")))
-		b.WriteString(fmt.Sprintf("%s\n", barSymbol))
-		b.WriteString(fmt.Sprintf("%s  %s\n", activeDiamond, stylePromptTitle.Render("¿Qué deseas hacer?")))
-		b.WriteString(renderOptions(m.menuOptions, m.menuCursor))
-		b.WriteString(fmt.Sprintf("%s\n", barSymbol))
-		b.WriteString(fmt.Sprintf("%s  %s\n", bottomSymbol, styleMuted.Render("[↑/↓] Navegar • [Enter] Seleccionar • [Ctrl+C] Salir")))
-		return b.String()
-
+		return views.RenderMenu(m.menuOptions, m.menuCursor)
 	case stateVersion:
-		var b strings.Builder
-		b.WriteString(fmt.Sprintf("\n%s  %s\n", topSymbol, styleHeader.Render("Koko CLI · Información del Sistema")))
-		b.WriteString(fmt.Sprintf("%s\n", barSymbol))
-		for _, item := range m.versionInfo {
-			b.WriteString(fmt.Sprintf("%s  %s  %s  %s\n", completedDiamond, stylePromptTitle.Render(item.key), dotDivider, styleValue.Render(item.val)))
-		}
-		b.WriteString(fmt.Sprintf("%s\n", barSymbol))
-		b.WriteString(fmt.Sprintf("%s  %s\n", bottomSymbol, styleMuted.Render("[Esc / Enter] Volver al menú")))
-		return b.String()
-
+		return views.RenderVersion(m.versionInfo)
 	case stateInitInput:
-		var b strings.Builder
-		b.WriteString(fmt.Sprintf("\n%s  %s\n", topSymbol, styleHeader.Render("Creating a new Koko project")))
-		b.WriteString(fmt.Sprintf("%s\n", barSymbol))
-		b.WriteString(fmt.Sprintf("%s  %s\n", activeDiamond, stylePromptTitle.Render("Project name")))
-		b.WriteString(fmt.Sprintf("%s  %s\n", barSymbol, m.projectNameInput.View()))
-		b.WriteString(fmt.Sprintf("%s\n", barSymbol))
-		b.WriteString(fmt.Sprintf("%s  %s\n", bottomSymbol, styleMuted.Render("[Enter] Continuar • [Esc] Menú principal")))
-		return b.String()
-
+		return views.RenderInput(m.projectNameInput)
 	case stateInitMode:
-		var b strings.Builder
-		b.WriteString(fmt.Sprintf("\n%s  %s\n", topSymbol, styleHeader.Render("Creating a new Koko project")))
-		b.WriteString(fmt.Sprintf("%s\n", barSymbol))
-		b.WriteString(fmt.Sprintf("%s  %s  %s  %s\n", completedDiamond, stylePromptTitle.Render("Project name"), dotDivider, styleValue.Render(m.chosenName)))
-		b.WriteString(fmt.Sprintf("%s\n", barSymbol))
-		b.WriteString(fmt.Sprintf("%s  %s\n", activeDiamond, stylePromptTitle.Render("Choose setup mode")))
-		b.WriteString(renderOptions(m.modeOptions, m.modeCursor))
-		b.WriteString(fmt.Sprintf("%s\n", barSymbol))
-		b.WriteString(fmt.Sprintf("%s  %s\n", bottomSymbol, styleMuted.Render("[↑/↓] Navegar • [Enter] Continuar • [Esc] Cambiar nombre")))
-		return b.String()
-
+		return views.RenderMode(m.chosenName, m.modeOptions, m.modeCursor)
 	case stateInitManual:
-		var b strings.Builder
-		b.WriteString(fmt.Sprintf("\n%s  %s\n", topSymbol, styleHeader.Render("Creating a new Koko project")))
-		b.WriteString(fmt.Sprintf("%s\n", barSymbol))
-		b.WriteString(fmt.Sprintf("%s  %s  %s  %s\n", completedDiamond, stylePromptTitle.Render("Project name"), dotDivider, styleValue.Render(m.chosenName)))
-		b.WriteString(fmt.Sprintf("%s\n", barSymbol))
-		b.WriteString(fmt.Sprintf("%s  %s\n", activeDiamond, stylePromptTitle.Render("Configuración Manual")))
-		b.WriteString(fmt.Sprintf("%s  %s\n", barSymbol, styleHint.Render("El modo interactivo modular estará disponible en la próxima versión.")))
-		b.WriteString(fmt.Sprintf("%s  %s\n", barSymbol, styleHint.Render("Por favor selecciona 'Setup Rápido' con nuestras recetas listas para producción.")))
-		b.WriteString(fmt.Sprintf("%s\n", barSymbol))
-		b.WriteString(fmt.Sprintf("%s  %s\n", bottomSymbol, styleMuted.Render("[Esc / Enter] Volver a selección de modo")))
-		return b.String()
+		// Construir historial dinámico de los pasos anteriores ya respondidos
+		var history []views.SummaryItem
+		for i := 0; i < m.manualStepIdx; i++ {
+			history = append(history, views.SummaryItem{
+				Label: m.manualSteps[i].label,
+				Value: m.manualSelections[i].Label,
+			})
+		}
+		currentStep := m.manualSteps[m.manualStepIdx]
+		cursor := m.manualCursors[m.manualStepIdx]
+		return views.RenderManual(m.chosenName, history, currentStep.title, currentStep.options, cursor)
 
 	case stateInitRecipe:
-		var b strings.Builder
-		b.WriteString(fmt.Sprintf("\n%s  %s\n", topSymbol, styleHeader.Render("Creating a new Koko project")))
-		b.WriteString(fmt.Sprintf("%s\n", barSymbol))
-		b.WriteString(fmt.Sprintf("%s  %s  %s  %s\n", completedDiamond, stylePromptTitle.Render("Project name"), dotDivider, styleValue.Render(m.chosenName)))
-		b.WriteString(fmt.Sprintf("%s  %s  %s  %s\n", completedDiamond, stylePromptTitle.Render("Setup mode"), dotDivider, styleValue.Render("Setup Rápido")))
-		b.WriteString(fmt.Sprintf("%s\n", barSymbol))
-		b.WriteString(fmt.Sprintf("%s  %s\n", activeDiamond, stylePromptTitle.Render("Choose recipe / stack")))
-		b.WriteString(renderOptions(m.recipeOptions, m.recipeCursor))
-		b.WriteString(fmt.Sprintf("%s\n", barSymbol))
-		b.WriteString(fmt.Sprintf("%s  %s\n", bottomSymbol, styleMuted.Render("[↑/↓] Navegar • [Enter] Crear proyecto • [Esc] Atrás")))
-		return b.String()
-
+		return views.RenderRecipe(m.chosenName, m.recipeOptions, m.recipeCursor)
 	case stateInitRunning:
-		pkgManager := m.getPackageManager(m.chosenRecipe)
-		recipeLabel := m.getRecipeLabel(m.chosenRecipe)
-
-		var b strings.Builder
-		b.WriteString(fmt.Sprintf("\n%s  %s\n", topSymbol, styleHeader.Render("Creating a new Koko project")))
-		b.WriteString(fmt.Sprintf("%s\n", barSymbol))
-		b.WriteString(fmt.Sprintf("%s  %s  %s  %s\n", completedDiamond, stylePromptTitle.Render("Project name"), dotDivider, styleValue.Render(m.chosenName)))
-		b.WriteString(fmt.Sprintf("%s  %s  %s  %s\n", completedDiamond, stylePromptTitle.Render("Recipe"), dotDivider, styleValue.Render(recipeLabel)))
-		b.WriteString(fmt.Sprintf("%s  %s  %s  %s\n", completedDiamond, stylePromptTitle.Render("Package Manager"), dotDivider, styleValue.Render(pkgManager)))
-		b.WriteString(fmt.Sprintf("%s\n", barSymbol))
-
-		for i, stepName := range m.stepNames {
-			switch m.stepStatus[i] {
-			case "pending":
-				b.WriteString(fmt.Sprintf("%s  %s  %s\n", barSymbol, diamondPending, styleMuted.Render(stepName)))
-			case "running":
-				b.WriteString(fmt.Sprintf("%s  %s  %s\n", barSymbol, m.spinner.View(), styleActiveItem.Render(stepName)))
-			case "success":
-				b.WriteString(fmt.Sprintf("%s  %s  %s\n", barSymbol, checkSuccess, stylePromptTitle.Render(stepName)))
-			case "error":
-				b.WriteString(fmt.Sprintf("%s  %s  %s\n", barSymbol, crossError, styleError.Render(stepName)))
-			}
-		}
-		b.WriteString(fmt.Sprintf("%s\n", barSymbol))
-		b.WriteString(fmt.Sprintf("%s  %s\n", bottomSymbol, styleMuted.Render("Scaffolding in progress...")))
-		return b.String()
-
+		pkgManager := views.GetPackageManager(m.chosenRecipe)
+		recipeLabel := views.GetRecipeLabel(m.recipeOptions, m.chosenRecipe)
+		return views.RenderRunning(m.chosenName, recipeLabel, pkgManager, m.stepNames, m.stepStatus, m.spinner)
 	case stateInitDone:
-		pkgManager := m.getPackageManager(m.chosenRecipe)
-		recipeLabel := m.getRecipeLabel(m.chosenRecipe)
-
-		var b strings.Builder
-		b.WriteString(fmt.Sprintf("\n%s  %s\n", topSymbol, styleHeader.Render("Creating a new Koko project")))
-		b.WriteString(fmt.Sprintf("%s\n", barSymbol))
-		b.WriteString(fmt.Sprintf("%s  %s  %s  %s\n", completedDiamond, stylePromptTitle.Render("Project name"), dotDivider, styleValue.Render(m.chosenName)))
-		b.WriteString(fmt.Sprintf("%s  %s  %s  %s\n", completedDiamond, stylePromptTitle.Render("Recipe"), dotDivider, styleValue.Render(recipeLabel)))
-		b.WriteString(fmt.Sprintf("%s  %s  %s  %s\n", completedDiamond, stylePromptTitle.Render("Package Manager"), dotDivider, styleValue.Render(pkgManager)))
-		b.WriteString(fmt.Sprintf("%s\n", barSymbol))
-
-		for i, stepName := range m.stepNames {
-			if m.stepStatus[i] == "success" {
-				b.WriteString(fmt.Sprintf("%s  %s  %s\n", barSymbol, checkSuccess, stylePromptTitle.Render(stepName)))
-			} else if m.stepStatus[i] == "error" {
-				b.WriteString(fmt.Sprintf("%s  %s  %s\n", barSymbol, crossError, styleError.Render(stepName)))
-			} else {
-				b.WriteString(fmt.Sprintf("%s  %s  %s\n", barSymbol, diamondPending, styleMuted.Render(stepName)))
-			}
-		}
-
-		b.WriteString(fmt.Sprintf("%s\n", barSymbol))
-
-		if m.scaffoldErr != nil {
-			b.WriteString(fmt.Sprintf("%s  %s\n\n", bottomSymbol, styleError.Render(fmt.Sprintf("Error en la creación: %v", m.scaffoldErr))))
-			return b.String()
-		}
-
-		b.WriteString(fmt.Sprintf("%s  %s\n\n", bottomSymbol, styleSuccess.Render(fmt.Sprintf("¡Proyecto creado con éxito en %.2fs!", m.elapsedTime.Seconds()))))
-
-		b.WriteString(fmt.Sprintf("  %s\n", styleHeader.Render("Próximos pasos:")))
-		b.WriteString(fmt.Sprintf("  1. %s\n", styleValue.Render(fmt.Sprintf("cd %s", m.chosenName))))
-		if pkgManager == "pnpm" {
-			b.WriteString(fmt.Sprintf("  2. %s\n", styleValue.Render("pnpm install")))
-			b.WriteString(fmt.Sprintf("  3. %s\n\n", styleValue.Render("pnpm dev")))
-		} else {
-			b.WriteString(fmt.Sprintf("  2. %s\n", styleValue.Render("npm install")))
-			b.WriteString(fmt.Sprintf("  3. %s\n\n", styleValue.Render("npm run dev")))
-		}
-
-		return b.String()
+		pkgManager := views.GetPackageManager(m.chosenRecipe)
+		recipeLabel := views.GetRecipeLabel(m.recipeOptions, m.chosenRecipe)
+		return views.RenderDone(m.chosenName, recipeLabel, pkgManager, m.stepNames, m.stepStatus, m.elapsedTime, m.scaffoldErr)
 	}
-
 	return ""
 }
 
