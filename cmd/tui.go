@@ -120,11 +120,20 @@ func initialModel(initialState sessionState, initialProjectName string) mainMode
 			title: "Selecciona el Backend Framework / Runtime",
 			label: "Backend",
 			options: []views.SelectOption{
-				{Value: "express", Label: "Node.js / Express", Hint: "API REST ligera con TypeScript"},
+				{Value: "express", Label: "Node.js / Express", Hint: "light API REST with TypeScript"},
 				{Value: "fastapi", Label: "Python / FastAPI", Hint: "Asíncrono con validación Pydantic v2"},
-				{Value: "go_chi", Label: "Go / Chi Router", Hint: "Alto rendimiento y tipado estricto"},
-				{Value: "nestjs", Label: "NestJS", Hint: "Arquitectura empresarial modular con TypeScript"},
-				{Value: "none", Label: "Sin Backend dedicado", Hint: "Usar Server Actions o BaaS"},
+				{Value: "go_chi", Label: "Go / Chi Router", Hint: "high performance and strict type"},
+				{Value: "nestjs", Label: "NestJS", Hint: "Modular Arch with TypeScript"},
+				{Value: "none", Label: "Sin Backend dedicado", Hint: "use server actiones o BaaS"},
+			},
+		},
+		{
+			title: "Selecciona el Runtime",
+			label: "Package Manager",
+			options: []views.SelectOption{
+				{Value: "pnpm", Label: "PNPM", Hint: "Fast and disk efficient"},
+				{Value: "npm", Label: "NPM", Hint: "Asíncrono con validación Pydantic v2"},
+				{Value: "bun", Label: "Bun", Hint: "Usar Server Actions o BaaS"},
 			},
 		},
 		{
