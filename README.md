@@ -11,7 +11,7 @@
 
 ---
 
-**Koko CLI** (guiado por tu fiel asistente de andamiaje 🦾) es un inicializador interactivo ultra veloz para la terminal escrito en Go. Olvídate de configurar a mano plantillas complejas de TypeScript, workspaces de monorrepos, bases de datos o contenedores Docker. Koko te permite seleccionar tu receta de producción ideal y estructurará tu proyecto listo para desarrollo en segundos de forma 100% offline.
+**Koko CLI** (guided by your faithful scaffolding assistant 🦾) is an ultra-fast interactive terminal initializer written in Go. Forget about manually setting up complex TypeScript templates, monorepo workspaces, databases, or Docker containers. Koko lets you pick your ideal production recipe and structures your project ready for development in seconds, 100% offline.
 
 ```text
      .---.   .---.
@@ -24,18 +24,18 @@
 
 ---
 
-## ✨ Características Principales
+## ✨ Key Features
 
-*   🎨 **Experiencia Visual Premium**: Interfaz TUI interactiva y animada construida con Bubble Tea y Lipgloss.
-*   🚀 **Instalación Instantánea**: Desempaquetado físico y estructuración en disco en milisegundos.
-*   📦 **Recetas de Producción**: Bootstrapping con configuraciones listas y optimizadas (ej. SaaS Starter con autenticación y base de datos).
-*   🐳 **Monorrepo e Infraestructura**: Configuración automática de workspaces de pnpm/npm, linters, TypeScript y contenedores Docker Compose locales.
+*   🎨 **Premium Visual Experience**: Interactive, animated TUI built with Bubble Tea and Lipgloss.
+*   🚀 **Instant Scaffolding**: Physical disk unpacking and structuring in milliseconds.
+*   📦 **Production Recipes**: Bootstrapping with ready-to-use, optimized setups (e.g. SaaS Starter with auth and DB).
+*   🐳 **Monorepo & Infrastructure**: Automatic configuration of pnpm/npm workspaces, linters, TypeScript, and local Docker Compose containers.
 
 ---
 
-## 🛠️ Stack Tecnológico Soportado en Recetas (v1.0.0)
+## 🛠️ Supported Technology Stack (v1.0.0)
 
-| Frontend 💻 | Backend 🔌 | Herramientas 🐳 | Base de Datos & ORM 🗄️ |
+| Frontend 💻 | Backend 🔌 | Infrastructure 🐳 | Database & ORM 🗄️ |
 | :--- | :--- | :--- | :--- |
 | **Next.js** (App Router, TS) | **Node.js Express** (TS) | **Docker Compose** | **PostgreSQL** (Drizzle / Prisma) |
 | **React** (Vite SPA, TS) | **Go Fiber** (REST API) | **pnpm Workspaces** | **MySQL** (Drizzle / Prisma / SQLx) |
@@ -43,69 +43,69 @@
 
 ---
 
-## 🚀 Instalación y Uso Rápido
+## 🚀 Quick Start
 
-### Ejecutar Directamente (Sin Instalar)
-La manera más rápida de comenzar un nuevo proyecto es mediante `npx`:
+### Run Directly (Without Installing)
+The fastest way to start a new project is with `npx`:
 ```bash
 npx koko-cli init
 ```
 
-### 🛠️ Desarrollo y Compilación Local (Go)
-Si estás ejecutando o modificando el CLI desde el código fuente:
+### 🛠️ Local Development & Build (Go)
+If running or modifying the CLI from source:
 ```bash
-# Compilar el binario
+# Build binary
 go build -o koko.exe main.go
 
-# Ejecutar el asistente interactivo
+# Run interactive assistant
 ./koko.exe init
 ```
 
 ---
 
-## 💻 Flujo en Terminal
+## 💻 Terminal Flow
 
-Al iniciar, **Koko** te guiará con indicadores de progreso interactivos:
+When started, **Koko** guides you with interactive progress indicators:
 
 ```bash
-  ◇ Estructurando directorios y copiando plantillas...  ✓
-  ◇ Generando configuración de Docker y DB...          ✓
-  ◇ Inicializando repositorio Git...                   ✓
-  ◇ Creando manifiesto koko.config.json...             ✓
+  ◇ Scaffolding directories and copying templates...  ✓
+  ◇ Generating Docker and Database configuration...   ✓
+  ◇ Initializing Git repository...                    ✓
+  ◇ Creating koko.config.json manifest...             ✓
 
-✨ ¡Proyecto 'mi-app' creado con éxito en 2.45s!
+✨ Project 'my-app' created successfully in 2.45s!
 ```
 
 ---
 
-## 📁 Estructura del Repositorio Generado
+## 📁 Generated Repository Structure
 
-Dependiendo de tu elección, Koko estructurará una arquitectura monorrepo modular unificada:
+Depending on your choices, Koko structures a unified modular monorepo architecture:
 
 ```text
-mi-app/
+my-app/
 ├── apps/
-│   ├── frontend/         # Aplicación de Frontend (ej: Next.js)
-│   └── backend/          # Servidor de API (ej: Express / Go Fiber)
+│   ├── frontend/         # Frontend application (e.g., Next.js)
+│   └── backend/          # API server (e.g., Express / Go Fiber)
 ├── packages/
-│   └── db/               # Esquemas y cliente de conexión (Prisma / Drizzle)
-├── docker-compose.yml    # Contenedor de PostgreSQL / MySQL local
-├── koko.config.json      # Manifiesto de configuración de Koko
-├── package.json          # Root package con workspaces configurados
+│   └── db/               # Schemas and connection client (Prisma / Drizzle)
+├── docker-compose.yml    # Local PostgreSQL / MySQL container
+├── koko.config.json      # Koko configuration manifest
+├── package.json          # Root package with configured workspaces
 └── README.md
 ```
 
 ---
 
-## ⚙️ Manifiesto de Configuración (koko.config.json)
+## ⚙️ Configuration Manifest (koko.config.json)
 
-Al inicializar un proyecto, se genera un archivo `koko.config.json` en la raíz que actúa como el registro central del stack y permite futuras inyecciones de código en el "Día 2" (ej. mediante `koko add`):
+When initializing a project, a `koko.config.json` file is generated at the root, acting as the single source of truth for the stack and enabling "Day 2" additions (e.g., via `koko add`):
 
 ```json
 {
   "$schema": "https://koko-cli.dev/schema.json",
   "project": {
-    "name": "mi-super-app",
+    "name": "my-super-app",
     "cliVersion": "v1.0.0",
     "createdAt": "2026-08-20T20:50:00Z"
   },
@@ -143,12 +143,13 @@ Al inicializar un proyecto, se genera un archivo `koko.config.json` en la raíz 
 
 ---
 
-## 🤝 Contribuir
+## 🤝 Contributing
 
-¡Nos encantan las contribuciones! Consulta nuestra [Guía de Contribución](CONTRIBUTING.md) para saber cómo clonar el repositorio, configurar tu entorno local y enviar Pull Requests.
+Contributions are welcome! Check our [Contributing Guide](CONTRIBUTING.md) to learn how to clone the repository, set up your local environment, and submit Pull Requests.
 
 ---
 
-## 📄 Licencia
+## 📄 License
 
-Este proyecto está bajo la Licencia MIT. Consulta el archivo [LICENSE](LICENSE) para obtener más detalles.
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+
