@@ -16,8 +16,16 @@ import (
 var templateFs embed.FS
 
 type ScaffoldConfig struct {
-	ProjectName string
-	Recipe      string
+	ProjectName    string
+	Recipe         string
+	InitGit        bool
+	Frontend       string
+	Backend        string
+	PackageManager string
+	Database       string
+	ORM            string
+	Auth           string
+	Addons         string
 }
 
 func RunScaffold(targetDir string, config ScaffoldConfig) error {
@@ -27,7 +35,10 @@ func RunScaffold(targetDir string, config ScaffoldConfig) error {
 	if err := GenerateDockerAndDB(targetDir, config); err != nil {
 		return err
 	}
-	return InitGit(targetDir)
+	if config.InitGit {
+		return InitGit(targetDir)
+	}
+	return nil
 }
 
 func CopyTemplates(targetDir string, config ScaffoldConfig) error {
@@ -45,7 +56,7 @@ func GenerateDockerAndDB(targetDir string, config ScaffoldConfig) error {
 func walkAndCopy(targetDir string, config ScaffoldConfig, filterFn func(string) bool) error {
 	err := os.MkdirAll(targetDir, 0755)
 	if err != nil {
-		return fmt.Errorf("error al crear el directorio de destino: %w", err)
+		return fmt.Errorf("failed to create destination directory: %w", err)
 	}
 
 	err = fs.WalkDir(templateFs, "templates", func(path string, d fs.DirEntry, err error) error {
@@ -74,49 +85,49 @@ func walkAndCopy(targetDir string, config ScaffoldConfig, filterFn func(string) 
 
 		err = os.MkdirAll(filepath.Dir(destPath), 0755)
 		if err != nil {
-			return fmt.Errorf("error al crear subdirectorio para %s: %w", destPath, err)
+			return fmt.Errorf("failed to create subdirectory for %s: %w", destPath, err)
 		}
 
 		content, err := templateFs.ReadFile(path)
 		if err != nil {
-			return fmt.Errorf("error al leer archivo virtual %s: %w", path, err)
+			return fmt.Errorf("failed to read virtual file %s: %w", path, err)
 		}
 
-		// Si es un archivo binario, lo copiamos directamente sin pasarlo por el motor de plantillas
+		// If it is a binary file, copy directly without passing through template engine
 		if bytes.IndexByte(content, 0) != -1 || isBinaryExtension(destPath) {
 			err = os.WriteFile(destPath, content, 0644)
 			if err != nil {
-				return fmt.Errorf("error al escribir archivo binario %s: %w", destPath, err)
+				return fmt.Errorf("failed to write binary file %s: %w", destPath, err)
 			}
 			return nil
 		}
 
-		// Si no contiene tags de plantilla válidos de Go, lo copiamos directamente sin parsearlo
+		// If it does not contain Go template tags, copy directly without parsing
 		if !shouldParseAsTemplate(content) {
 			err = os.WriteFile(destPath, content, 0644)
 			if err != nil {
-				return fmt.Errorf("error al escribir archivo %s: %w", destPath, err)
+				return fmt.Errorf("failed to write file %s: %w", destPath, err)
 			}
 			return nil
 		}
 
-		// Motor de Interpolación (Task 1.4):
-		// Parseamos el contenido como una plantilla de Go y la renderizamos con config
+		// Template Interpolation Engine:
+		// Parse content as Go template and render with config
 		tmpl, err := template.New(path).Delims("[[", "]]").Parse(string(content))
 		if err != nil {
-			return fmt.Errorf("error al procesar plantilla para %s: %w", path, err)
+			return fmt.Errorf("failed to process template for %s: %w", path, err)
 		}
 
 		var buf bytes.Buffer
 		err = tmpl.Execute(&buf, config)
 		if err != nil {
-			return fmt.Errorf("error al interpolar variables en plantilla %s: %w", path, err)
+			return fmt.Errorf("failed to interpolate variables in template %s: %w", path, err)
 		}
 
-		// Escribimos el archivo procesado en el disco real
+		// Write processed file to disk
 		err = os.WriteFile(destPath, buf.Bytes(), 0644)
 		if err != nil {
-			return fmt.Errorf("error al escribir archivo %s: %w", destPath, err)
+			return fmt.Errorf("failed to write file %s: %w", destPath, err)
 		}
 		return nil
 	})
@@ -186,7 +197,7 @@ func InitGit(targetDir string) error {
 	cmd.Dir = targetDir
 
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("no se pudo inicializar git; %w", err)
+		return fmt.Errorf("failed to initialize git repository: %w", err)
 	}
 
 	return nil

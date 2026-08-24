@@ -5,8 +5,8 @@ import (
 	"strings"
 )
 
-// RenderManual renderiza la vista interactiva paso a paso de la configuración manual.
-// Renderiza dinámicamente el historial acumulado y las opciones del paso actual.
+// RenderManual renders the interactive step-by-step view for manual configuration.
+// It dynamically renders the accumulated summary history and current step options.
 func RenderManual(
 	projectName string,
 	history []SummaryItem,
@@ -19,23 +19,23 @@ func RenderManual(
 	b.WriteString(fmt.Sprintf("\n%s  %s\n", TopSymbol, StyleHeader.Render("Creating a new Koko project")))
 	b.WriteString(fmt.Sprintf("%s\n", BarSymbol))
 
-	// 1. Resumen de Nombre del Proyecto
+	// 1. Project name summary
 	b.WriteString(fmt.Sprintf("%s  %s  %s  %s\n", CompletedDiamond, StylePromptTitle.Render("Project name"), DotDivider, StyleValue.Render(projectName)))
-	b.WriteString(fmt.Sprintf("%s  %s  %s  %s\n", CompletedDiamond, StylePromptTitle.Render("Setup mode"), DotDivider, StyleValue.Render("Configuración Manual")))
+	b.WriteString(fmt.Sprintf("%s  %s  %s  %s\n", CompletedDiamond, StylePromptTitle.Render("Setup mode"), DotDivider, StyleValue.Render("Manual Configuration")))
 
-	// 2. Historial de tecnologías ya seleccionadas (iterativo sin if anidados)
+	// 2. History of previously chosen options
 	for _, item := range history {
 		b.WriteString(fmt.Sprintf("%s  %s  %s  %s\n", CompletedDiamond, StylePromptTitle.Render(item.Label), DotDivider, StyleValue.Render(item.Value)))
 	}
 
 	b.WriteString(fmt.Sprintf("%s\n", BarSymbol))
 
-	// 3. Paso actual interactivo
+	// 3. Current interactive step
 	b.WriteString(fmt.Sprintf("%s  %s\n", ActiveDiamond, StylePromptTitle.Render(currentStepTitle)))
 	b.WriteString(RenderOptions(options, cursor))
 
 	b.WriteString(fmt.Sprintf("%s\n", BarSymbol))
-	b.WriteString(fmt.Sprintf("%s  %s\n", BottomSymbol, StyleMuted.Render("[↑/↓] Navegar • [Enter] Siguiente • [Esc] Volver atrás")))
+	b.WriteString(fmt.Sprintf("%s  %s\n", BottomSymbol, StyleMuted.Render("[↑/↓] Navigate • [Enter] Next • [Esc] Go back")))
 
 	return b.String()
 }

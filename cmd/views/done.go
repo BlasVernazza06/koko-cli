@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// RenderCancelled renderiza la salida cuando el usuario cancela la operación
+// RenderCancelled renders the output when the user cancels the operation
 func RenderCancelled(msg string) string {
 	var b strings.Builder
 	b.WriteString(fmt.Sprintf("\n%s  %s\n", TopSymbol, StyleHeader.Render("Koko CLI")))
@@ -15,13 +15,13 @@ func RenderCancelled(msg string) string {
 	return b.String()
 }
 
-// RenderDone renderiza el resumen final de éxito o error y los próximos pasos
+// RenderDone renders the final summary (success/error) and next steps
 func RenderDone(projectName, recipeName, pkgManager string, stepNames, stepStatus []string, elapsed time.Duration, scaffoldErr error) string {
 	var b strings.Builder
 	b.WriteString(fmt.Sprintf("\n%s  %s\n", TopSymbol, StyleHeader.Render("Creating a new Koko project")))
 	b.WriteString(fmt.Sprintf("%s\n", BarSymbol))
 	b.WriteString(fmt.Sprintf("%s  %s  %s  %s\n", CompletedDiamond, StylePromptTitle.Render("Project name"), DotDivider, StyleValue.Render(projectName)))
-	b.WriteString(fmt.Sprintf("%s  %s  %s  %s\n", CompletedDiamond, StylePromptTitle.Render("Recipe"), DotDivider, StyleValue.Render(recipeName)))
+	b.WriteString(fmt.Sprintf("%s  %s  %s  %s\n", CompletedDiamond, StylePromptTitle.Render("Recipe / Stack"), DotDivider, StyleValue.Render(recipeName)))
 	b.WriteString(fmt.Sprintf("%s  %s  %s  %s\n", CompletedDiamond, StylePromptTitle.Render("Package Manager"), DotDivider, StyleValue.Render(pkgManager)))
 	b.WriteString(fmt.Sprintf("%s\n", BarSymbol))
 
@@ -38,17 +38,20 @@ func RenderDone(projectName, recipeName, pkgManager string, stepNames, stepStatu
 	b.WriteString(fmt.Sprintf("%s\n", BarSymbol))
 
 	if scaffoldErr != nil {
-		b.WriteString(fmt.Sprintf("%s  %s\n\n", BottomSymbol, StyleError.Render(fmt.Sprintf("Error en la creación: %v", scaffoldErr))))
+		b.WriteString(fmt.Sprintf("%s  %s\n\n", BottomSymbol, StyleError.Render(fmt.Sprintf("Creation error: %v", scaffoldErr))))
 		return b.String()
 	}
 
-	b.WriteString(fmt.Sprintf("%s  %s\n\n", BottomSymbol, StyleSuccess.Render(fmt.Sprintf("¡Proyecto creado con éxito en %.2fs!", elapsed.Seconds()))))
+	b.WriteString(fmt.Sprintf("%s  %s\n\n", BottomSymbol, StyleSuccess.Render(fmt.Sprintf("Project created successfully in %.2fs!", elapsed.Seconds()))))
 
-	b.WriteString(fmt.Sprintf("  %s\n", StyleHeader.Render("Próximos pasos:")))
+	b.WriteString(fmt.Sprintf("  %s\n", StyleHeader.Render("Next steps:")))
 	b.WriteString(fmt.Sprintf("  1. %s\n", StyleValue.Render(fmt.Sprintf("cd %s", projectName))))
 	if pkgManager == "pnpm" {
 		b.WriteString(fmt.Sprintf("  2. %s\n", StyleValue.Render("pnpm install")))
 		b.WriteString(fmt.Sprintf("  3. %s\n\n", StyleValue.Render("pnpm dev")))
+	} else if pkgManager == "bun" {
+		b.WriteString(fmt.Sprintf("  2. %s\n", StyleValue.Render("bun install")))
+		b.WriteString(fmt.Sprintf("  3. %s\n\n", StyleValue.Render("bun dev")))
 	} else {
 		b.WriteString(fmt.Sprintf("  2. %s\n", StyleValue.Render("npm install")))
 		b.WriteString(fmt.Sprintf("  3. %s\n\n", StyleValue.Render("npm run dev")))

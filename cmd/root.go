@@ -9,7 +9,7 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:   "koko",
-	Short: "Koko CLI - Herramienta moderna de inicialización y scaffolding de proyectos",
+	Short: "Koko CLI - Modern project initialization and scaffolding tool",
 	Run: func(cmd *cobra.Command, args []string) {
 		RunTUI()
 	},

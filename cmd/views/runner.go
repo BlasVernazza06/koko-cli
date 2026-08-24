@@ -7,13 +7,13 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 )
 
-// RenderRunning renderiza el progreso de creación del proyecto con spinners
+// RenderRunning renders the project creation progress with spinners
 func RenderRunning(projectName, recipeName, pkgManager string, stepNames, stepStatus []string, s spinner.Model) string {
 	var b strings.Builder
 	b.WriteString(fmt.Sprintf("\n%s  %s\n", TopSymbol, StyleHeader.Render("Creating a new Koko project")))
 	b.WriteString(fmt.Sprintf("%s\n", BarSymbol))
 	b.WriteString(fmt.Sprintf("%s  %s  %s  %s\n", CompletedDiamond, StylePromptTitle.Render("Project name"), DotDivider, StyleValue.Render(projectName)))
-	b.WriteString(fmt.Sprintf("%s  %s  %s  %s\n", CompletedDiamond, StylePromptTitle.Render("Recipe"), DotDivider, StyleValue.Render(recipeName)))
+	b.WriteString(fmt.Sprintf("%s  %s  %s  %s\n", CompletedDiamond, StylePromptTitle.Render("Recipe / Stack"), DotDivider, StyleValue.Render(recipeName)))
 	b.WriteString(fmt.Sprintf("%s  %s  %s  %s\n", CompletedDiamond, StylePromptTitle.Render("Package Manager"), DotDivider, StyleValue.Render(pkgManager)))
 	b.WriteString(fmt.Sprintf("%s\n", BarSymbol))
 

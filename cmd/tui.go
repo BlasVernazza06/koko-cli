@@ -35,46 +35,53 @@ type stepFinishedMsg struct {
 	err  error
 }
 
-// manualStepConfig representa la definición de un paso en la configuración manual
+// manualStepConfig represents the definition of a step in manual configuration
 type manualStepConfig struct {
 	title   string
 	label   string
 	options []views.SelectOption
 }
 
-// mainModel representa el estado global y contexto de la TUI
+type runnerStep struct {
+	name string
+	run  func(string, scaffold.ScaffoldConfig) error
+}
+
+// mainModel represents the global state and context of the TUI
 type mainModel struct {
 	state       sessionState
 	prevState   sessionState
 	versionInfo []views.VersionItem
 
-	// Opciones del Menú Principal
+	// Main Menu Options
 	menuCursor  int
 	menuOptions []views.SelectOption
 
-	// Opciones de Modo
+	// Setup Mode Options
 	modeCursor  int
 	modeOptions []views.SelectOption
 
-	// Opciones de Receta (Setup Rápido)
+	// Recipe Options (Quick Setup)
 	recipeCursor  int
 	recipeOptions []views.SelectOption
 
-	// Configuración Manual Paso a Paso
+	// Step-by-Step Manual Configuration
 	manualSteps      []manualStepConfig
 	manualStepIdx    int
 	manualCursors    []int
 	manualSelections []views.SelectOption
 
-	// Campos de inicialización
+	// Initialization fields
 	projectNameInput textinput.Model
 	chosenName       string
 	chosenMode       string
 	chosenRecipe     string
 	cancelledMsg     string
+	scaffoldConfig   scaffold.ScaffoldConfig
 
-	// Estado y progreso del Scaffolding
+	// Scaffolding Progress State
 	currentStep int
+	runnerSteps []runnerStep
 	stepNames   []string
 	stepStatus  []string // "pending", "running", "success", "error"
 	spinner     spinner.Model
@@ -106,56 +113,83 @@ func initialModel(initialState sessionState, initialProjectName string) mainMode
 
 	manualSteps := []manualStepConfig{
 		{
-			title: "Selecciona el Frontend Framework",
+			title: "Select Frontend Framework",
 			label: "Frontend",
 			options: []views.SelectOption{
-				{Value: "nextjs", Label: "Next.js (App Router)", Hint: "React framework con SSR y Server Components"},
-				{Value: "react", Label: "React + Vite", Hint: "Single Page Application ultrarrápida"},
-				{Value: "vue", Label: "Vue 3 + Vite", Hint: "Framework reactivo y progresivo"},
-				{Value: "svelte", Label: "SvelteKit", Hint: "Compilador reactivo sin virtual DOM"},
-				{Value: "none", Label: "Sin Frontend", Hint: "Solo Backend / API REST"},
+				{Value: "nextjs", Label: "Next.js (App Router)", Hint: "React framework with SSR & Server Components"},
+				{Value: "react", Label: "React + Vite", Hint: "Ultra-fast Single Page Application"},
+				{Value: "vue", Label: "Vue 3 + Vite", Hint: "Progressive and reactive framework"},
+				{Value: "svelte", Label: "SvelteKit", Hint: "Reactive compiler with no virtual DOM"},
+				{Value: "none", Label: "None", Hint: "Backend / REST API only"},
 			},
 		},
 		{
-			title: "Selecciona el Backend Framework / Runtime",
+			title: "Select Backend Framework / Runtime",
 			label: "Backend",
 			options: []views.SelectOption{
-				{Value: "express", Label: "Node.js / Express", Hint: "light API REST with TypeScript"},
-				{Value: "fastapi", Label: "Python / FastAPI", Hint: "Asíncrono con validación Pydantic v2"},
-				{Value: "go_chi", Label: "Go / Chi Router", Hint: "high performance and strict type"},
-				{Value: "nestjs", Label: "NestJS", Hint: "Modular Arch with TypeScript"},
-				{Value: "none", Label: "Sin Backend dedicado", Hint: "use server actiones o BaaS"},
+				{Value: "express", Label: "Node.js / Express", Hint: "Lightweight REST API with TypeScript"},
+				{Value: "fastapi", Label: "Python / FastAPI", Hint: "Async framework with Pydantic v2 validation"},
+				{Value: "go_chi", Label: "Go / Chi Router", Hint: "High performance with strict types"},
+				{Value: "nestjs", Label: "NestJS", Hint: "Enterprise modular architecture with TypeScript"},
+				{Value: "none", Label: "None", Hint: "No dedicated backend (Server Actions or BaaS)"},
 			},
 		},
 		{
-			title: "Selecciona el Runtime",
+			title: "Select Package Manager",
 			label: "Package Manager",
 			options: []views.SelectOption{
-				{Value: "pnpm", Label: "PNPM", Hint: "Fast and disk efficient"},
-				{Value: "npm", Label: "NPM", Hint: "Asíncrono con validación Pydantic v2"},
-				{Value: "bun", Label: "Bun", Hint: "Usar Server Actions o BaaS"},
+				{Value: "pnpm", Label: "PNPM", Hint: "Fast and disk space efficient (Recommended)"},
+				{Value: "npm", Label: "NPM", Hint: "Standard Node package manager"},
+				{Value: "bun", Label: "Bun", Hint: "All-in-one JavaScript runtime & package manager"},
 			},
 		},
 		{
-			title: "Selecciona la Base de Datos",
+			title: "Select Database",
 			label: "Database",
 			options: []views.SelectOption{
-				{Value: "postgres", Label: "PostgreSQL", Hint: "Base de datos relacional estándar con Docker"},
-				{Value: "mongodb", Label: "MongoDB", Hint: "Base de datos de documentos NoSQL"},
-				{Value: "mysql", Label: "MySQL / MariaDB", Hint: "Base de datos SQL tradicional"},
-				{Value: "sqlite", Label: "SQLite", Hint: "Base de datos embebida en archivo local"},
-				{Value: "none", Label: "Ninguna", Hint: "Sin persistencia de datos"},
+				{Value: "postgres", Label: "PostgreSQL", Hint: "Standard relational database with Docker"},
+				{Value: "mongodb", Label: "MongoDB", Hint: "NoSQL document database"},
+				{Value: "mysql", Label: "MySQL / MariaDB", Hint: "Traditional SQL database"},
+				{Value: "sqlite", Label: "SQLite", Hint: "Embedded lightweight database"},
+				{Value: "none", Label: "None", Hint: "No database persistence"},
 			},
 		},
 		{
-			title: "Selecciona el ORM / Query Builder",
+			title: "Select ORM / Query Builder",
 			label: "ORM / Tool",
 			options: []views.SelectOption{
-				{Value: "drizzle", Label: "Drizzle ORM", Hint: "Type-safe y liviano con soporte SQL nativo"},
-				{Value: "prisma", Label: "Prisma", Hint: "ORM popular con auto-generación de tipos"},
-				{Value: "sqlalchemy", Label: "SQLAlchemy / SQLModel", Hint: "ORM estándar para Python"},
-				{Value: "gorm", Label: "GORM", Hint: "ORM completo para Go"},
-				{Value: "none", Label: "Ninguno / Raw SQL", Hint: "Conexión directa sin ORM"},
+				{Value: "drizzle", Label: "Drizzle ORM", Hint: "Lightweight, type-safe with native SQL support"},
+				{Value: "prisma", Label: "Prisma", Hint: "Next-gen ORM with auto type generation"},
+				{Value: "sqlalchemy", Label: "SQLAlchemy / SQLModel", Hint: "Standard ORM for Python"},
+				{Value: "gorm", Label: "GORM", Hint: "Feature-rich ORM for Go"},
+				{Value: "none", Label: "None / Raw SQL", Hint: "Direct driver connection without ORM"},
+			},
+		},
+		{
+			title: "Select Authentication Provider",
+			label: "Auth",
+			options: []views.SelectOption{
+				{Value: "better-auth", Label: "Better-Auth", Hint: "Comprehensive TypeScript-first auth"},
+				{Value: "clerk", Label: "Clerk", Hint: "Complete user management & auth suite"},
+				{Value: "none", Label: "None", Hint: "Skip authentication setup"},
+			},
+		},
+		{
+			title: "Select Addons / Tooling",
+			label: "Addons",
+			options: []views.SelectOption{
+				{Value: "docker_cicd", Label: "Docker Compose + GitHub Actions", Hint: "Full containerization & CI/CD workflow"},
+				{Value: "docker", Label: "Docker Compose", Hint: "Local containerized services"},
+				{Value: "github_actions", Label: "GitHub Actions CI", Hint: "Automated linting and test workflows"},
+				{Value: "none", Label: "None", Hint: "No extra tooling"},
+			},
+		},
+		{
+			title: "Initialize Git Repository?",
+			label: "Git",
+			options: []views.SelectOption{
+				{Value: "yes", Label: "Yes", Hint: "Initialize a new Git repository (git init)"},
+				{Value: "no", Label: "No", Hint: "Skip Git repository initialization"},
 			},
 		},
 	}
@@ -170,13 +204,13 @@ func initialModel(initialState sessionState, initialProjectName string) mainMode
 			{Key: "Build Date", Val: "2026-08-12"},
 		},
 		menuOptions: []views.SelectOption{
-			{Value: "init", Label: "Inicializar proyecto", Hint: "Crear una nueva aplicación con Koko"},
-			{Value: "version", Label: "Versión del sistema", Hint: "Ver detalles de entorno y CLI"},
-			{Value: "exit", Label: "Salir", Hint: "Cerrar la herramienta"},
+			{Value: "init", Label: "Initialize project", Hint: "Create a new application with Koko"},
+			{Value: "version", Label: "System version", Hint: "View environment and CLI details"},
+			{Value: "exit", Label: "Exit", Hint: "Quit the application"},
 		},
 		modeOptions: []views.SelectOption{
-			{Value: "quick", Label: "Setup Rápido", Hint: "Recetas de producción listas para usar"},
-			{Value: "manual", Label: "Configuración Manual", Hint: "Elegir stack paso a paso (Frontend, Backend, DB, ORM)"},
+			{Value: "quick", Label: "Quick Setup", Hint: "Production-ready recipes ready to use"},
+			{Value: "manual", Label: "Manual Configuration", Hint: "Choose stack step-by-step (Frontend, Backend, DB, ORM, Auth, etc.)"},
 		},
 		recipeOptions: []views.SelectOption{
 			{Value: "saas", Label: "⚡ SaaS Starter", Hint: "Next.js + Drizzle + Better-Auth + Stripe"},
@@ -189,14 +223,7 @@ func initialModel(initialState sessionState, initialProjectName string) mainMode
 		manualCursors:    make([]int, len(manualSteps)),
 		manualSelections: make([]views.SelectOption, len(manualSteps)),
 		projectNameInput: ti,
-		stepNames: []string{
-			"Estructurando directorios y copiando plantillas...",
-			"Generando configuración de Docker y DB...",
-			"Inicializando repositorio Git...",
-			"Creando manifiesto koko.config.json...",
-		},
-		stepStatus: []string{"pending", "pending", "pending", "pending"},
-		spinner:    s,
+		spinner:          s,
 	}
 }
 
@@ -204,27 +231,49 @@ func (m mainModel) Init() tea.Cmd {
 	return textinput.Blink
 }
 
-func runStepCmd(step int, projectName string, recipe string) tea.Cmd {
+func setupRunnerSteps(cfg scaffold.ScaffoldConfig) []runnerStep {
+	steps := []runnerStep{
+		{
+			name: "Scaffolding directories and copying templates...",
+			run: func(p string, c scaffold.ScaffoldConfig) error {
+				return scaffold.CopyTemplates(p, c)
+			},
+		},
+		{
+			name: "Generating Docker and Database configuration...",
+			run: func(p string, c scaffold.ScaffoldConfig) error {
+				return scaffold.GenerateDockerAndDB(p, c)
+			},
+		},
+	}
+
+	if cfg.InitGit {
+		steps = append(steps, runnerStep{
+			name: "Initializing Git repository...",
+			run: func(p string, c scaffold.ScaffoldConfig) error {
+				return scaffold.InitGit(p)
+			},
+		})
+	}
+
+	steps = append(steps, runnerStep{
+		name: "Creating koko.config.json manifest...",
+		run: func(p string, c scaffold.ScaffoldConfig) error {
+			return kokoConfig.GenerateConfig(p, c)
+		},
+	})
+
+	return steps
+}
+
+func runStepCmd(stepIdx int, projectName string, cfg scaffold.ScaffoldConfig, fn func(string, scaffold.ScaffoldConfig) error) tea.Cmd {
 	return func() tea.Msg {
-		cfg := scaffold.ScaffoldConfig{
-			ProjectName: projectName,
-			Recipe:      recipe,
-		}
-
 		var err error
-		switch step {
-		case 1:
-			err = scaffold.CopyTemplates(projectName, cfg)
-		case 2:
-			err = scaffold.GenerateDockerAndDB(projectName, cfg)
-		case 3:
-			err = scaffold.InitGit(projectName)
-		case 4:
-			err = kokoConfig.GenerateConfig(projectName, cfg)
+		if fn != nil {
+			err = fn(projectName, cfg)
 		}
-
-		time.Sleep(450 * time.Millisecond) // micro-animación
-		return stepFinishedMsg{step: step, err: err}
+		time.Sleep(450 * time.Millisecond) // micro-animation
+		return stepFinishedMsg{step: stepIdx, err: err}
 	}
 }
 
@@ -235,7 +284,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c":
-			m.cancelledMsg = "Operación cancelada."
+			m.cancelledMsg = "Operation cancelled."
 			m.state = stateCancelled
 			return m, tea.Quit
 		}
@@ -261,7 +310,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case "version":
 					m.state = stateVersion
 				case "exit":
-					m.cancelledMsg = "Hasta pronto."
+					m.cancelledMsg = "Goodbye!"
 					m.state = stateCancelled
 					return m, tea.Quit
 				}
@@ -304,7 +353,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.modeCursor++
 				}
 			case "enter":
-				m.chosenMode = m.modeOptions[m.modeCursor].Label
+				m.chosenMode = m.modeOptions[m.modeCursor].Value
 				if m.modeOptions[m.modeCursor].Value == "quick" {
 					m.state = stateInitRecipe
 				} else {
@@ -327,25 +376,46 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.manualCursors[m.manualStepIdx]++
 				}
 			case "enter":
-				// Guardar la selección actual
+				// Save current selection
 				selectedOpt := currentStep.options[m.manualCursors[m.manualStepIdx]]
 				m.manualSelections[m.manualStepIdx] = selectedOpt
 
-				// Avanzar al siguiente paso o finalizar configuración
+				// Advance to next step or complete configuration
 				if m.manualStepIdx < len(m.manualSteps)-1 {
 					m.manualStepIdx++
 				} else {
-					// Todos los pasos completados -> Iniciar creación
-					m.chosenRecipe = "saas" // o configuración manual generada
+					// All steps completed -> initialize project
+					initGit := m.manualSelections[7].Value == "yes"
+					m.scaffoldConfig = scaffold.ScaffoldConfig{
+						ProjectName:    m.chosenName,
+						Recipe:         "",
+						InitGit:        initGit,
+						Frontend:       m.manualSelections[0].Value,
+						Backend:        m.manualSelections[1].Value,
+						PackageManager: m.manualSelections[2].Value,
+						Database:       m.manualSelections[3].Value,
+						ORM:            m.manualSelections[4].Value,
+						Auth:           m.manualSelections[5].Value,
+						Addons:         m.manualSelections[6].Value,
+					}
+
+					m.chosenRecipe = ""
+					m.runnerSteps = setupRunnerSteps(m.scaffoldConfig)
+					m.stepNames = make([]string, len(m.runnerSteps))
+					m.stepStatus = make([]string, len(m.runnerSteps))
+					for i, s := range m.runnerSteps {
+						m.stepNames[i] = s.name
+						m.stepStatus[i] = "pending"
+					}
+
 					m.state = stateInitRunning
-					m.currentStep = 1
+					m.currentStep = 0
 					m.stepStatus[0] = "running"
 					m.startTime = time.Now()
-					return m, tea.Batch(m.spinner.Tick, runStepCmd(1, m.chosenName, m.chosenRecipe))
+					return m, tea.Batch(m.spinner.Tick, runStepCmd(0, m.chosenName, m.scaffoldConfig, m.runnerSteps[0].run))
 				}
 
 			case "esc":
-				// Retroceder paso sin perder la selección previa
 				if m.manualStepIdx > 0 {
 					m.manualStepIdx--
 				} else {
@@ -367,11 +437,25 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			case "enter":
 				m.chosenRecipe = m.recipeOptions[m.recipeCursor].Value
+				m.scaffoldConfig = scaffold.ScaffoldConfig{
+					ProjectName: m.chosenName,
+					Recipe:      m.chosenRecipe,
+					InitGit:     true,
+				}
+
+				m.runnerSteps = setupRunnerSteps(m.scaffoldConfig)
+				m.stepNames = make([]string, len(m.runnerSteps))
+				m.stepStatus = make([]string, len(m.runnerSteps))
+				for i, s := range m.runnerSteps {
+					m.stepNames[i] = s.name
+					m.stepStatus[i] = "pending"
+				}
+
 				m.state = stateInitRunning
-				m.currentStep = 1
+				m.currentStep = 0
 				m.stepStatus[0] = "running"
 				m.startTime = time.Now()
-				return m, tea.Batch(m.spinner.Tick, runStepCmd(1, m.chosenName, m.chosenRecipe))
+				return m, tea.Batch(m.spinner.Tick, runStepCmd(0, m.chosenName, m.scaffoldConfig, m.runnerSteps[0].run))
 			}
 
 		case stateInitDone:
@@ -391,17 +475,17 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case stepFinishedMsg:
 		if msg.err != nil {
-			m.stepStatus[msg.step-1] = "error"
+			m.stepStatus[msg.step] = "error"
 			m.scaffoldErr = msg.err
 			m.state = stateInitDone
 			return m, tea.Quit
 		}
 
-		m.stepStatus[msg.step-1] = "success"
-		if msg.step < 4 {
+		m.stepStatus[msg.step] = "success"
+		if msg.step+1 < len(m.runnerSteps) {
 			m.currentStep = msg.step + 1
-			m.stepStatus[msg.step] = "running"
-			return m, runStepCmd(m.currentStep, m.chosenName, m.chosenRecipe)
+			m.stepStatus[m.currentStep] = "running"
+			return m, runStepCmd(m.currentStep, m.chosenName, m.scaffoldConfig, m.runnerSteps[m.currentStep].run)
 		}
 
 		m.elapsedTime = time.Since(m.startTime)
@@ -412,7 +496,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// View actúa como enrutador central y delega a las funciones de cmd/views
+// View delegates rendering to cmd/views
 func (m mainModel) View() string {
 	switch m.state {
 	case stateCancelled:
@@ -426,7 +510,6 @@ func (m mainModel) View() string {
 	case stateInitMode:
 		return views.RenderMode(m.chosenName, m.modeOptions, m.modeCursor)
 	case stateInitManual:
-		// Construir historial dinámico de los pasos anteriores ya respondidos
 		var history []views.SummaryItem
 		for i := 0; i < m.manualStepIdx; i++ {
 			history = append(history, views.SummaryItem{
@@ -441,12 +524,24 @@ func (m mainModel) View() string {
 	case stateInitRecipe:
 		return views.RenderRecipe(m.chosenName, m.recipeOptions, m.recipeCursor)
 	case stateInitRunning:
-		pkgManager := views.GetPackageManager(m.chosenRecipe)
-		recipeLabel := views.GetRecipeLabel(m.recipeOptions, m.chosenRecipe)
+		pkgManager := m.scaffoldConfig.PackageManager
+		if pkgManager == "" {
+			pkgManager = views.GetPackageManager(m.chosenRecipe)
+		}
+		recipeLabel := "Manual Configuration"
+		if m.chosenRecipe != "" {
+			recipeLabel = views.GetRecipeLabel(m.recipeOptions, m.chosenRecipe)
+		}
 		return views.RenderRunning(m.chosenName, recipeLabel, pkgManager, m.stepNames, m.stepStatus, m.spinner)
 	case stateInitDone:
-		pkgManager := views.GetPackageManager(m.chosenRecipe)
-		recipeLabel := views.GetRecipeLabel(m.recipeOptions, m.chosenRecipe)
+		pkgManager := m.scaffoldConfig.PackageManager
+		if pkgManager == "" {
+			pkgManager = views.GetPackageManager(m.chosenRecipe)
+		}
+		recipeLabel := "Manual Configuration"
+		if m.chosenRecipe != "" {
+			recipeLabel = views.GetRecipeLabel(m.recipeOptions, m.chosenRecipe)
+		}
 		return views.RenderDone(m.chosenName, recipeLabel, pkgManager, m.stepNames, m.stepStatus, m.elapsedTime, m.scaffoldErr)
 	}
 	return ""
@@ -455,7 +550,7 @@ func (m mainModel) View() string {
 func RunTUI() {
 	p := tea.NewProgram(initialModel(stateMenu, ""))
 	if _, err := p.Run(); err != nil {
-		fmt.Printf("Error al arrancar la TUI: %v\n", err)
+		fmt.Printf("Error running TUI: %v\n", err)
 		os.Exit(1)
 	}
 }
@@ -471,7 +566,7 @@ func RunTUIInit(projectName string) {
 	}
 	p := tea.NewProgram(model)
 	if _, err := p.Run(); err != nil {
-		fmt.Printf("Error al arrancar la TUI: %v\n", err)
+		fmt.Printf("Error running TUI: %v\n", err)
 		os.Exit(1)
 	}
 }

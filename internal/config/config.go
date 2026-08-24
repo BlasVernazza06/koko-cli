@@ -71,6 +71,13 @@ type Infrastructure struct {
 }
 
 func GenerateConfig(targetDir string, scaffoldCfg scaffold.ScaffoldConfig) error {
+	pm := scaffoldCfg.PackageManager
+	if pm == "" {
+		pm = determinePackageManager(scaffoldCfg.Recipe)
+	}
+
+	layout := determineLayout(scaffoldCfg)
+
 	config := KokoConfig{
 		Schema: "https://koko-cli.dev/schema.json",
 		Project: ProjectInfo{
@@ -79,87 +86,136 @@ func GenerateConfig(targetDir string, scaffoldCfg scaffold.ScaffoldConfig) error
 			CreatedAt:  time.Now().UTC(),
 		},
 		Architecture: ArchitectureInfo{
-			Layout:         determineLayout(scaffoldCfg.Recipe),
-			PackageManager: determinePackageManager(scaffoldCfg.Recipe),
+			Layout:         layout,
+			PackageManager: pm,
 		},
 	}
 
-	switch scaffoldCfg.Recipe {
-	case "saas":
-		config.Stack.Frontend = &FrontendInfo{
-			Framework: "next",
-			Language:  "typescript",
-			Styling:   "tailwindcss",
-			UILibrary: "shadcn",
-			Icons:     "lucide",
-		}
-		config.Stack.Backend = &BackendInfo{
-			Framework: "next",
-			Language:  "typescript",
-		}
-		config.Stack.Database = &DatabaseInfo{
-			Provider: "postgres",
-			ORM:      "drizzle",
-		}
-		config.Features.Auth = &AuthInfo{
-			Provider: "better-auth",
-			Status:   "installed",
+	if scaffoldCfg.Recipe != "" {
+		switch scaffoldCfg.Recipe {
+		case "saas":
+			config.Stack.Frontend = &FrontendInfo{
+				Framework: "next",
+				Language:  "typescript",
+				Styling:   "tailwindcss",
+				UILibrary: "shadcn",
+				Icons:     "lucide",
+			}
+			config.Stack.Backend = &BackendInfo{
+				Framework: "next",
+				Language:  "typescript",
+			}
+			config.Stack.Database = &DatabaseInfo{
+				Provider: "postgres",
+				ORM:      "drizzle",
+			}
+			config.Features.Auth = &AuthInfo{
+				Provider: "better-auth",
+				Status:   "installed",
+			}
+
+		case "pern":
+			config.Stack.Frontend = &FrontendInfo{
+				Framework: "react",
+				Language:  "typescript",
+				Styling:   "tailwindcss",
+			}
+			config.Stack.Backend = &BackendInfo{
+				Framework: "express",
+				Language:  "typescript",
+			}
+			config.Stack.Database = &DatabaseInfo{
+				Provider: "postgres",
+				ORM:      "prisma",
+			}
+
+		case "mern":
+			config.Stack.Frontend = &FrontendInfo{
+				Framework: "react",
+				Language:  "typescript",
+				Styling:   "tailwindcss",
+			}
+			config.Stack.Backend = &BackendInfo{
+				Framework: "express",
+				Language:  "typescript",
+			}
+			config.Stack.Database = &DatabaseInfo{
+				Provider: "mongodb",
+				ORM:      "mongoose",
+			}
+
+		case "fastapi_react":
+			config.Stack.Frontend = &FrontendInfo{
+				Framework: "react",
+				Language:  "typescript",
+				Styling:   "tailwindcss",
+			}
+			config.Stack.Backend = &BackendInfo{
+				Framework: "fastapi",
+				Language:  "python",
+			}
 		}
 
-	case "pern":
-		config.Stack.Frontend = &FrontendInfo{
-			Framework: "react",
-			Language:  "typescript",
-			Styling:   "tailwindcss",
-		}
-		config.Stack.Backend = &BackendInfo{
-			Framework: "express",
-			Language:  "typescript",
-		}
-		config.Stack.Database = &DatabaseInfo{
-			Provider: "postgres",
-			ORM:      "prisma",
+		var docker bool
+		var ciCd string = "none"
+		if scaffoldCfg.Recipe == "saas" {
+			docker = true
+			ciCd = "github-actions"
+		} else if scaffoldCfg.Recipe == "pern" || scaffoldCfg.Recipe == "mern" {
+			docker = true
 		}
 
-	case "mern":
-		config.Stack.Frontend = &FrontendInfo{
-			Framework: "react",
-			Language:  "typescript",
-			Styling:   "tailwindcss",
+		config.Features.Infrastructure = &Infrastructure{
+			DockerCompose: docker,
+			CICD:          ciCd,
 		}
-		config.Stack.Backend = &BackendInfo{
-			Framework: "express",
-			Language:  "typescript",
-		}
-		config.Stack.Database = &DatabaseInfo{
-			Provider: "mongodb",
-			ORM:      "mongoose",
+	} else {
+		// Manual Configuration mapping
+		if scaffoldCfg.Frontend != "" && scaffoldCfg.Frontend != "none" {
+			config.Stack.Frontend = &FrontendInfo{
+				Framework: scaffoldCfg.Frontend,
+				Language:  "typescript",
+				Styling:   "tailwindcss",
+			}
 		}
 
-	case "fastapi_react":
-		config.Stack.Frontend = &FrontendInfo{
-			Framework: "react",
-			Language:  "typescript",
-			Styling:   "tailwindcss",
+		if scaffoldCfg.Backend != "" && scaffoldCfg.Backend != "none" {
+			lang := "typescript"
+			if scaffoldCfg.Backend == "fastapi" {
+				lang = "python"
+			} else if scaffoldCfg.Backend == "go_chi" {
+				lang = "go"
+			}
+			config.Stack.Backend = &BackendInfo{
+				Framework: scaffoldCfg.Backend,
+				Language:  lang,
+			}
 		}
-		config.Stack.Backend = &BackendInfo{
-			Framework: "fastapi",
-			Language:  "python",
+
+		if scaffoldCfg.Database != "" && scaffoldCfg.Database != "none" {
+			config.Stack.Database = &DatabaseInfo{
+				Provider: scaffoldCfg.Database,
+				ORM:      scaffoldCfg.ORM,
+			}
 		}
-	}
 
-	var docker bool
-	var ciCd string = "none"
-	if scaffoldCfg.Recipe == "saas" {
-		docker = true
-		ciCd = "github-actions"
-	} else if scaffoldCfg.Recipe == "pern" || scaffoldCfg.Recipe == "mern" {
-		docker = true
-	}
+		if scaffoldCfg.Auth != "" && scaffoldCfg.Auth != "none" {
+			config.Features.Auth = &AuthInfo{
+				Provider: scaffoldCfg.Auth,
+				Status:   "installed",
+			}
+		}
 
-	config.Features.Infrastructure = &Infrastructure{
-		DockerCompose: docker,
-		CICD:          ciCd,
+		docker := scaffoldCfg.Addons == "docker" || scaffoldCfg.Addons == "docker_cicd"
+		ciCd := "none"
+		if scaffoldCfg.Addons == "github_actions" || scaffoldCfg.Addons == "docker_cicd" {
+			ciCd = "github-actions"
+		}
+
+		config.Features.Infrastructure = &Infrastructure{
+			DockerCompose: docker,
+			CICD:          ciCd,
+		}
 	}
 
 	// Marshal JSON with indents
@@ -172,8 +228,11 @@ func GenerateConfig(targetDir string, scaffoldCfg scaffold.ScaffoldConfig) error
 	return os.WriteFile(configFilePath, data, 0644)
 }
 
-func determineLayout(recipe string) string {
-	if recipe == "saas" || recipe == "pern" || recipe == "mern" {
+func determineLayout(scaffoldCfg scaffold.ScaffoldConfig) string {
+	if scaffoldCfg.Recipe == "saas" || scaffoldCfg.Recipe == "pern" || scaffoldCfg.Recipe == "mern" {
+		return "monorepo"
+	}
+	if scaffoldCfg.Frontend != "" && scaffoldCfg.Frontend != "none" && scaffoldCfg.Backend != "" && scaffoldCfg.Backend != "none" {
 		return "monorepo"
 	}
 	return "standalone"
