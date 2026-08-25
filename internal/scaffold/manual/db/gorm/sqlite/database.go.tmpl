@@ -1,0 +1,26 @@
+package db
+
+import (
+	"log"
+	"os"
+
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+)
+
+var DB *gorm.DB
+
+func Connect() {
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		dsn = "app.db"
+	}
+
+	var err error
+	DB, err = gorm.Open(sqlite.Open(dsn), &gorm.Config{})
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+
+	DB.AutoMigrate(&User{})
+}

@@ -3,7 +3,7 @@ version: '3.8'
 services:
 [[- if eq .Database "postgres" ]]
   postgres:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     container_name: [[.ProjectName]]-postgres
     ports:
       - "5432:5432"
@@ -28,6 +28,15 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
 [[- end ]]
+[[- if eq .Database "mongodb" ]]
+  mongodb:
+    image: mongo:7
+    container_name: [[.ProjectName]]-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+[[- end ]]
 
 volumes:
 [[- if eq .Database "postgres" ]]
@@ -35,4 +44,7 @@ volumes:
 [[- end ]]
 [[- if eq .Database "mysql" ]]
   mysql_data:
+[[- end ]]
+[[- if eq .Database "mongodb" ]]
+  mongodb_data:
 [[- end ]]

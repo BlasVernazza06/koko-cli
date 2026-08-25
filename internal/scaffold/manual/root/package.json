@@ -1,0 +1,23 @@
+{
+  "name": "[[.ProjectName]]",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "check-types": "turbo check-types",
+    "clean": "turbo clean"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "turbo": "^2.1.1",
+    "typescript": "^5.6.2"
+  },
+  "packageManager": "[[if eq .PackageManager `bun`]]bun@1.1.29[[else if eq .PackageManager `npm`]]npm@10.8.2[[else]]pnpm@9.11.0[[end]]"
+}

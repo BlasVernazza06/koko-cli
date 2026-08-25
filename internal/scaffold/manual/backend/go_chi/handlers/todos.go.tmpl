@@ -1,0 +1,122 @@
+package handlers
+
+import (
+	"encoding/json"
+	"net/http"
+	"strconv"
+	"sync"
+
+	"github.com/go-chi/chi/v5"
+)
+
+type Todo struct {
+	ID    int    `json:"id"`
+	Title string `json:"title"`
+	Done  bool   `json:"done"`
+}
+
+var (
+	todosMu sync.Mutex
+	todos   = []Todo{
+		{ID: 1, Title: "Learn Go & Chi Router", Done: false},
+		{ID: 2, Title: "Configure Koko Monorepo", Done: true},
+	}
+)
+
+func GetTodos(w http.ResponseWriter, r *http.Request) {
+	todosMu.Lock()
+	defer todosMu.Unlock()
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(todos)
+}
+
+func CreateTodo(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		Title string `json:"title"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil || input.Title == "" {
+		http.Error(w, `{"error":"Title is required"}`, http.StatusBadRequest)
+		return
+	}
+
+	todosMu.Lock()
+	newTodo := Todo{
+		ID:    len(todos) + 1,
+		Title: input.Title,
+		Done:  false,
+	}
+	todos = append(todos, newTodo)
+	todosMu.Unlock()
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(newTodo)
+}
+
+func UpdateTodo(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, `{"error":"Invalid ID"}`, http.StatusBadRequest)
+		return
+	}
+
+	var input struct {
+		Title *string `json:"title"`
+		Done  *bool   `json:"done"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		http.Error(w, `{"error":"Invalid payload"}`, http.StatusBadRequest)
+		return
+	}
+
+	todosMu.Lock()
+	defer todosMu.Unlock()
+
+	for i, t := range todos {
+		if t.ID == id {
+			if input.Title != nil {
+				todos[i].Title = *input.Title
+			}
+			if input.Done != nil {
+				todos[i].Done = *input.Done
+			}
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(todos[i])
+			return
+		}
+	}
+
+	http.Error(w, `{"error":"Todo not found"}`, http.StatusNotFound)
+}
+
+func DeleteTodo(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, `{"error":"Invalid ID"}`, http.StatusBadRequest)
+		return
+	}
+
+	todosMu.Lock()
+	defer todosMu.Unlock()
+
+	found := false
+	var updated []Todo
+	for _, t := range todos {
+		if t.ID == id {
+			found = true
+			continue
+		}
+		updated = append(updated, t)
+	}
+
+	if !found {
+		http.Error(w, `{"error":"Todo not found"}`, http.StatusNotFound)
+		return
+	}
+
+	todos = updated
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"message": "Todo deleted successfully"})
+}
