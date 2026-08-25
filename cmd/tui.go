@@ -14,6 +14,7 @@ import (
 	"github.com/BlasVernazza06/koko-cli/cmd/views"
 	kokoConfig "github.com/BlasVernazza06/koko-cli/internal/config"
 	"github.com/BlasVernazza06/koko-cli/internal/scaffold"
+	"github.com/BlasVernazza06/koko-cli/internal/validator"
 )
 
 type sessionState int
@@ -73,6 +74,7 @@ type mainModel struct {
 
 	// Initialization fields
 	projectNameInput textinput.Model
+	inputErr         string
 	chosenName       string
 	chosenMode       string
 	chosenRecipe     string
@@ -325,6 +327,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case stateInitInput:
 			switch msg.String() {
 			case "esc":
+				m.inputErr = ""
 				m.state = stateMenu
 			case "enter":
 				name := strings.TrimSpace(m.projectNameInput.Value())
@@ -332,9 +335,15 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					name = "my-app"
 					m.projectNameInput.SetValue("my-app")
 				}
+				if err := validator.Validate(name); err != nil {
+					m.inputErr = err.Error()
+					return m, nil
+				}
+				m.inputErr = ""
 				m.chosenName = name
 				m.state = stateInitMode
 			default:
+				m.inputErr = ""
 				m.projectNameInput, cmd = m.projectNameInput.Update(msg)
 				return m, cmd
 			}
@@ -506,7 +515,7 @@ func (m mainModel) View() string {
 	case stateVersion:
 		return views.RenderVersion(m.versionInfo)
 	case stateInitInput:
-		return views.RenderInput(m.projectNameInput)
+		return views.RenderInput(m.projectNameInput, m.inputErr)
 	case stateInitMode:
 		return views.RenderMode(m.chosenName, m.modeOptions, m.modeCursor)
 	case stateInitManual:
@@ -557,12 +566,23 @@ func RunTUI() {
 
 func RunTUIInit(projectName string) {
 	state := stateInitInput
+	inputErr := ""
 	if projectName != "" {
-		state = stateInitMode
+		if err := validator.Validate(projectName); err != nil {
+			inputErr = err.Error()
+			state = stateInitInput
+		} else {
+			state = stateInitMode
+		}
 	}
 	model := initialModel(state, projectName)
+	model.inputErr = inputErr
 	if projectName != "" {
-		model.chosenName = projectName
+		if inputErr == "" {
+			model.chosenName = projectName
+		} else {
+			model.projectNameInput.SetValue(projectName)
+		}
 	}
 	p := tea.NewProgram(model)
 	if _, err := p.Run(); err != nil {

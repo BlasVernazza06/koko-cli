@@ -8,6 +8,7 @@ import (
 
 	kokoConfig "github.com/BlasVernazza06/koko-cli/internal/config"
 	"github.com/BlasVernazza06/koko-cli/internal/scaffold"
+	"github.com/BlasVernazza06/koko-cli/internal/validator"
 	"github.com/spf13/cobra"
 )
 
@@ -37,12 +38,20 @@ var initCmd = &cobra.Command{
 			if projectName == "" {
 				projectName = "my-project"
 			}
+			if err := validator.Validate(projectName); err != nil {
+				fmt.Printf("\n\033[31m✗ Error: %s\033[0m\n\n", err.Error())
+				os.Exit(1)
+			}
 			runDefaultInit(projectName, recipieFlag)
 			return
 		}
 		if frontendFlag != "" || backendFlag != "" || databaseFlag != "" || ormFlag != "" || authFlag != "" {
 			if projectName == "" {
 				projectName = "my-project"
+			}
+			if err := validator.Validate(projectName); err != nil {
+				fmt.Printf("\n\033[31m✗ Error: %s\033[0m\n\n", err.Error())
+				os.Exit(1)
 			}
 			pm := pmFlag
 			if pm == "" {
