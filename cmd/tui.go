@@ -12,6 +12,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/BlasVernazza06/koko-cli/cmd/views"
+	"github.com/BlasVernazza06/koko-cli/internal/compatibility"
 	kokoConfig "github.com/BlasVernazza06/koko-cli/internal/config"
 	"github.com/BlasVernazza06/koko-cli/internal/scaffold"
 	"github.com/BlasVernazza06/koko-cli/internal/validator"
@@ -92,6 +93,31 @@ type mainModel struct {
 	scaffoldErr error
 }
 
+// findNextEnabled returns the index of the next enabled option in the given direction (delta: +1 for down, -1 for up).
+func findNextEnabled(options []views.SelectOption, currentIdx int, delta int) int {
+	if len(options) == 0 {
+		return 0
+	}
+	next := currentIdx + delta
+	for next >= 0 && next < len(options) {
+		if !options[next].Disabled {
+			return next
+		}
+		next += delta
+	}
+	return currentIdx
+}
+
+// findFirstEnabled returns the index of the first enabled option.
+func findFirstEnabled(options []views.SelectOption) int {
+	for i, opt := range options {
+		if !opt.Disabled {
+			return i
+		}
+	}
+	return 0
+}
+
 func initialModel(initialState sessionState, initialProjectName string) mainModel {
 	ti := textinput.New()
 	ti.Placeholder = "my-app"
@@ -115,84 +141,39 @@ func initialModel(initialState sessionState, initialProjectName string) mainMode
 
 	manualSteps := []manualStepConfig{
 		{
-			title: "Select Frontend Framework",
-			label: "Frontend",
-			options: []views.SelectOption{
-				{Value: "nextjs", Label: "Next.js (App Router)", Hint: "React framework with SSR & Server Components"},
-				{Value: "react", Label: "React + Vite", Hint: "Ultra-fast Single Page Application"},
-				{Value: "vue", Label: "Vue 3 + Vite", Hint: "Progressive and reactive framework"},
-				{Value: "svelte", Label: "SvelteKit", Hint: "Reactive compiler with no virtual DOM"},
-				{Value: "none", Label: "None", Hint: "Backend / REST API only"},
-			},
+			title:   "Select Frontend Framework",
+			label:   "Frontend",
+			options: compatibility.BaseOptions(compatibility.StepFrontend),
 		},
 		{
-			title: "Select Backend Framework / Runtime",
-			label: "Backend",
-			options: []views.SelectOption{
-				{Value: "express", Label: "Node.js / Express", Hint: "Lightweight REST API with TypeScript"},
-				{Value: "fastapi", Label: "Python / FastAPI", Hint: "Async framework with Pydantic v2 validation"},
-				{Value: "go_chi", Label: "Go / Chi Router", Hint: "High performance with strict types"},
-				{Value: "nestjs", Label: "NestJS", Hint: "Enterprise modular architecture with TypeScript"},
-				{Value: "none", Label: "None", Hint: "No dedicated backend (Server Actions or BaaS)"},
-			},
+			title:   "Select Backend Framework / Runtime",
+			label:   "Backend",
+			options: compatibility.BaseOptions(compatibility.StepBackend),
 		},
 		{
-			title: "Select Package Manager",
-			label: "Package Manager",
-			options: []views.SelectOption{
-				{Value: "pnpm", Label: "PNPM", Hint: "Fast and disk space efficient (Recommended)"},
-				{Value: "npm", Label: "NPM", Hint: "Standard Node package manager"},
-				{Value: "bun", Label: "Bun", Hint: "All-in-one JavaScript runtime & package manager"},
-			},
+			title:   "Select Package Manager",
+			label:   "Package Manager",
+			options: compatibility.BaseOptions(compatibility.StepPackageManager),
 		},
 		{
-			title: "Select Database",
-			label: "Database",
-			options: []views.SelectOption{
-				{Value: "postgres", Label: "PostgreSQL", Hint: "Standard relational database with Docker"},
-				{Value: "mongodb", Label: "MongoDB", Hint: "NoSQL document database"},
-				{Value: "mysql", Label: "MySQL / MariaDB", Hint: "Traditional SQL database"},
-				{Value: "sqlite", Label: "SQLite", Hint: "Embedded lightweight database"},
-				{Value: "none", Label: "None", Hint: "No database persistence"},
-			},
+			title:   "Select Database",
+			label:   "Database",
+			options: compatibility.BaseOptions(compatibility.StepDatabase),
 		},
 		{
-			title: "Select ORM / Query Builder",
-			label: "ORM / Tool",
-			options: []views.SelectOption{
-				{Value: "drizzle", Label: "Drizzle ORM", Hint: "Lightweight, type-safe with native SQL support"},
-				{Value: "prisma", Label: "Prisma", Hint: "Next-gen ORM with auto type generation"},
-				{Value: "sqlalchemy", Label: "SQLAlchemy / SQLModel", Hint: "Standard ORM for Python"},
-				{Value: "gorm", Label: "GORM", Hint: "Feature-rich ORM for Go"},
-				{Value: "none", Label: "None / Raw SQL", Hint: "Direct driver connection without ORM"},
-			},
+			title:   "Select ORM / Query Builder",
+			label:   "ORM / Tool",
+			options: compatibility.BaseOptions(compatibility.StepORM),
 		},
 		{
-			title: "Select Authentication Provider",
-			label: "Auth",
-			options: []views.SelectOption{
-				{Value: "better-auth", Label: "Better-Auth", Hint: "Comprehensive TypeScript-first auth"},
-				{Value: "clerk", Label: "Clerk", Hint: "Complete user management & auth suite"},
-				{Value: "none", Label: "None", Hint: "Skip authentication setup"},
-			},
+			title:   "Select Addons / Tooling",
+			label:   "Addons",
+			options: compatibility.BaseOptions(compatibility.StepAddons),
 		},
 		{
-			title: "Select Addons / Tooling",
-			label: "Addons",
-			options: []views.SelectOption{
-				{Value: "docker_cicd", Label: "Docker Compose + GitHub Actions", Hint: "Full containerization & CI/CD workflow"},
-				{Value: "docker", Label: "Docker Compose", Hint: "Local containerized services"},
-				{Value: "github_actions", Label: "GitHub Actions CI", Hint: "Automated linting and test workflows"},
-				{Value: "none", Label: "None", Hint: "No extra tooling"},
-			},
-		},
-		{
-			title: "Initialize Git Repository?",
-			label: "Git",
-			options: []views.SelectOption{
-				{Value: "yes", Label: "Yes", Hint: "Initialize a new Git repository (git init)"},
-				{Value: "no", Label: "No", Hint: "Skip Git repository initialization"},
-			},
+			title:   "Initialize Git Repository?",
+			label:   "Git",
+			options: compatibility.BaseOptions(compatibility.StepGit),
 		},
 	}
 
@@ -368,65 +349,73 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				} else {
 					m.state = stateInitManual
 					m.manualStepIdx = 0
+					firstOpts := compatibility.GetStepOptions(0, m.manualSelections)
+					m.manualCursors[0] = findFirstEnabled(firstOpts)
 				}
 			}
 
 		case stateInitManual:
-			currentStep := m.manualSteps[m.manualStepIdx]
+			currentOptions := compatibility.GetStepOptions(m.manualStepIdx, m.manualSelections)
 			cursor := m.manualCursors[m.manualStepIdx]
+			if cursor >= len(currentOptions) || currentOptions[cursor].Disabled {
+				cursor = findFirstEnabled(currentOptions)
+				m.manualCursors[m.manualStepIdx] = cursor
+			}
 
 			switch msg.String() {
 			case "up", "k":
-				if cursor > 0 {
-					m.manualCursors[m.manualStepIdx]--
-				}
+				m.manualCursors[m.manualStepIdx] = findNextEnabled(currentOptions, cursor, -1)
 			case "down", "j":
-				if cursor < len(currentStep.options)-1 {
-					m.manualCursors[m.manualStepIdx]++
-				}
+				m.manualCursors[m.manualStepIdx] = findNextEnabled(currentOptions, cursor, 1)
 			case "enter":
-				// Save current selection
-				selectedOpt := currentStep.options[m.manualCursors[m.manualStepIdx]]
-				m.manualSelections[m.manualStepIdx] = selectedOpt
+				if cursor >= 0 && cursor < len(currentOptions) && !currentOptions[cursor].Disabled {
+					selectedOpt := currentOptions[cursor]
+					m.manualSelections[m.manualStepIdx] = selectedOpt
 
-				// Advance to next step or complete configuration
-				if m.manualStepIdx < len(m.manualSteps)-1 {
-					m.manualStepIdx++
-				} else {
-					// All steps completed -> initialize project
-					initGit := m.manualSelections[7].Value == "yes"
-					m.scaffoldConfig = scaffold.ScaffoldConfig{
-						ProjectName:    m.chosenName,
-						Recipe:         "",
-						InitGit:        initGit,
-						Frontend:       m.manualSelections[0].Value,
-						Backend:        m.manualSelections[1].Value,
-						PackageManager: m.manualSelections[2].Value,
-						Database:       m.manualSelections[3].Value,
-						ORM:            m.manualSelections[4].Value,
-						Auth:           m.manualSelections[5].Value,
-						Addons:         m.manualSelections[6].Value,
+					// Advance to next step or complete configuration
+					if m.manualStepIdx < len(m.manualSteps)-1 {
+						m.manualStepIdx++
+						nextOpts := compatibility.GetStepOptions(m.manualStepIdx, m.manualSelections)
+						m.manualCursors[m.manualStepIdx] = findFirstEnabled(nextOpts)
+					} else {
+						// All steps completed -> initialize project
+						initGit := m.manualSelections[compatibility.StepGit].Value == "yes"
+						m.scaffoldConfig = scaffold.ScaffoldConfig{
+							ProjectName:    m.chosenName,
+							Recipe:         "",
+							InitGit:        initGit,
+							Frontend:       m.manualSelections[compatibility.StepFrontend].Value,
+							Backend:        m.manualSelections[compatibility.StepBackend].Value,
+							PackageManager: m.manualSelections[compatibility.StepPackageManager].Value,
+							Database:       m.manualSelections[compatibility.StepDatabase].Value,
+							ORM:            m.manualSelections[compatibility.StepORM].Value,
+							Addons:         m.manualSelections[compatibility.StepAddons].Value,
+						}
+
+						m.chosenRecipe = ""
+						m.runnerSteps = setupRunnerSteps(m.scaffoldConfig)
+						m.stepNames = make([]string, len(m.runnerSteps))
+						m.stepStatus = make([]string, len(m.runnerSteps))
+						for i, s := range m.runnerSteps {
+							m.stepNames[i] = s.name
+							m.stepStatus[i] = "pending"
+						}
+
+						m.state = stateInitRunning
+						m.currentStep = 0
+						m.stepStatus[0] = "running"
+						m.startTime = time.Now()
+						return m, tea.Batch(m.spinner.Tick, runStepCmd(0, m.chosenName, m.scaffoldConfig, m.runnerSteps[0].run))
 					}
-
-					m.chosenRecipe = ""
-					m.runnerSteps = setupRunnerSteps(m.scaffoldConfig)
-					m.stepNames = make([]string, len(m.runnerSteps))
-					m.stepStatus = make([]string, len(m.runnerSteps))
-					for i, s := range m.runnerSteps {
-						m.stepNames[i] = s.name
-						m.stepStatus[i] = "pending"
-					}
-
-					m.state = stateInitRunning
-					m.currentStep = 0
-					m.stepStatus[0] = "running"
-					m.startTime = time.Now()
-					return m, tea.Batch(m.spinner.Tick, runStepCmd(0, m.chosenName, m.scaffoldConfig, m.runnerSteps[0].run))
 				}
 
 			case "esc":
 				if m.manualStepIdx > 0 {
 					m.manualStepIdx--
+					prevOpts := compatibility.GetStepOptions(m.manualStepIdx, m.manualSelections)
+					if m.manualCursors[m.manualStepIdx] >= len(prevOpts) || prevOpts[m.manualCursors[m.manualStepIdx]].Disabled {
+						m.manualCursors[m.manualStepIdx] = findFirstEnabled(prevOpts)
+					}
 				} else {
 					m.state = stateInitMode
 				}
@@ -505,6 +494,40 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+func (m mainModel) getSummaryItems() []views.SummaryItem {
+	var summary []views.SummaryItem
+	summary = append(summary, views.SummaryItem{
+		Label: "Project name",
+		Value: m.chosenName,
+	})
+
+	if m.chosenRecipe != "" {
+		recipeLabel := views.GetRecipeLabel(m.recipeOptions, m.chosenRecipe)
+		pkgManager := m.scaffoldConfig.PackageManager
+		if pkgManager == "" {
+			pkgManager = views.GetPackageManager(m.chosenRecipe)
+		}
+		summary = append(summary, views.SummaryItem{
+			Label: "Recipe / Stack",
+			Value: recipeLabel,
+		})
+		summary = append(summary, views.SummaryItem{
+			Label: "Package Manager",
+			Value: pkgManager,
+		})
+	} else {
+		for i, step := range m.manualSteps {
+			if i < len(m.manualSelections) && m.manualSelections[i].Label != "" {
+				summary = append(summary, views.SummaryItem{
+					Label: step.label,
+					Value: m.manualSelections[i].Label,
+				})
+			}
+		}
+	}
+	return summary
+}
+
 // View delegates rendering to cmd/views
 func (m mainModel) View() string {
 	switch m.state {
@@ -527,31 +550,23 @@ func (m mainModel) View() string {
 			})
 		}
 		currentStep := m.manualSteps[m.manualStepIdx]
+		currentOptions := compatibility.GetStepOptions(m.manualStepIdx, m.manualSelections)
 		cursor := m.manualCursors[m.manualStepIdx]
-		return views.RenderManual(m.chosenName, history, currentStep.title, currentStep.options, cursor)
+		if cursor >= len(currentOptions) || currentOptions[cursor].Disabled {
+			cursor = findFirstEnabled(currentOptions)
+		}
+		return views.RenderManual(m.chosenName, history, currentStep.title, currentOptions, cursor)
 
 	case stateInitRecipe:
 		return views.RenderRecipe(m.chosenName, m.recipeOptions, m.recipeCursor)
 	case stateInitRunning:
-		pkgManager := m.scaffoldConfig.PackageManager
-		if pkgManager == "" {
-			pkgManager = views.GetPackageManager(m.chosenRecipe)
-		}
-		recipeLabel := "Manual Configuration"
-		if m.chosenRecipe != "" {
-			recipeLabel = views.GetRecipeLabel(m.recipeOptions, m.chosenRecipe)
-		}
-		return views.RenderRunning(m.chosenName, recipeLabel, pkgManager, m.stepNames, m.stepStatus, m.spinner)
+		return views.RenderRunning(m.getSummaryItems(), m.stepNames, m.stepStatus, m.spinner)
 	case stateInitDone:
 		pkgManager := m.scaffoldConfig.PackageManager
 		if pkgManager == "" {
 			pkgManager = views.GetPackageManager(m.chosenRecipe)
 		}
-		recipeLabel := "Manual Configuration"
-		if m.chosenRecipe != "" {
-			recipeLabel = views.GetRecipeLabel(m.recipeOptions, m.chosenRecipe)
-		}
-		return views.RenderDone(m.chosenName, recipeLabel, pkgManager, m.stepNames, m.stepStatus, m.elapsedTime, m.scaffoldErr)
+		return views.RenderDone(m.getSummaryItems(), m.chosenName, pkgManager, m.stepNames, m.stepStatus, m.elapsedTime, m.scaffoldErr)
 	}
 	return ""
 }

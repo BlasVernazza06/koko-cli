@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/BlasVernazza06/koko-cli/internal/compatibility"
 	kokoConfig "github.com/BlasVernazza06/koko-cli/internal/config"
 	"github.com/BlasVernazza06/koko-cli/internal/scaffold"
 	"github.com/BlasVernazza06/koko-cli/internal/validator"
@@ -67,6 +68,10 @@ var initCmd = &cobra.Command{
 				ORM:            ormFlag,
 				Auth:           authFlag,
 				InitGit:        initGit,
+			}
+			if err := compatibility.ValidateConfig(cfg); err != nil {
+				fmt.Printf("\n\033[31m✗ Incompatible stack error: %s\033[0m\n\n", err.Error())
+				os.Exit(1)
 			}
 			runManualInit(cfg)
 			return
@@ -141,6 +146,12 @@ func runManualInit(cfg scaffold.ScaffoldConfig) {
 	}
 	if cfg.Auth != "" {
 		fmt.Printf("\033[90m│\033[0m  \033[38;2;0;255;127m◆\033[0m  \033[1mAuth\033[0m             \033[90m·\033[0m  \033[38;2;167;139;250m%s\033[0m\n", cfg.Auth)
+	}
+	if cfg.Addons != "" {
+		fmt.Printf("\033[90m│\033[0m  \033[38;2;0;255;127m◆\033[0m  \033[1mAddons\033[0m           \033[90m·\033[0m  \033[38;2;167;139;250m%s\033[0m\n", cfg.Addons)
+	}
+	if cfg.InitGit {
+		fmt.Printf("\033[90m│\033[0m  \033[38;2;0;255;127m◆\033[0m  \033[1mGit\033[0m              \033[90m·\033[0m  \033[38;2;167;139;250mYes\033[0m\n")
 	}
 	fmt.Printf("\033[90m│\033[0m  \033[38;2;0;255;127m◆\033[0m  \033[1mPackage Manager\033[0m  \033[90m·\033[0m  \033[38;2;167;139;250m%s\033[0m\n", cfg.PackageManager)
 	fmt.Printf("\033[90m│\033[0m\n")

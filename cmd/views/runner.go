@@ -8,13 +8,13 @@ import (
 )
 
 // RenderRunning renders the project creation progress with spinners
-func RenderRunning(projectName, recipeName, pkgManager string, stepNames, stepStatus []string, s spinner.Model) string {
+func RenderRunning(summary []SummaryItem, stepNames, stepStatus []string, s spinner.Model) string {
 	var b strings.Builder
 	b.WriteString(fmt.Sprintf("\n%s  %s\n", TopSymbol, StyleHeader.Render("Creating a new Koko project")))
 	b.WriteString(fmt.Sprintf("%s\n", BarSymbol))
-	b.WriteString(fmt.Sprintf("%s  %s  %s  %s\n", CompletedDiamond, StylePromptTitle.Render("Project name"), DotDivider, StyleValue.Render(projectName)))
-	b.WriteString(fmt.Sprintf("%s  %s  %s  %s\n", CompletedDiamond, StylePromptTitle.Render("Recipe / Stack"), DotDivider, StyleValue.Render(recipeName)))
-	b.WriteString(fmt.Sprintf("%s  %s  %s  %s\n", CompletedDiamond, StylePromptTitle.Render("Package Manager"), DotDivider, StyleValue.Render(pkgManager)))
+	for _, item := range summary {
+		b.WriteString(fmt.Sprintf("%s  %s  %s  %s\n", CompletedDiamond, StylePromptTitle.Render(item.Label), DotDivider, StyleValue.Render(item.Value)))
+	}
 	b.WriteString(fmt.Sprintf("%s\n", BarSymbol))
 
 	for i, stepName := range stepNames {

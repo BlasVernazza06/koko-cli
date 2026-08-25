@@ -59,13 +59,25 @@ var (
 	StyleError = lipgloss.NewStyle().
 			Bold(true).
 			Foreground(lipgloss.Color("#FF4444"))
+
+	StyleDisabledItem = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#4A4A4A"))
+
+	StyleDisabledReason = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#FF6B6B")).
+				Italic(true)
 )
 
 // RenderOptions dibuja una lista de opciones con el cursor y estilo de selección
 func RenderOptions(options []SelectOption, cursor int) string {
 	var b strings.Builder
 	for i, opt := range options {
-		if i == cursor {
+		if opt.Disabled {
+			b.WriteString(fmt.Sprintf("%s  %s %s", BarSymbol, RadioInactive, StyleDisabledItem.Render(opt.Label)))
+			if opt.DisabledReason != "" {
+				b.WriteString(fmt.Sprintf("  %s", StyleDisabledReason.Render("("+opt.DisabledReason+")")))
+			}
+		} else if i == cursor {
 			b.WriteString(fmt.Sprintf("%s  %s %s", BarSymbol, RadioActive, StyleActiveItem.Render(opt.Label)))
 			if opt.Hint != "" {
 				b.WriteString(fmt.Sprintf("  %s", StyleHint.Render(opt.Hint)))
