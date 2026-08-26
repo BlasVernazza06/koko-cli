@@ -1,0 +1,26 @@
+{
+  "name": "koko-cli",
+  "version": "2.0.0",
+  "description": "Interactive CLI wizard to bootstrap production-ready monorepos",
+  "main": "index.js",
+  "bin": {
+    "koko": "./index.js"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "keywords": [
+    "cli",
+    "scaffold",
+    "init",
+    "monorepo",
+    "go",
+    "bubbletea"
+  ],
+  "author": "Blas Vernazza",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BlasVernazza06/koko-cli.git"
+  }
+}
