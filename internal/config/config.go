@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/BlasVernazza06/koko-cli/internal/scaffold"
+	"github.com/BlasVernazza06/koko-cli/internal/vfs"
 )
 
 const CLIVersion = "v1.0"
@@ -70,7 +71,8 @@ type Infrastructure struct {
 	CICD          string `json:"ciCd"` // "github-actions", "gitlab-ci", "none"
 }
 
-func GenerateConfig(targetDir string, scaffoldCfg scaffold.ScaffoldConfig) error {
+// BuildKokoConfig construye la estructura de configuración tipada a partir de ScaffoldConfig.
+func BuildKokoConfig(scaffoldCfg scaffold.ScaffoldConfig) KokoConfig {
 	pm := scaffoldCfg.PackageManager
 	if pm == "" {
 		pm = determinePackageManager(scaffoldCfg.Recipe)
@@ -218,7 +220,18 @@ func GenerateConfig(targetDir string, scaffoldCfg scaffold.ScaffoldConfig) error
 		}
 	}
 
-	// Marshal JSON with indents
+	return config
+}
+
+// GenerateConfigToVFS genera koko.config.json directamente en el Virtual File System.
+func GenerateConfigToVFS(v *vfs.VFS, scaffoldCfg scaffold.ScaffoldConfig) error {
+	config := BuildKokoConfig(scaffoldCfg)
+	return v.WriteJSON("koko.config.json", config, "  ")
+}
+
+// GenerateConfig genera el archivo directamente en disco (legacy / standalone).
+func GenerateConfig(targetDir string, scaffoldCfg scaffold.ScaffoldConfig) error {
+	config := BuildKokoConfig(scaffoldCfg)
 	data, err := json.MarshalIndent(config, "", "  ")
 	if err != nil {
 		return err

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/BlasVernazza06/koko-cli/cmd/views"
+	"github.com/BlasVernazza06/koko-cli/internal/errors"
 	"github.com/BlasVernazza06/koko-cli/internal/scaffold"
 )
 
@@ -224,30 +225,30 @@ func ValidateConfig(cfg scaffold.ScaffoldConfig) error {
 
 	// 1. Both frontend and backend empty/none
 	if (frontend == "none" || frontend == "") && (backend == "none" || backend == "") {
-		return fmt.Errorf("invalid configuration: project cannot have both Frontend and Backend as 'none'")
+		return errors.NewValidationError("No se puede crear un proyecto con Frontend y Backend configurados como 'none'", "Selecciona al menos un Frontend o un Backend para tu proyecto")
 	}
 
 	// 2. Client-side SPA with no backend connecting to database
 	if (backend == "none" || backend == "") && (frontend == "react" || frontend == "svelte") {
 		if db != "none" && db != "" {
-			return fmt.Errorf("incompatible configuration: client-side SPA (%s) with no backend cannot connect directly to database '%s'", frontend, db)
+			return errors.NewValidationError(fmt.Sprintf("Una aplicación SPA cliente (%s) sin backend no puede conectarse directamente a la base de datos '%s'", frontend, db), "Agrega un backend (como Express, Hono o FastAPI) o usa un framework fullstack (como Next.js o Nuxt)")
 		}
 	}
 
 	// 3. Database vs ORM
 	if (db == "none" || db == "") && orm != "none" && orm != "" {
-		return fmt.Errorf("incompatible configuration: ORM '%s' selected but database is 'none'", orm)
+		return errors.NewValidationError(fmt.Sprintf("Se seleccionó el ORM '%s' pero no se eligió ninguna base de datos", orm), "Selecciona una base de datos compatible o marca el ORM como 'none'")
 	}
 
 	if db == "mongodb" {
 		if orm == "drizzle" || orm == "sqlalchemy" || orm == "gorm" {
-			return fmt.Errorf("incompatible configuration: '%s' is a SQL ORM and cannot be used with MongoDB", orm)
+			return errors.NewValidationError(fmt.Sprintf("'%s' es un ORM SQL y no es compatible con MongoDB", orm), "Para MongoDB utiliza 'Mongoose' o 'none'")
 		}
 	}
 
 	if db == "postgres" || db == "mysql" || db == "sqlite" {
 		if orm == "moongose" || orm == "mongoose" {
-			return fmt.Errorf("incompatible configuration: Mongoose is a MongoDB ODM and cannot be used with SQL database '%s'", db)
+			return errors.NewValidationError(fmt.Sprintf("Mongoose es exclusivo para MongoDB y no funciona con '%s'", db), "Para bases de datos relacionales SQL utiliza 'Drizzle' o 'Prisma'")
 		}
 	}
 
@@ -258,19 +259,19 @@ func ValidateConfig(cfg scaffold.ScaffoldConfig) error {
 
 	if isPython {
 		if orm == "drizzle" || orm == "prisma" || orm == "moongose" || orm == "mongoose" || orm == "gorm" {
-			return fmt.Errorf("incompatible configuration: ORM '%s' is not supported in Python / FastAPI backend", orm)
+			return errors.NewValidationError(fmt.Sprintf("El ORM '%s' no es compatible con el backend Python / FastAPI", orm), "Para Python utiliza 'SQLAlchemy' o 'none'")
 		}
 	}
 
 	if isGo {
 		if orm == "drizzle" || orm == "prisma" || orm == "moongose" || orm == "mongoose" || orm == "sqlalchemy" {
-			return fmt.Errorf("incompatible configuration: ORM '%s' is not supported in Go backend", orm)
+			return errors.NewValidationError(fmt.Sprintf("El ORM '%s' no es compatible con el backend Go", orm), "Para Go utiliza 'GORM' o 'none'")
 		}
 	}
 
 	if isNode {
 		if orm == "sqlalchemy" || orm == "gorm" {
-			return fmt.Errorf("incompatible configuration: ORM '%s' is not supported in Node.js / TypeScript backend", orm)
+			return errors.NewValidationError(fmt.Sprintf("El ORM '%s' no es compatible con el ecosistema Node.js / TypeScript", orm), "Para TypeScript utiliza 'Drizzle', 'Prisma' o 'Mongoose'")
 		}
 	}
 

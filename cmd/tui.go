@@ -16,6 +16,7 @@ import (
 	kokoConfig "github.com/BlasVernazza06/koko-cli/internal/config"
 	"github.com/BlasVernazza06/koko-cli/internal/scaffold"
 	"github.com/BlasVernazza06/koko-cli/internal/validator"
+	"github.com/BlasVernazza06/koko-cli/internal/vfs"
 )
 
 type sessionState int
@@ -215,17 +216,28 @@ func (m mainModel) Init() tea.Cmd {
 }
 
 func setupRunnerSteps(cfg scaffold.ScaffoldConfig) []runnerStep {
+	var cachedVFS *vfs.VFS
+
 	steps := []runnerStep{
 		{
-			name: "Scaffolding directories and copying templates...",
+			name: "Generating templates and configuration in memory...",
 			run: func(p string, c scaffold.ScaffoldConfig) error {
-				return scaffold.CopyTemplates(p, c)
+				var err error
+				cachedVFS, err = scaffold.GenerateVFS(c)
+				return err
 			},
 		},
 		{
-			name: "Generating Docker and Database configuration...",
+			name: "Writing files safely to disk...",
 			run: func(p string, c scaffold.ScaffoldConfig) error {
-				return scaffold.GenerateDockerAndDB(p, c)
+				if cachedVFS == nil {
+					var err error
+					cachedVFS, err = scaffold.GenerateVFS(c)
+					if err != nil {
+						return err
+					}
+				}
+				return scaffold.WriteTree(cachedVFS, p)
 			},
 		},
 	}

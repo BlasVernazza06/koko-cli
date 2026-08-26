@@ -27,10 +27,10 @@
 
 Here is Koko CLI in action, generating a fully configured monorepo using the step-by-step TUI wizard:
 
-![Koko CLI Terminal Walkthrough](demo.gif)
+<video src="demo.mp4" autoplay loop muted playsinline controls class="d-block rounded-2 border width-fit" style="max-height:640px; width: 100%;"></video>
 
 > [!TIP]
-> **Want to record your own demo?** Install [vhs](https://github.com/charmbracelet/vhs) and run `vhs demo.tape` from the root of this repository to generate a fresh `demo.gif` automatically!
+> **Want to record your own demo?** Install [vhs](https://github.com/charmbracelet/vhs) and run `vhs demo.tape` from the root of this repository to generate a fresh `demo.mp4` automatically!
 
 ---
 

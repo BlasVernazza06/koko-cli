@@ -99,14 +99,14 @@ func TestManualTemplatesCompleteness(t *testing.T) {
 
 	// 5. Check packages, docker, github
 	shared := []string{
-		"manual/packages/typescript-config/package.json",
-		"manual/packages/typescript-config/base.json",
-		"manual/packages/typescript-config/nextjs.json",
-		"manual/packages/typescript-config/react-library.json",
-		"manual/packages/eslint-config/package.json",
-		"manual/packages/eslint-config/base.js",
-		"manual/packages/eslint-config/next.js",
-		"manual/packages/eslint-config/react-internal.js",
+		"manual/root/packages/typescript-config/package.json",
+		"manual/root/packages/typescript-config/base.json",
+		"manual/root/packages/typescript-config/nextjs.json",
+		"manual/root/packages/typescript-config/react-library.json",
+		"manual/root/packages/eslint-config/package.json",
+		"manual/root/packages/eslint-config/base.js",
+		"manual/root/packages/eslint-config/next.js",
+		"manual/root/packages/eslint-config/react-internal.js",
 		"manual/docker/docker-compose.yml",
 		"manual/github/ci.yml",
 	}
@@ -136,6 +136,12 @@ func TestScaffoldManualNextjsExpressPostgresDrizzle(t *testing.T) {
 	err := RunScaffold(targetDir, cfg)
 	if err != nil {
 		t.Fatalf("RunScaffold failed: %v", err)
+	}
+
+	// Verify apps/.gitkeep is removed
+	gitkeepPath := filepath.Join(targetDir, "apps", ".gitkeep")
+	if _, err := os.Stat(gitkeepPath); !os.IsNotExist(err) {
+		t.Errorf("Expected apps/.gitkeep to be removed, but it exists: %s", gitkeepPath)
 	}
 
 	// Verify Root Monorepo files

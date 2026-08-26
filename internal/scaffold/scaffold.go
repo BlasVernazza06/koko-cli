@@ -28,16 +28,22 @@ type ScaffoldConfig struct {
 	Addons         string
 }
 
+// RunScaffold genera el proyecto en memoria (VFS), escribe los archivos
+// atómicamente en disco e inicializa Git si fue solicitado.
 func RunScaffold(targetDir string, config ScaffoldConfig) error {
-	if err := CopyTemplates(targetDir, config); err != nil {
+	virtualFS, err := GenerateVFS(config)
+	if err != nil {
 		return err
 	}
-	if err := GenerateDockerAndDB(targetDir, config); err != nil {
+
+	if err := WriteTree(virtualFS, targetDir); err != nil {
 		return err
 	}
+
 	if config.InitGit {
 		return InitGit(targetDir)
 	}
+
 	return nil
 }
 
@@ -132,6 +138,13 @@ func walkAndCopy(targetDir string, config ScaffoldConfig, filterFn func(string) 
 		return nil
 	})
 
+	if err == nil {
+		hasApps := (config.Frontend != "" && config.Frontend != "none") || (config.Backend != "" && config.Backend != "none")
+		if hasApps {
+			_ = os.Remove(filepath.Join(targetDir, "apps", ".gitkeep"))
+		}
+	}
+
 	return err
 }
 
@@ -167,6 +180,11 @@ func evaluatePath(path string, config ScaffoldConfig) (string, bool) {
 
 	// Monorepo root files -> root
 	if strings.HasPrefix(rel, "manual/root/") {
+		if rel == "manual/root/apps/.gitkeep" {
+			if (config.Frontend != "" && config.Frontend != "none") || (config.Backend != "" && config.Backend != "none") {
+				return "", false
+			}
+		}
 		dest := strings.TrimPrefix(rel, "manual/root/")
 		return dest, true
 	}
