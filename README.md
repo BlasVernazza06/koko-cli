@@ -4,14 +4,13 @@
 
 ### *Grab your stack, structure your project, and start building instantly.*
 
-[![npm version](https://img.shields.io/npm/v/koko-cli?color=33cd5f&style=flat-flat)](https://www.npmjs.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 </div>
 
 ---
 
-**Koko CLI** (guided by your faithful scaffolding assistant 🦾) is an ultra-fast interactive terminal initializer written in Go. Forget about manually setting up complex TypeScript templates, monorepo workspaces, databases, or Docker containers. Koko lets you pick your ideal production recipe and structures your project ready for development in seconds, 100% offline.
+**Koko CLI** is an ultra-fast interactive terminal project initializer written in Go. Forget about manually setting up complex TypeScript configurations, monorepo workspaces, databases, or Docker containers. Koko lets you pick your ideal production recipe or design a custom stack step-by-step, generating your files in milliseconds.
 
 ```text
      .---.   .---.
@@ -19,95 +18,106 @@
    |  (o)     (o)  |     | |/ / __ \| |/ / __ \
    |     (..)      |     | ' / /  | | ' / /  | |
     \   (____)    /      | . \ \__| | . \ \__| |
-     '-----------'       |_|\_\____/|_|\_\____/  v1.0.0
+     '-----------'       |_|\_\____/|_|\_\____/  v2.0.0
 ```
+
+---
+
+## 📺 Demo walkthrough
+
+Here is Koko CLI in action, generating a fully configured monorepo using the step-by-step TUI wizard:
+
+![Koko CLI Terminal Walkthrough](demo.gif)
+
+> [!TIP]
+> **Want to record your own demo?** Install [vhs](https://github.com/charmbracelet/vhs) and run `vhs demo.tape` from the root of this repository to generate a fresh `demo.gif` automatically!
 
 ---
 
 ## ✨ Key Features
 
-*   🎨 **Premium Visual Experience**: Interactive, animated TUI built with Bubble Tea and Lipgloss.
-*   🚀 **Instant Scaffolding**: Physical disk unpacking and structuring in milliseconds.
-*   📦 **Production Recipes**: Bootstrapping with ready-to-use, optimized setups (e.g. SaaS Starter with auth and DB).
-*   🐳 **Monorepo & Infrastructure**: Automatic configuration of pnpm/npm workspaces, linters, TypeScript, and local Docker Compose containers.
+* 🎨 **Premium Interactive TUI**: Beautiful terminal interface built with Bubble Tea and Lipgloss featuring real-time spinner animations.
+* 📦 **Flexible Init Modes**: Choose **Quick Setup** for pre-configured production recipes or **Manual Configuration** to build your stack piece-by-piece.
+* 🛡️ **Cross-Validation Safety Rules**: Smart validation checks prevent generating incompatible tech combinations (e.g. blocking Go Fiber with Prisma ORM or Node-only drivers with Python) in real-time.
+* 🐳 **Monorepo Architecture out-of-the-box**: Automatically setups workspaces, Shared TypeScript configs, ESLint/Prettier, local Docker Compose files, and CI/CD pipelines.
 
 ---
 
-## 🛠️ Supported Technology Stack (v1.0.0)
+## 🛠️ Supported Technology Stack (v2.0.0)
 
-| Frontend 💻 | Backend 🔌 | Infrastructure 🐳 | Database & ORM 🗄️ |
-| :--- | :--- | :--- | :--- |
-| **Next.js** (App Router, TS) | **Node.js Express** (TS) | **Docker Compose** | **PostgreSQL** (Drizzle / Prisma) |
-| **React** (Vite SPA, TS) | **Go Fiber** (REST API) | **pnpm Workspaces** | **MySQL** (Drizzle / Prisma / SQLx) |
-| **Vue.js** (Vite, TS) | **Hono** (Node.js Server) | **ESLint & Prettier** | **MongoDB** (Mongoose) |
+Koko supports a diverse set of technologies, frameworks, and databases:
+
+### 📦 1. Quick Setup Recipes
+* ⚡ **SaaS Starter:** Next.js + Drizzle ORM + Better-Auth + Docker Compose + Stripe.
+* 💻 **MERN Stack:** React (Vite) + Express + MongoDB.
+* 🚀 **PERN Stack:** React (Vite) + Express + PostgreSQL.
+* 🐍 **FastAPI + React:** Python FastAPI + React (Vite) SPA.
+
+### ⚙️ 2. Manual Configuration Options
+
+| Layer | Supported Technologies |
+| :--- | :--- |
+| **Frontend Framework** | `Next.js` (App Router) • `React (Vite)` • `Nuxt (Vue)` • `Svelte` • `None` |
+| **Backend Runtime** | `Node.js Express` • `NestJS` • `Hono` • `Go Chi Router` • `Python FastAPI` • `None` |
+| **Database Server** | `PostgreSQL` • `MySQL` • `MongoDB` • `SQLite` • `None` |
+| **ORM / Query Builder** | `Drizzle ORM` • `Prisma` • `Mongoose` • `GORM (Go)` • `SQLAlchemy / SQLModel (Python)` • `None` |
+| **Package Managers** | `pnpm` • `npm` • `bun` • `Go Modules` • `pip (Python)` |
+| **Addons & Tooling** | `Docker Compose` • `GitHub Actions CI` • `None` |
 
 ---
 
 ## 🚀 Quick Start
 
-### Run Directly (Without Installing)
-The fastest way to start a new project is with `npx`:
+### Run Directly via Node/NPX
+You can run the CLI immediately without manual setup:
 ```bash
 npx koko-cli init
 ```
 
-### 🛠️ Local Development & Build (Go)
-If running or modifying the CLI from source:
+### Download Native Binary (Go)
+Download the pre-compiled executable matching your operating system directly from our **GitHub Releases** page and run it:
 ```bash
-# Build binary
-go build -o koko.exe main.go
+# Windows
+koko.exe init
 
-# Run interactive assistant
-./koko.exe init
+# macOS / Linux
+chmod +x koko
+./koko init
 ```
 
 ---
 
-## 💻 Terminal Flow
+## 📁 Generated Repository Layout
 
-When started, **Koko** guides you with interactive progress indicators:
-
-```bash
-  ◇ Scaffolding directories and copying templates...  ✓
-  ◇ Generating Docker and Database configuration...   ✓
-  ◇ Initializing Git repository...                    ✓
-  ◇ Creating koko.config.json manifest...             ✓
-
-✨ Project 'my-app' created successfully in 2.45s!
-```
-
----
-
-## 📁 Generated Repository Structure
-
-Depending on your choices, Koko structures a unified modular monorepo architecture:
+Manual configurations structure a clean monorepo using pnpm/npm workspaces:
 
 ```text
-my-app/
+my-koko-app/
 ├── apps/
-│   ├── frontend/         # Frontend application (e.g., Next.js)
-│   └── backend/          # API server (e.g., Express / Go Fiber)
+│   ├── web/              # Frontend application (Next.js, React, etc.)
+│   └── api/              # Backend server (Express, Go Chi, FastAPI, etc.)
 ├── packages/
-│   └── db/               # Schemas and connection client (Prisma / Drizzle)
-├── docker-compose.yml    # Local PostgreSQL / MySQL container
-├── koko.config.json      # Koko configuration manifest
-├── package.json          # Root package with configured workspaces
+│   └── db/               # Shared DB connection client (Prisma / Drizzle)
+├── docker-compose.yml    # Local Database container setup
+├── koko.config.json      # Koko workspace configuration manifest
+├── package.json          # Root configuration with workspaces
+├── turbo.json            # Turborepo pipeline configuration
 └── README.md
 ```
 
 ---
 
-## ⚙️ Configuration Manifest (koko.config.json)
+## ⚙️ Configuration Manifest (`koko.config.json`)
 
-When initializing a project, a `koko.config.json` file is generated at the root, acting as the single source of truth for the stack and enabling "Day 2" additions (e.g., via `koko add`):
+On initialization, Koko outputs a manifest file at the root, capturing the active stack. This configuration drives future workspace operations:
 
 ```json
 {
   "$schema": "https://koko-cli.dev/schema.json",
   "project": {
     "name": "my-super-app",
-    "cliVersion": "v1.0.0",
-    "createdAt": "2026-08-20T20:50:00Z"
+    "cliVersion": "v2.0.0",
+    "createdAt": "2026-08-25T20:50:00Z"
   },
   "architecture": {
     "layout": "monorepo",
@@ -115,27 +125,22 @@ When initializing a project, a `koko.config.json` file is generated at the root,
   },
   "stack": {
     "frontend": {
-      "framework": "next",
-      "language": "typescript",
-      "styling": "tailwindcss"
+      "framework": "nextjs",
+      "language": "typescript"
     },
     "backend": {
-      "framework": "express",
-      "language": "typescript"
+      "framework": "go_chi",
+      "language": "go"
     },
     "database": {
       "provider": "postgres",
-      "orm": "prisma"
+      "orm": "drizzle"
     }
   },
   "features": {
-    "auth": {
-      "provider": "better-auth",
-      "status": "installed"
-    },
     "infrastructure": {
       "dockerCompose": true,
-      "ciCd": "github-actions"
+      "ciCd": "github_actions"
     }
   }
 }
@@ -145,11 +150,8 @@ When initializing a project, a `koko.config.json` file is generated at the root,
 
 ## 🤝 Contributing
 
-Contributions are welcome! Check our [Contributing Guide](CONTRIBUTING.md) to learn how to clone the repository, set up your local environment, and submit Pull Requests.
-
----
+Contributions are welcome! Please check out our [Contributing Guide](CONTRIBUTING.md) to get started.
 
 ## 📄 License
 
 This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
-
