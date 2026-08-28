@@ -40,6 +40,7 @@ Here is Koko CLI in action, generating a fully configured monorepo using the ste
 * 📦 **Flexible Init Modes**: Choose **Quick Setup** for pre-configured production recipes or **Manual Configuration** to build your stack piece-by-piece.
 * 🛡️ **Cross-Validation Safety Rules**: Smart validation checks prevent generating incompatible tech combinations (e.g. blocking Go Fiber with Prisma ORM or Node-only drivers with Python) in real-time.
 * 🐳 **Monorepo Architecture out-of-the-box**: Automatically setups workspaces, Shared TypeScript configs, ESLint/Prettier, local Docker Compose files, and CI/CD pipelines.
+* 🗃️ **Master Dependency Catalog**: Centrally manages package versions across all templates to guarantee reproducible builds and instant version upgrades.
 
 ---
 
