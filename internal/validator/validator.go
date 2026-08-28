@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/BlasVernazza06/koko-cli/internal/errors"
 )
 
 var (
@@ -50,31 +52,31 @@ var (
 func ValidateProjectName(name string) error {
 	trimmed := strings.TrimSpace(name)
 	if trimmed == "" {
-		return fmt.Errorf("project name cannot be empty")
+		return errors.NewValidationError("El nombre del proyecto no puede estar vacío", "Escribe un nombre, por ejemplo: 'mi-app' o 'my-saas'")
 	}
 
 	if len(trimmed) > 214 {
-		return fmt.Errorf("project name must be 214 characters or less")
+		return errors.NewValidationError("El nombre del proyecto no puede superar los 214 caracteres", "Elige un nombre más corto y descriptivo")
 	}
 
 	if strings.ContainsAny(trimmed, " \t\n\r") {
-		return fmt.Errorf("project name cannot contain spaces")
+		return errors.NewValidationError("El nombre del proyecto no puede contener espacios", fmt.Sprintf("Usa guiones medios en su lugar: '%s'", strings.ReplaceAll(trimmed, " ", "-")))
 	}
 
 	if strings.ToLower(trimmed) != trimmed {
-		return fmt.Errorf("project name must be lowercase (e.g. '%s')", strings.ToLower(trimmed))
+		return errors.NewValidationError("El nombre del proyecto debe estar en minúsculas", fmt.Sprintf("Usa: '%s'", strings.ToLower(trimmed)))
 	}
 
 	if strings.HasPrefix(trimmed, ".") || strings.HasPrefix(trimmed, "_") {
-		return fmt.Errorf("project name cannot start with a dot '.' or underscore '_'")
+		return errors.NewValidationError("El nombre no puede comenzar con un punto '.' o guion bajo '_'", "Comienza con una letra o número (ej: 'app-web')")
 	}
 
 	if !validNameRegex.MatchString(trimmed) {
-		return fmt.Errorf("project name can only contain lowercase letters, numbers, hyphens (-), underscores (_), and dots (.)")
+		return errors.NewValidationError("El nombre contiene caracteres especiales no permitidos", "Usa únicamente letras minúsculas, números, guiones (-) y puntos (.)")
 	}
 
 	if reservedNames[strings.ToLower(trimmed)] {
-		return fmt.Errorf("'%s' is a reserved name and cannot be used", trimmed)
+		return errors.NewValidationError(fmt.Sprintf("'%s' es un nombre reservado por el sistema", trimmed), "Elige otro nombre para tu proyecto (ej: 'mi-"+trimmed+"')")
 	}
 
 	return nil
@@ -84,7 +86,7 @@ func ValidateProjectName(name string) error {
 func ValidateTargetDir(dirPath string) error {
 	trimmed := strings.TrimSpace(dirPath)
 	if trimmed == "" {
-		return fmt.Errorf("target directory path cannot be empty")
+		return errors.NewValidationError("La ruta del directorio de destino no puede estar vacía", "Especifica un directorio válido")
 	}
 
 	info, err := os.Stat(trimmed)
@@ -92,21 +94,21 @@ func ValidateTargetDir(dirPath string) error {
 		if os.IsNotExist(err) {
 			return nil // Directory doesn't exist, which is ideal
 		}
-		return fmt.Errorf("unable to inspect directory '%s': %w", trimmed, err)
+		return errors.NewValidationError(fmt.Sprintf("No se pudo inspeccionar el directorio '%s'", trimmed), "Verifica los permisos de lectura en la carpeta actual")
 	}
 
 	if !info.IsDir() {
-		return fmt.Errorf("a file named '%s' already exists", trimmed)
+		return errors.NewValidationError(fmt.Sprintf("Ya existe un archivo llamado '%s'", trimmed), "Elige otro nombre o elimina el archivo existente")
 	}
 
 	// Check if directory is empty
 	entries, err := os.ReadDir(trimmed)
 	if err != nil {
-		return fmt.Errorf("unable to read directory '%s': %w", trimmed, err)
+		return errors.NewValidationError(fmt.Sprintf("No se pudo leer el contenido de '%s'", trimmed), "Verifica los permisos de lectura")
 	}
 
 	if len(entries) > 0 {
-		return fmt.Errorf("directory '%s' already exists and is not empty", filepath.Base(trimmed))
+		return errors.NewValidationError(fmt.Sprintf("El directorio '%s' ya existe y no está vacío", filepath.Base(trimmed)), "Elige un directorio nuevo o vacía la carpeta antes de continuar")
 	}
 
 	return nil

@@ -1,6 +1,6 @@
-# Tape file for Charm VHS - generates the terminal walkthrough GIF
-# Output path
-Output demo.gif
+# Tape file for Charm VHS - generates the terminal walkthrough video
+# Output path (outputs a high-quality, lightweight MP4)
+Output demo.mp4
 
 # Set terminal configurations
 Set Shell "powershell"

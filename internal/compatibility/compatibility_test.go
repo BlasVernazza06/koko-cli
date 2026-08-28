@@ -57,6 +57,27 @@ func TestGetStepOptions_PackageManager(t *testing.T) {
 	}
 }
 
+func TestGetStepOptions_Database_ClientSPA(t *testing.T) {
+	// React SPA without backend: All databases except none must be disabled
+	selections := []views.SelectOption{
+		{Value: "react"},
+		{Value: "none"},
+		{Value: "pnpm"},
+	}
+	opts := GetStepOptions(StepDatabase, selections)
+	for _, opt := range opts {
+		if opt.Value == "none" {
+			if opt.Disabled {
+				t.Errorf("Expected database 'none' to be enabled for SPA without backend")
+			}
+		} else {
+			if !opt.Disabled {
+				t.Errorf("Expected database '%s' to be disabled for SPA without backend", opt.Value)
+			}
+		}
+	}
+}
+
 func TestGetStepOptions_ORM_DatabaseNone(t *testing.T) {
 	// If Database == "none", all ORMs except none must be disabled
 	selections := []views.SelectOption{
@@ -165,10 +186,82 @@ func TestValidateConfig(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "valid fullstack nuxt + prisma + mysql",
+			cfg: scaffold.ScaffoldConfig{
+				Frontend: "nuxt",
+				Backend:  "none",
+				Database: "mysql",
+				ORM:      "prisma",
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid react + express + postgres + drizzle",
+			cfg: scaffold.ScaffoldConfig{
+				Frontend: "react",
+				Backend:  "express",
+				Database: "postgres",
+				ORM:      "drizzle",
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid pure python fastapi + postgres + sqlalchemy",
+			cfg: scaffold.ScaffoldConfig{
+				Frontend:       "none",
+				Backend:        "fastapi",
+				PackageManager: "pip",
+				Database:       "postgres",
+				ORM:            "sqlalchemy",
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid pure go go_chi + sqlite + gorm",
+			cfg: scaffold.ScaffoldConfig{
+				Frontend:       "none",
+				Backend:        "go_chi",
+				PackageManager: "go_mod",
+				Database:       "sqlite",
+				ORM:            "gorm",
+			},
+			wantErr: false,
+		},
+		{
 			name: "invalid none + none",
 			cfg: scaffold.ScaffoldConfig{
 				Frontend: "none",
 				Backend:  "none",
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid react spa without backend with postgres db",
+			cfg: scaffold.ScaffoldConfig{
+				Frontend: "react",
+				Backend:  "none",
+				Database: "postgres",
+				ORM:      "drizzle",
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid svelte spa without backend with mongodb",
+			cfg: scaffold.ScaffoldConfig{
+				Frontend: "svelte",
+				Backend:  "none",
+				Database: "mongodb",
+				ORM:      "moongose",
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid db none with orm drizzle",
+			cfg: scaffold.ScaffoldConfig{
+				Frontend: "nextjs",
+				Backend:  "none",
+				Database: "none",
+				ORM:      "drizzle",
 			},
 			wantErr: true,
 		},
@@ -211,6 +304,52 @@ func TestValidateConfig(t *testing.T) {
 				ORM:      "sqlalchemy",
 			},
 			wantErr: true,
+		},
+		{
+			name: "invalid pure go with pnpm package manager",
+			cfg: scaffold.ScaffoldConfig{
+				Frontend:       "none",
+				Backend:        "go_chi",
+				PackageManager: "pnpm",
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid pure python with bun package manager",
+			cfg: scaffold.ScaffoldConfig{
+				Frontend:       "none",
+				Backend:        "fastapi",
+				PackageManager: "bun",
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid better-auth on pure go backend",
+			cfg: scaffold.ScaffoldConfig{
+				Frontend:       "none",
+				Backend:        "go_chi",
+				PackageManager: "go_mod",
+				Auth:           "better-auth",
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid next-auth on react spa",
+			cfg: scaffold.ScaffoldConfig{
+				Frontend: "react",
+				Backend:  "express",
+				Auth:     "next-auth",
+			},
+			wantErr: true,
+		},
+		{
+			name: "valid better-auth on nextjs",
+			cfg: scaffold.ScaffoldConfig{
+				Frontend: "nextjs",
+				Backend:  "none",
+				Auth:     "better-auth",
+			},
+			wantErr: false,
 		},
 	}
 

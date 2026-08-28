@@ -5,10 +5,11 @@ import (
 	"strings"
 
 	"github.com/BlasVernazza06/koko-cli/cmd/views"
+	"github.com/BlasVernazza06/koko-cli/internal/errors"
 	"github.com/BlasVernazza06/koko-cli/internal/scaffold"
 )
 
-// Step indices
+// Step indices for interactive TUI wizard
 const (
 	StepFrontend = iota
 	StepBackend
@@ -19,6 +20,58 @@ const (
 	StepGit
 )
 
+// Classification Predicates
+
+// IsFullstackFrontend returns true if the frontend framework has native server capabilities (SSR / Server Actions).
+func IsFullstackFrontend(frontend string) bool {
+	f := strings.ToLower(frontend)
+	return f == "nextjs" || f == "nuxt"
+}
+
+// IsClientSPA returns true if the frontend is a pure client-side Single Page Application.
+func IsClientSPA(frontend string) bool {
+	f := strings.ToLower(frontend)
+	return f == "react" || f == "svelte"
+}
+
+// IsNodeBackend returns true if the backend framework belongs to Node.js / TypeScript.
+func IsNodeBackend(backend string) bool {
+	b := strings.ToLower(backend)
+	return b == "express" || b == "nestjs" || b == "hono"
+}
+
+// IsPythonBackend returns true if the backend is Python-based.
+func IsPythonBackend(backend string) bool {
+	return strings.ToLower(backend) == "fastapi"
+}
+
+// IsGoBackend returns true if the backend is Go-based.
+func IsGoBackend(backend string) bool {
+	return strings.ToLower(backend) == "go_chi"
+}
+
+// IsNodeEcosystem returns true if the project contains a Node.js/TS server runtime.
+func IsNodeEcosystem(frontend, backend string) bool {
+	if IsNodeBackend(backend) {
+		return true
+	}
+	if (backend == "none" || backend == "") && IsFullstackFrontend(frontend) {
+		return true
+	}
+	return false
+}
+
+// IsSQLDatabase returns true if the database is a relational SQL engine.
+func IsSQLDatabase(db string) bool {
+	d := strings.ToLower(db)
+	return d == "postgres" || d == "mysql" || d == "sqlite"
+}
+
+// IsNoSQLDatabase returns true if the database is document-based / NoSQL.
+func IsNoSQLDatabase(db string) bool {
+	return strings.ToLower(db) == "mongodb"
+}
+
 // BaseOptions returns default template options for a given step.
 func BaseOptions(stepIdx int) []views.SelectOption {
 	switch stepIdx {
@@ -26,7 +79,7 @@ func BaseOptions(stepIdx int) []views.SelectOption {
 		return []views.SelectOption{
 			{Value: "nextjs", Label: "Next.js", Hint: "React framework with SSR & Server Components"},
 			{Value: "react", Label: "React + Vite", Hint: "Ultra-fast Single Page Application"},
-			{Value: "nuxt", Label: "Nuxt", Hint: "Vue full-stack framework"},
+			{Value: "nuxt", Label: "Nuxt", Hint: "Vue full-stack framework with Nitro engine"},
 			{Value: "svelte", Label: "Svelte", Hint: "Cybernetically enhanced web apps"},
 			{Value: "none", Label: "None", Hint: "Backend / REST API only"},
 		}
@@ -37,7 +90,7 @@ func BaseOptions(stepIdx int) []views.SelectOption {
 			{Value: "go_chi", Label: "Go / Chi Router", Hint: "High performance with strict types"},
 			{Value: "nestjs", Label: "NestJS", Hint: "Enterprise modular architecture with TypeScript"},
 			{Value: "hono", Label: "Hono", Hint: "Ultrafast web framework"},
-			{Value: "none", Label: "None", Hint: "No dedicated backend (Server Actions or BaaS)"},
+			{Value: "none", Label: "None", Hint: "No dedicated backend (Fullstack Server Actions or BaaS)"},
 		}
 	case StepPackageManager:
 		return []views.SelectOption{
@@ -126,11 +179,11 @@ func GetStepOptions(stepIdx int, currentSelections []views.SelectOption) []views
 
 	case StepDatabase:
 		// Rule 2: Client-side SPAs (React + Vite, Svelte) without a backend cannot directly connect to DB servers
-		if backend == "none" && (frontend == "react" || frontend == "svelte") {
+		if backend == "none" && IsClientSPA(frontend) {
 			for i := range options {
-				if options[i].Value == "postgres" || options[i].Value == "mongodb" || options[i].Value == "mysql" || options[i].Value == "sqlite" {
+				if options[i].Value != "none" {
 					options[i].Disabled = true
-					options[i].DisabledReason = "Incompatible: Client-side SPAs cannot connect directly to DBs without a backend"
+					options[i].DisabledReason = fmt.Sprintf("Incompatible: Client-side SPA (%s) cannot connect directly to DBs without a backend", frontend)
 				}
 			}
 		}
@@ -147,39 +200,39 @@ func GetStepOptions(stepIdx int, currentSelections []views.SelectOption) []views
 			return options
 		}
 
-		isNodeOrTS := isNodeEcosystem(frontend, backend)
-		isPython := backend == "fastapi"
-		isGo := backend == "go_chi"
+		isNode := IsNodeEcosystem(frontend, backend)
+		isPython := IsPythonBackend(backend)
+		isGo := IsGoBackend(backend)
 
 		for i := range options {
 			val := options[i].Value
 			switch val {
 			case "moongose":
-				if db != "mongodb" {
+				if !IsNoSQLDatabase(db) {
 					options[i].Disabled = true
 					options[i].DisabledReason = "Incompatible: Mongoose is exclusively for MongoDB"
-				} else if !isNodeOrTS {
+				} else if !isNode {
 					options[i].Disabled = true
 					options[i].DisabledReason = "Incompatible: Mongoose is a Node.js/TS package"
 				}
 
 			case "drizzle":
-				if db == "mongodb" {
+				if IsNoSQLDatabase(db) {
 					options[i].Disabled = true
 					options[i].DisabledReason = "Incompatible: Drizzle is a SQL ORM (incompatible with MongoDB)"
-				} else if !isNodeOrTS {
+				} else if !isNode {
 					options[i].Disabled = true
 					options[i].DisabledReason = "Incompatible: Drizzle is a TypeScript ORM"
 				}
 
 			case "prisma":
-				if !isNodeOrTS {
+				if !isNode {
 					options[i].Disabled = true
 					options[i].DisabledReason = "Incompatible: Prisma is a Node.js/TS ORM"
 				}
 
 			case "sqlalchemy":
-				if db == "mongodb" {
+				if IsNoSQLDatabase(db) {
 					options[i].Disabled = true
 					options[i].DisabledReason = "Incompatible: SQLAlchemy is a SQL ORM (incompatible with MongoDB)"
 				} else if !isPython {
@@ -188,7 +241,7 @@ func GetStepOptions(stepIdx int, currentSelections []views.SelectOption) []views
 				}
 
 			case "gorm":
-				if db == "mongodb" {
+				if IsNoSQLDatabase(db) {
 					options[i].Disabled = true
 					options[i].DisabledReason = "Incompatible: GORM is a SQL ORM (incompatible with MongoDB)"
 				} else if !isGo {
@@ -205,72 +258,130 @@ func GetStepOptions(stepIdx int, currentSelections []views.SelectOption) []views
 	return options
 }
 
-func isNodeEcosystem(frontend, backend string) bool {
-	if backend == "express" || backend == "nestjs" || backend == "hono" {
-		return true
-	}
-	if backend == "none" && (frontend == "nextjs" || frontend == "nuxt") {
-		return true
-	}
-	return false
-}
-
 // ValidateConfig validates the complete scaffold configuration against all compatibility rules.
 func ValidateConfig(cfg scaffold.ScaffoldConfig) error {
 	frontend := strings.ToLower(cfg.Frontend)
 	backend := strings.ToLower(cfg.Backend)
+	pm := strings.ToLower(cfg.PackageManager)
 	db := strings.ToLower(cfg.Database)
 	orm := strings.ToLower(cfg.ORM)
+	auth := strings.ToLower(cfg.Auth)
 
 	// 1. Both frontend and backend empty/none
 	if (frontend == "none" || frontend == "") && (backend == "none" || backend == "") {
-		return fmt.Errorf("invalid configuration: project cannot have both Frontend and Backend as 'none'")
+		return errors.NewValidationError(
+			"No se puede crear un proyecto con Frontend y Backend configurados como 'none'",
+			"Selecciona al menos un Frontend o un Backend para tu proyecto",
+		)
 	}
 
 	// 2. Client-side SPA with no backend connecting to database
-	if (backend == "none" || backend == "") && (frontend == "react" || frontend == "svelte") {
+	if (backend == "none" || backend == "") && IsClientSPA(frontend) {
 		if db != "none" && db != "" {
-			return fmt.Errorf("incompatible configuration: client-side SPA (%s) with no backend cannot connect directly to database '%s'", frontend, db)
+			return errors.NewValidationError(
+				fmt.Sprintf("Una aplicación SPA cliente (%s) sin backend no puede conectarse directamente a la base de datos '%s'", frontend, db),
+				"Agrega un backend (como Express, Hono, FastAPI o Go Chi) o usa un framework fullstack (como Next.js o Nuxt)",
+			)
+		}
+		if orm != "none" && orm != "" {
+			return errors.NewValidationError(
+				fmt.Sprintf("Una aplicación SPA cliente (%s) sin backend no puede utilizar el ORM '%s'", frontend, orm),
+				"Agrega un backend para gestionar la persistencia y ORM",
+			)
 		}
 	}
 
-	// 3. Database vs ORM
+	// 3. Database vs ORM consistency
 	if (db == "none" || db == "") && orm != "none" && orm != "" {
-		return fmt.Errorf("incompatible configuration: ORM '%s' selected but database is 'none'", orm)
+		return errors.NewValidationError(
+			fmt.Sprintf("Se seleccionó el ORM '%s' pero la base de datos está marcada como 'none'", orm),
+			"Selecciona una base de datos compatible o marca el ORM como 'none'",
+		)
 	}
 
-	if db == "mongodb" {
+	// 4. SQL vs NoSQL ORMs
+	if IsNoSQLDatabase(db) {
 		if orm == "drizzle" || orm == "sqlalchemy" || orm == "gorm" {
-			return fmt.Errorf("incompatible configuration: '%s' is a SQL ORM and cannot be used with MongoDB", orm)
+			return errors.NewValidationError(
+				fmt.Sprintf("'%s' es un ORM relacional SQL y no es compatible con MongoDB", orm),
+				"Para MongoDB utiliza 'Mongoose', 'Prisma' o 'none'",
+			)
 		}
 	}
 
-	if db == "postgres" || db == "mysql" || db == "sqlite" {
+	if IsSQLDatabase(db) {
 		if orm == "moongose" || orm == "mongoose" {
-			return fmt.Errorf("incompatible configuration: Mongoose is a MongoDB ODM and cannot be used with SQL database '%s'", db)
+			return errors.NewValidationError(
+				fmt.Sprintf("Mongoose es exclusivo para MongoDB y no es compatible con '%s'", db),
+				"Para bases de datos relacionales SQL utiliza 'Drizzle', 'Prisma', 'SQLAlchemy' (Python) o 'GORM' (Go)",
+			)
 		}
 	}
 
-	// 4. Runtime / Ecosystem vs ORM
-	isNode := isNodeEcosystem(frontend, backend)
-	isPython := backend == "fastapi"
-	isGo := backend == "go_chi"
+	// 5. Runtime & Ecosystem vs ORM
+	isNode := IsNodeEcosystem(frontend, backend)
+	isPython := IsPythonBackend(backend)
+	isGo := IsGoBackend(backend)
 
 	if isPython {
 		if orm == "drizzle" || orm == "prisma" || orm == "moongose" || orm == "mongoose" || orm == "gorm" {
-			return fmt.Errorf("incompatible configuration: ORM '%s' is not supported in Python / FastAPI backend", orm)
+			return errors.NewValidationError(
+				fmt.Sprintf("El ORM '%s' no es compatible con el backend Python / FastAPI", orm),
+				"Para Python utiliza 'SQLAlchemy' o 'none'",
+			)
 		}
 	}
 
 	if isGo {
 		if orm == "drizzle" || orm == "prisma" || orm == "moongose" || orm == "mongoose" || orm == "sqlalchemy" {
-			return fmt.Errorf("incompatible configuration: ORM '%s' is not supported in Go backend", orm)
+			return errors.NewValidationError(
+				fmt.Sprintf("El ORM '%s' no es compatible con el backend Go", orm),
+				"Para Go utiliza 'GORM' o 'none'",
+			)
 		}
 	}
 
 	if isNode {
 		if orm == "sqlalchemy" || orm == "gorm" {
-			return fmt.Errorf("incompatible configuration: ORM '%s' is not supported in Node.js / TypeScript backend", orm)
+			return errors.NewValidationError(
+				fmt.Sprintf("El ORM '%s' no es compatible con el ecosistema Node.js / TypeScript", orm),
+				"Para TypeScript utiliza 'Drizzle', 'Prisma' o 'Mongoose'",
+			)
+		}
+	}
+
+	// 6. Package Manager compatibility
+	if frontend == "none" {
+		if isGo && (pm == "pnpm" || pm == "npm" || pm == "bun") {
+			return errors.NewValidationError(
+				fmt.Sprintf("Un proyecto exclusivo de Go no utiliza el gestor de paquetes '%s'", pm),
+				"Utiliza 'go_mod' para proyectos en Go",
+			)
+		}
+		if isPython && (pm == "pnpm" || pm == "npm" || pm == "bun") {
+			return errors.NewValidationError(
+				fmt.Sprintf("Un proyecto exclusivo de Python no utiliza el gestor de paquetes '%s'", pm),
+				"Utiliza 'pip' o 'uv' para proyectos en Python",
+			)
+		}
+	}
+
+	// 7. Auth Provider compatibility
+	if auth != "" && auth != "none" {
+		if auth == "better-auth" {
+			if !isNode {
+				return errors.NewValidationError(
+					"Better Auth requiere un entorno Node.js / TypeScript (Next.js, Express, Hono)",
+					"Agrega un frontend o backend compatible con TypeScript o cambia el proveedor de autenticación",
+				)
+			}
+		} else if auth == "next-auth" {
+			if frontend != "nextjs" {
+				return errors.NewValidationError(
+					"NextAuth.js es exclusivo para proyectos con frontend Next.js",
+					"Selecciona Next.js como frontend o utiliza Better Auth",
+				)
+			}
 		}
 	}
 

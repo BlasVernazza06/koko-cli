@@ -27,10 +27,10 @@
 
 Here is Koko CLI in action, generating a fully configured monorepo using the step-by-step TUI wizard:
 
-![Koko CLI Terminal Walkthrough](demo.gif)
+<video src="demo.mp4" autoplay loop muted playsinline controls class="d-block rounded-2 border width-fit" style="max-height:640px; width: 100%;"></video>
 
 > [!TIP]
-> **Want to record your own demo?** Install [vhs](https://github.com/charmbracelet/vhs) and run `vhs demo.tape` from the root of this repository to generate a fresh `demo.gif` automatically!
+> **Want to record your own demo?** Install [vhs](https://github.com/charmbracelet/vhs) and run `vhs demo.tape` from the root of this repository to generate a fresh `demo.mp4` automatically!
 
 ---
 
@@ -40,6 +40,7 @@ Here is Koko CLI in action, generating a fully configured monorepo using the ste
 * 📦 **Flexible Init Modes**: Choose **Quick Setup** for pre-configured production recipes or **Manual Configuration** to build your stack piece-by-piece.
 * 🛡️ **Cross-Validation Safety Rules**: Smart validation checks prevent generating incompatible tech combinations (e.g. blocking Go Fiber with Prisma ORM or Node-only drivers with Python) in real-time.
 * 🐳 **Monorepo Architecture out-of-the-box**: Automatically setups workspaces, Shared TypeScript configs, ESLint/Prettier, local Docker Compose files, and CI/CD pipelines.
+* 🗃️ **Master Dependency Catalog**: Centrally manages package versions across all templates to guarantee reproducible builds and instant version upgrades.
 
 ---
 

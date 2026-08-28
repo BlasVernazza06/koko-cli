@@ -9,11 +9,11 @@
     "db:studio": "prisma studio"
   },
   "dependencies": {
-    "@prisma/client": "^5.19.1"
+    "@prisma/client": "[[ version "@prisma/client" ]]"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
-    "prisma": "^5.19.1",
-    "typescript": "^5.6.2"
+    "prisma": "[[ version "prisma" ]]",
+    "typescript": "[[ version "typescript" ]]"
   }
 }

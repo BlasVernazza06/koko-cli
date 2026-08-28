@@ -10,6 +10,7 @@ import (
 	kokoConfig "github.com/BlasVernazza06/koko-cli/internal/config"
 	"github.com/BlasVernazza06/koko-cli/internal/scaffold"
 	"github.com/BlasVernazza06/koko-cli/internal/validator"
+	"github.com/BlasVernazza06/koko-cli/internal/vfs"
 	"github.com/spf13/cobra"
 )
 
@@ -97,12 +98,27 @@ func runDefaultInit(projectName string, recipie string) {
 		InitGit:     true,
 	}
 
+	var cachedVFS *vfs.VFS
+
 	steps := []struct {
 		name string
 		fn   func() error
 	}{
-		{"Scaffolding directories and copying templates...", func() error { return scaffold.CopyTemplates(projectName, cfg) }},
-		{"Generating Docker and Database configuration...", func() error { return scaffold.GenerateDockerAndDB(projectName, cfg) }},
+		{"Generating templates and configuration in memory...", func() error {
+			var err error
+			cachedVFS, err = scaffold.GenerateVFS(cfg)
+			return err
+		}},
+		{"Writing files safely to disk...", func() error {
+			if cachedVFS == nil {
+				var err error
+				cachedVFS, err = scaffold.GenerateVFS(cfg)
+				if err != nil {
+					return err
+				}
+			}
+			return scaffold.WriteTree(cachedVFS, projectName)
+		}},
 		{"Initializing Git repository...", func() error { return scaffold.InitGit(projectName) }},
 		{"Creating koko.config.json manifest...", func() error { return kokoConfig.GenerateConfig(projectName, cfg) }},
 	}
@@ -158,12 +174,27 @@ func runManualInit(cfg scaffold.ScaffoldConfig) {
 
 	startTime := time.Now()
 
+	var cachedVFS *vfs.VFS
+
 	steps := []struct {
 		name string
 		fn   func() error
 	}{
-		{"Scaffolding directories and copying templates...", func() error { return scaffold.CopyTemplates(cfg.ProjectName, cfg) }},
-		{"Generating Docker and Database configuration...", func() error { return scaffold.GenerateDockerAndDB(cfg.ProjectName, cfg) }},
+		{"Generating templates and configuration in memory...", func() error {
+			var err error
+			cachedVFS, err = scaffold.GenerateVFS(cfg)
+			return err
+		}},
+		{"Writing files safely to disk...", func() error {
+			if cachedVFS == nil {
+				var err error
+				cachedVFS, err = scaffold.GenerateVFS(cfg)
+				if err != nil {
+					return err
+				}
+			}
+			return scaffold.WriteTree(cachedVFS, cfg.ProjectName)
+		}},
 	}
 	if cfg.InitGit {
 		steps = append(steps, struct {
