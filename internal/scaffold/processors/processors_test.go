@@ -46,6 +46,30 @@ func TestProcessPackageJSONs(t *testing.T) {
 	if webPkg["name"] != "@acme-saas/web" {
 		t.Errorf("Expected web package name '@acme-saas/web', got '%v'", webPkg["name"])
 	}
+
+	var dbPkg map[string]interface{}
+	_ = v.ReadJSON("packages/db/package.json", &dbPkg)
+	deps := dbPkg["dependencies"].(map[string]interface{})
+	if deps["postgres"] != "^3.4.4" {
+		t.Errorf("Expected dynamically added postgres dependency '^3.4.4', got '%v'", deps["postgres"])
+	}
+}
+
+func TestAddDependency(t *testing.T) {
+	pkg := make(map[string]interface{})
+
+	AddDependency(pkg, "drizzle-orm", false)
+	AddDependency(pkg, "typescript", true)
+
+	deps := pkg["dependencies"].(map[string]interface{})
+	if deps["drizzle-orm"] != "^0.30.10" {
+		t.Errorf("Expected drizzle-orm version '^0.30.10', got '%v'", deps["drizzle-orm"])
+	}
+
+	devDeps := pkg["devDependencies"].(map[string]interface{})
+	if devDeps["typescript"] != "^5.6.2" {
+		t.Errorf("Expected typescript version '^5.6.2', got '%v'", devDeps["typescript"])
+	}
 }
 
 func TestProcessEnvVariables(t *testing.T) {

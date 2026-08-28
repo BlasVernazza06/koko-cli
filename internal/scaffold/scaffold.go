@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/BlasVernazza06/koko-cli/internal/catalog"
 )
 
 //go:embed all:templates all:manual
@@ -119,7 +121,12 @@ func walkAndCopy(targetDir string, config ScaffoldConfig, filterFn func(string) 
 
 		// Template Interpolation Engine:
 		// Parse content as Go template and render with config
-		tmpl, err := template.New(path).Delims("[[", "]]").Parse(string(content))
+		funcMap := template.FuncMap{
+			"version": func(pkg string) string {
+				return catalog.GetVersion(pkg)
+			},
+		}
+		tmpl, err := template.New(path).Delims("[[", "]]").Funcs(funcMap).Parse(string(content))
 		if err != nil {
 			return fmt.Errorf("failed to process template for %s: %w", path, err)
 		}
@@ -319,6 +326,8 @@ func isBinaryExtension(path string) bool {
 func shouldParseAsTemplate(content []byte) bool {
 	s := string(content)
 	return strings.Contains(s, "[[.") ||
+		strings.Contains(s, "[[ version ") ||
+		strings.Contains(s, "[[version ") ||
 		strings.Contains(s, "[[if ") ||
 		strings.Contains(s, "[[range ") ||
 		strings.Contains(s, "[[with ") ||

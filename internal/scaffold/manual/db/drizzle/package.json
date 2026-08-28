@@ -8,12 +8,12 @@
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
-    "drizzle-orm": "^0.30.10",
-    "postgres": "^3.4.4",
-    "mysql2": "^3.9.7"
+    "drizzle-orm": "[[ version "drizzle-orm" ]]",
+    "postgres": "[[ version "postgres" ]]",
+    "mysql2": "[[ version "mysql2" ]]"
   },
   "devDependencies": {
-    "drizzle-kit": "^0.21.4",
-    "typescript": "^5.4.5"
+    "drizzle-kit": "[[ version "drizzle-kit" ]]",
+    "typescript": "[[ version "typescript" ]]"
   }
 }

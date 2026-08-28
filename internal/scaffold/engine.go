@@ -7,6 +7,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/BlasVernazza06/koko-cli/internal/catalog"
 	"github.com/BlasVernazza06/koko-cli/internal/errors"
 	"github.com/BlasVernazza06/koko-cli/internal/scaffold/processors"
 	"github.com/BlasVernazza06/koko-cli/internal/vfs"
@@ -16,6 +17,13 @@ import (
 // No toca el disco duro. Aplica templates, helpers, interpolación de variables
 // y procesadores de package.json y .env.
 func GenerateVFS(config ScaffoldConfig) (*vfs.VFS, error) {
+
+	funcMap := template.FuncMap{
+		"version": func(pkg string) string {
+			return catalog.GetVersion(pkg)
+		},
+	}
+
 	v := vfs.New()
 
 	err := fs.WalkDir(templateFs, ".", func(path string, d fs.DirEntry, walkErr error) error {
@@ -54,7 +62,7 @@ func GenerateVFS(config ScaffoldConfig) (*vfs.VFS, error) {
 		}
 
 		// 3. Renderizar template de Go con delimitadores personalizados [[ y ]]
-		tmpl, parseErr := template.New(path).Delims("[[", "]]").Parse(string(content))
+		tmpl, parseErr := template.New(path).Delims("[[", "]]").Funcs(funcMap).Parse(string(content))
 		if parseErr != nil {
 			return errors.NewTemplateError(path, fmt.Sprintf("Error de sintaxis en plantilla %s", path), parseErr, "Verifica los bloques [[ ... ]]")
 		}

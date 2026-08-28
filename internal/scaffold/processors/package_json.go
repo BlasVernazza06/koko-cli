@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/BlasVernazza06/koko-cli/internal/catalog"
 	"github.com/BlasVernazza06/koko-cli/internal/vfs"
 )
 
@@ -29,8 +30,26 @@ type ProcessConfig struct {
 	Addons         string
 }
 
+// AddDependency agrega o actualiza una dependencia en un objeto package.json en memoria,
+// consultando la versión oficial registrada en el catálogo maestro.
+func AddDependency(pkg map[string]interface{}, pkgName string, isDev bool) {
+	field := "dependencies"
+	if isDev {
+		field = "devDependencies"
+	}
+
+	deps, ok := pkg[field].(map[string]interface{})
+	if !ok {
+		deps = make(map[string]interface{})
+	}
+
+	// Consultamos el catálogo maestro
+	deps[pkgName] = catalog.GetVersion(pkgName)
+	pkg[field] = deps
+}
+
 // ProcessPackageJSONs inspecciona y muta los package.json en el VFS en memoria
-// para inyectar los scripts exactos según el package manager, DB y ORM.
+// para inyectar los scripts exactos y dependencias dinámicas según el stack.
 func ProcessPackageJSONs(v *vfs.VFS, cfg ProcessConfig) error {
 	updateRootPackageJSON(v, cfg)
 	updateWorkspacePackageJSONs(v, cfg)
@@ -142,7 +161,26 @@ func updateWorkspacePackageJSONs(v *vfs.VFS, cfg ProcessConfig) {
 		if err := v.ReadJSON(wp.file, &pkg); err != nil {
 			continue
 		}
+
 		pkg["name"] = fmt.Sprintf("@%s/%s", cfg.ProjectName, wp.suffix)
+
+		// Inyección dinámica de dependencias opcionales
+		if wp.suffix == "db" && cfg.ORM == "drizzle" {
+			if cfg.Database == "postgres" {
+				AddDependency(pkg, "postgres", false)
+			} else if cfg.Database == "mysql" {
+				AddDependency(pkg, "mysql2", false)
+			}
+		}
+
+		if wp.suffix == "api" && strings.Contains(cfg.Auth, "better") {
+			AddDependency(pkg, "better-auth", false)
+		}
+
+		if wp.suffix == "web" && strings.Contains(cfg.Auth, "clerk") {
+			AddDependency(pkg, "@clerk/nextjs", false)
+		}
+
 		_ = v.WriteJSON(wp.file, pkg, "  ")
 	}
 }
