@@ -12,23 +12,13 @@ import (
 	"text/template"
 
 	"github.com/BlasVernazza06/koko-cli/internal/catalog"
+	"github.com/BlasVernazza06/koko-cli/internal/types"
 )
 
 //go:embed all:templates all:manual
 var templateFs embed.FS
 
-type ScaffoldConfig struct {
-	ProjectName    string
-	Recipe         string
-	InitGit        bool
-	Frontend       string
-	Backend        string
-	PackageManager string
-	Database       string
-	ORM            string
-	Auth           string
-	Addons         string
-}
+type ScaffoldConfig = types.ScaffoldConfig
 
 // RunScaffold genera el proyecto en memoria (VFS), escribe los archivos
 // atómicamente en disco e inicializa Git si fue solicitado.
@@ -153,139 +143,6 @@ func walkAndCopy(targetDir string, config ScaffoldConfig, filterFn func(string) 
 	}
 
 	return err
-}
-
-// evaluatePath decides if a file should be copied according to config
-// and returns the clean destination path and a boolean (shouldCopy)
-func evaluatePath(path string, config ScaffoldConfig) (string, bool) {
-	rel := filepath.ToSlash(path)
-
-	// Mode 1: Recipe Templates
-	if config.Recipe != "" {
-		recipePrefix := "templates/recipes/" + config.Recipe + "/"
-		if strings.HasPrefix(rel, recipePrefix) {
-			dest := strings.TrimPrefix(rel, recipePrefix)
-			return dest, true
-		}
-
-		if rel == "manual/docker/docker-compose.yml" || rel == "templates/docker/docker-compose.yml" {
-			if config.Recipe == "saas" || config.Recipe == "pern" || config.Recipe == "mern" {
-				return "docker-compose.yml", true
-			}
-		}
-
-		if rel == "manual/github/ci.yml" || rel == "templates/github/ci.yml" {
-			if config.Recipe == "saas" {
-				return ".github/workflows/ci.yml", true
-			}
-		}
-
-		return "", false
-	}
-
-	// Mode 2: Manual Configuration Templates
-
-	// Monorepo root files -> root
-	if strings.HasPrefix(rel, "manual/root/") {
-		if rel == "manual/root/apps/.gitkeep" {
-			if (config.Frontend != "" && config.Frontend != "none") || (config.Backend != "" && config.Backend != "none") {
-				return "", false
-			}
-		}
-		dest := strings.TrimPrefix(rel, "manual/root/")
-		return dest, true
-	}
-
-	// Shared packages -> packages/
-	if strings.HasPrefix(rel, "manual/packages/") {
-		dest := strings.TrimPrefix(rel, "manual/")
-		return dest, true
-	}
-
-	// Frontend selection -> apps/web
-	if config.Frontend != "" && config.Frontend != "none" {
-		frontendPrefix := "manual/frontend/" + config.Frontend + "/"
-		if strings.HasPrefix(rel, frontendPrefix) {
-			dest := "apps/web/" + strings.TrimPrefix(rel, frontendPrefix)
-			return dest, true
-		}
-	}
-
-	// Backend selection -> apps/api
-	if config.Backend != "" && config.Backend != "none" {
-		backendPrefix := "manual/backend/" + config.Backend + "/"
-		if strings.HasPrefix(rel, backendPrefix) {
-			dest := "apps/api/" + strings.TrimPrefix(rel, backendPrefix)
-			return dest, true
-		}
-	}
-
-	// Database and ORM routing
-	if config.Database != "" && config.Database != "none" {
-		orm := strings.ToLower(config.ORM)
-		db := strings.ToLower(config.Database)
-
-		if orm == "drizzle" {
-			// Specific db files
-			drizzleDbPrefix := "manual/db/drizzle/" + db + "/"
-			if strings.HasPrefix(rel, drizzleDbPrefix) {
-				dest := "packages/db/src/" + strings.TrimPrefix(rel, drizzleDbPrefix)
-				return dest, true
-			}
-			// Root config files for drizzle package
-			if rel == "manual/db/drizzle/drizzle.config.ts" {
-				return "packages/db/drizzle.config.ts", true
-			}
-			if rel == "manual/db/drizzle/package.json" {
-				return "packages/db/package.json", true
-			}
-		} else if orm == "prisma" {
-			// Specific prisma schemas
-			prismaDbPrefix := "manual/db/prisma/" + db + "/"
-			if strings.HasPrefix(rel, prismaDbPrefix) {
-				dest := "packages/db/prisma/" + strings.TrimPrefix(rel, prismaDbPrefix)
-				return dest, true
-			}
-			// Root package.json for prisma package
-			if rel == "manual/db/prisma/package.json" {
-				return "packages/db/package.json", true
-			}
-		} else if orm == "mongoose" || orm == "moongose" {
-			mongoosePrefix := "manual/db/mongoose/mongodb/"
-			if strings.HasPrefix(rel, mongoosePrefix) {
-				dest := "packages/db/" + strings.TrimPrefix(rel, mongoosePrefix)
-				return dest, true
-			}
-		} else if orm == "sqlalchemy" {
-			sqlAlchemyPrefix := "manual/db/sqlalchemy/" + db + "/"
-			if strings.HasPrefix(rel, sqlAlchemyPrefix) {
-				dest := "apps/api/app/db/" + strings.TrimPrefix(rel, sqlAlchemyPrefix)
-				return dest, true
-			}
-		} else if orm == "gorm" {
-			gormPrefix := "manual/db/gorm/" + db + "/"
-			if strings.HasPrefix(rel, gormPrefix) {
-				dest := "apps/api/db/" + strings.TrimPrefix(rel, gormPrefix)
-				return dest, true
-			}
-		}
-	}
-
-	// Addons: Docker Compose
-	if rel == "manual/docker/docker-compose.yml" {
-		if config.Addons == "docker" || config.Addons == "docker_cicd" || (config.Database != "" && config.Database != "none" && config.Database != "sqlite") {
-			return "docker-compose.yml", true
-		}
-	}
-
-	// Addons: GitHub Actions CI
-	if rel == "manual/github/ci.yml" {
-		if config.Addons == "github_actions" || config.Addons == "docker_cicd" {
-			return ".github/workflows/ci.yml", true
-		}
-	}
-
-	return "", false
 }
 
 func isDockerOrDBFile(path string) bool {
