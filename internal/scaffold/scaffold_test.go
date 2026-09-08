@@ -355,4 +355,175 @@ func TestScaffoldRecipeSaaS(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(targetDir, "apps", "web", "package.json")); os.IsNotExist(err) {
 		t.Errorf("apps/web/package.json not found for recipe saas")
 	}
+	if _, err := os.Stat(filepath.Join(targetDir, "apps", "web", "lib", "email.ts")); os.IsNotExist(err) {
+		t.Errorf("apps/web/lib/email.ts not found for recipe saas")
+	}
+	if _, err := os.Stat(filepath.Join(targetDir, "apps", "web", "components", "billing", "pricing-cards.tsx")); os.IsNotExist(err) {
+		t.Errorf("pricing-cards.tsx not found for recipe saas")
+	}
+}
+
+func TestScaffoldRecipeJavaSpring(t *testing.T) {
+	tmpDir := t.TempDir()
+	projectName := "test-recipe-java-spring"
+	targetDir := filepath.Join(tmpDir, projectName)
+
+	cfg := ScaffoldConfig{
+		ProjectName: projectName,
+		Recipe:      "java-spring",
+		InitGit:     false,
+	}
+
+	err := RunScaffold(targetDir, cfg)
+	if err != nil {
+		t.Fatalf("RunScaffold for recipe java-spring failed: %v", err)
+	}
+
+	if _, err := os.Stat(filepath.Join(targetDir, "package.json")); os.IsNotExist(err) {
+		t.Errorf("Root package.json not found for recipe java-spring")
+	}
+	if _, err := os.Stat(filepath.Join(targetDir, "apps", "backend", "pom.xml")); os.IsNotExist(err) {
+		t.Errorf("apps/backend/pom.xml not found for recipe java-spring")
+	}
+	if _, err := os.Stat(filepath.Join(targetDir, "apps", "frontend", "src", "App.tsx")); os.IsNotExist(err) {
+		t.Errorf("apps/frontend/src/App.tsx not found for recipe java-spring")
+	}
+	if _, err := os.Stat(filepath.Join(targetDir, "docker-compose.yml")); os.IsNotExist(err) {
+		t.Errorf("docker-compose.yml not found for recipe java-spring")
+	}
+}
+
+func TestScaffoldRecipeEnterpriseNestJS(t *testing.T) {
+	tmpDir := t.TempDir()
+	projectName := "test-recipe-nestjs"
+	targetDir := filepath.Join(tmpDir, projectName)
+
+	cfg := ScaffoldConfig{
+		ProjectName: projectName,
+		Recipe:      "enterprise-nestjs",
+		InitGit:     false,
+	}
+
+	err := RunScaffold(targetDir, cfg)
+	if err != nil {
+		t.Fatalf("RunScaffold for recipe enterprise-nestjs failed: %v", err)
+	}
+
+	if _, err := os.Stat(filepath.Join(targetDir, "apps", "web", "package.json")); os.IsNotExist(err) {
+		t.Errorf("apps/web/package.json not found for recipe enterprise-nestjs")
+	}
+	if _, err := os.Stat(filepath.Join(targetDir, "apps", "api", "src", "main.ts")); os.IsNotExist(err) {
+		t.Errorf("apps/api/src/main.ts not found for recipe enterprise-nestjs")
+	}
+	if _, err := os.Stat(filepath.Join(targetDir, "packages", "db", "prisma", "schema.prisma")); os.IsNotExist(err) {
+		t.Errorf("schema.prisma not found for recipe enterprise-nestjs")
+	}
+	if _, err := os.Stat(filepath.Join(targetDir, "docker-compose.yml")); os.IsNotExist(err) {
+		t.Errorf("docker-compose.yml not found for recipe enterprise-nestjs")
+	}
+}
+
+func TestScaffoldRecipeMERN(t *testing.T) {
+	tmpDir := t.TempDir()
+	projectName := "test-recipe-mern"
+	targetDir := filepath.Join(tmpDir, projectName)
+
+	cfg := ScaffoldConfig{
+		ProjectName: projectName,
+		Recipe:      "mern",
+		InitGit:     false,
+	}
+
+	err := RunScaffold(targetDir, cfg)
+	if err != nil {
+		t.Fatalf("RunScaffold for recipe mern failed: %v", err)
+	}
+
+	if _, err := os.Stat(filepath.Join(targetDir, "apps", "backend", "src", "models", "item.ts")); os.IsNotExist(err) {
+		t.Errorf("models/item.ts not found for recipe mern")
+	}
+	if _, err := os.Stat(filepath.Join(targetDir, "apps", "frontend", "src", "App.tsx")); os.IsNotExist(err) {
+		t.Errorf("apps/frontend/src/App.tsx not found for recipe mern")
+	}
+	if _, err := os.Stat(filepath.Join(targetDir, "docker-compose.yml")); os.IsNotExist(err) {
+		t.Errorf("docker-compose.yml not found for recipe mern")
+	}
+}
+
+func TestScaffoldRecipePERN(t *testing.T) {
+	tmpDir := t.TempDir()
+	projectName := "test-recipe-pern"
+	targetDir := filepath.Join(tmpDir, projectName)
+
+	cfg := ScaffoldConfig{
+		ProjectName: projectName,
+		Recipe:      "pern",
+		InitGit:     false,
+	}
+
+	err := RunScaffold(targetDir, cfg)
+	if err != nil {
+		t.Fatalf("RunScaffold for recipe pern failed: %v", err)
+	}
+
+	if _, err := os.Stat(filepath.Join(targetDir, "apps", "backend", "src", "index.ts")); os.IsNotExist(err) {
+		t.Errorf("apps/backend/src/index.ts not found for recipe pern")
+	}
+	if _, err := os.Stat(filepath.Join(targetDir, "packages", "db", "schema.prisma")); os.IsNotExist(err) {
+		t.Errorf("packages/db/schema.prisma not found for recipe pern")
+	}
+}
+
+func TestScaffoldRecipeFastAPIReact(t *testing.T) {
+	tmpDir := t.TempDir()
+	projectName := "test-recipe-fastapi"
+	targetDir := filepath.Join(tmpDir, projectName)
+
+	cfg := ScaffoldConfig{
+		ProjectName: projectName,
+		Recipe:      "python-fastapi",
+		InitGit:     false,
+	}
+
+	err := RunScaffold(targetDir, cfg)
+	if err != nil {
+		t.Fatalf("RunScaffold for recipe python-fastapi failed: %v", err)
+	}
+
+	if _, err := os.Stat(filepath.Join(targetDir, "apps", "backend", "main.py")); os.IsNotExist(err) {
+		t.Errorf("apps/backend/main.py not found for recipe python-fastapi")
+	}
+	if _, err := os.Stat(filepath.Join(targetDir, "apps", "backend", "app", "schemas", "item.py")); os.IsNotExist(err) {
+		t.Errorf("app/schemas/item.py not found for recipe python-fastapi")
+	}
+	if _, err := os.Stat(filepath.Join(targetDir, "apps", "frontend", "src", "App.tsx")); os.IsNotExist(err) {
+		t.Errorf("apps/frontend/src/App.tsx not found for recipe python-fastapi")
+	}
+}
+
+func TestScaffoldRecipeMobileExpo(t *testing.T) {
+	tmpDir := t.TempDir()
+	projectName := "test-recipe-expo"
+	targetDir := filepath.Join(tmpDir, projectName)
+
+	cfg := ScaffoldConfig{
+		ProjectName: projectName,
+		Recipe:      "mobile-expo",
+		InitGit:     false,
+	}
+
+	err := RunScaffold(targetDir, cfg)
+	if err != nil {
+		t.Fatalf("RunScaffold for recipe mobile-expo failed: %v", err)
+	}
+
+	if _, err := os.Stat(filepath.Join(targetDir, "apps", "mobile", "App.tsx")); os.IsNotExist(err) {
+		t.Errorf("apps/mobile/App.tsx not found for recipe mobile-expo")
+	}
+	if _, err := os.Stat(filepath.Join(targetDir, "apps", "api", "src", "index.ts")); os.IsNotExist(err) {
+		t.Errorf("apps/api/src/index.ts not found for recipe mobile-expo")
+	}
+	if _, err := os.Stat(filepath.Join(targetDir, "packages", "db", "prisma", "schema.prisma")); os.IsNotExist(err) {
+		t.Errorf("schema.prisma not found for recipe mobile-expo")
+	}
 }
