@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/BlasVernazza06/koko-cli/internal/scaffold"
+	"github.com/BlasVernazza06/koko-cli/internal/scaffold/handlers"
 	"github.com/BlasVernazza06/koko-cli/internal/vfs"
 )
 
@@ -73,9 +74,11 @@ type Infrastructure struct {
 
 // BuildKokoConfig construye la estructura de configuración tipada a partir de ScaffoldConfig.
 func BuildKokoConfig(scaffoldCfg scaffold.ScaffoldConfig) KokoConfig {
+	normRecipe := handlers.NormalizeRecipe(scaffoldCfg.Recipe)
+
 	pm := scaffoldCfg.PackageManager
 	if pm == "" {
-		pm = determinePackageManager(scaffoldCfg.Recipe)
+		pm = determinePackageManager(normRecipe)
 	}
 
 	layout := determineLayout(scaffoldCfg)
@@ -94,7 +97,7 @@ func BuildKokoConfig(scaffoldCfg scaffold.ScaffoldConfig) KokoConfig {
 	}
 
 	if scaffoldCfg.Recipe != "" {
-		switch scaffoldCfg.Recipe {
+		switch normRecipe {
 		case "saas":
 			config.Stack.Frontend = &FrontendInfo{
 				Framework: "next",
@@ -115,20 +118,53 @@ func BuildKokoConfig(scaffoldCfg scaffold.ScaffoldConfig) KokoConfig {
 				Provider: "better-auth",
 				Status:   "installed",
 			}
+			config.Features.Infrastructure = &Infrastructure{
+				DockerCompose: true,
+				CICD:          "github-actions",
+			}
 
-		case "pern":
+		case "java_spring":
 			config.Stack.Frontend = &FrontendInfo{
 				Framework: "react",
 				Language:  "typescript",
 				Styling:   "tailwindcss",
+				Icons:     "lucide",
 			}
 			config.Stack.Backend = &BackendInfo{
-				Framework: "express",
+				Framework: "spring",
+				Language:  "java",
+			}
+			config.Stack.Database = &DatabaseInfo{
+				Provider: "postgres",
+				ORM:      "jpa",
+			}
+			config.Features.Infrastructure = &Infrastructure{
+				DockerCompose: true,
+				CICD:          "github-actions",
+			}
+
+		case "enterprise_nestjs":
+			config.Stack.Frontend = &FrontendInfo{
+				Framework: "next",
+				Language:  "typescript",
+				Styling:   "tailwindcss",
+				Icons:     "lucide",
+			}
+			config.Stack.Backend = &BackendInfo{
+				Framework: "nestjs",
 				Language:  "typescript",
 			}
 			config.Stack.Database = &DatabaseInfo{
 				Provider: "postgres",
 				ORM:      "prisma",
+			}
+			config.Features.Auth = &AuthInfo{
+				Provider: "better-auth",
+				Status:   "installed",
+			}
+			config.Features.Infrastructure = &Infrastructure{
+				DockerCompose: true,
+				CICD:          "github-actions",
 			}
 
 		case "mern":
@@ -136,6 +172,7 @@ func BuildKokoConfig(scaffoldCfg scaffold.ScaffoldConfig) KokoConfig {
 				Framework: "react",
 				Language:  "typescript",
 				Styling:   "tailwindcss",
+				Icons:     "lucide",
 			}
 			config.Stack.Backend = &BackendInfo{
 				Framework: "express",
@@ -145,31 +182,82 @@ func BuildKokoConfig(scaffoldCfg scaffold.ScaffoldConfig) KokoConfig {
 				Provider: "mongodb",
 				ORM:      "mongoose",
 			}
+			config.Features.Auth = &AuthInfo{
+				Provider: "jwt",
+				Status:   "installed",
+			}
+			config.Features.Infrastructure = &Infrastructure{
+				DockerCompose: true,
+				CICD:          "none",
+			}
+
+		case "pern":
+			config.Stack.Frontend = &FrontendInfo{
+				Framework: "react",
+				Language:  "typescript",
+				Styling:   "tailwindcss",
+				Icons:     "lucide",
+			}
+			config.Stack.Backend = &BackendInfo{
+				Framework: "express",
+				Language:  "typescript",
+			}
+			config.Stack.Database = &DatabaseInfo{
+				Provider: "postgres",
+				ORM:      "prisma",
+			}
+			config.Features.Auth = &AuthInfo{
+				Provider: "jwt",
+				Status:   "installed",
+			}
+			config.Features.Infrastructure = &Infrastructure{
+				DockerCompose: true,
+				CICD:          "none",
+			}
 
 		case "fastapi_react":
 			config.Stack.Frontend = &FrontendInfo{
 				Framework: "react",
 				Language:  "typescript",
 				Styling:   "tailwindcss",
+				Icons:     "lucide",
 			}
 			config.Stack.Backend = &BackendInfo{
 				Framework: "fastapi",
 				Language:  "python",
 			}
-		}
+			config.Stack.Database = &DatabaseInfo{
+				Provider: "postgres",
+				ORM:      "sqlalchemy",
+			}
+			config.Features.Infrastructure = &Infrastructure{
+				DockerCompose: true,
+				CICD:          "none",
+			}
 
-		var docker bool
-		var ciCd string = "none"
-		if scaffoldCfg.Recipe == "saas" {
-			docker = true
-			ciCd = "github-actions"
-		} else if scaffoldCfg.Recipe == "pern" || scaffoldCfg.Recipe == "mern" {
-			docker = true
-		}
-
-		config.Features.Infrastructure = &Infrastructure{
-			DockerCompose: docker,
-			CICD:          ciCd,
+		case "mobile_expo":
+			config.Stack.Frontend = &FrontendInfo{
+				Framework: "expo",
+				Language:  "typescript",
+				Styling:   "react-native",
+				Icons:     "lucide-react-native",
+			}
+			config.Stack.Backend = &BackendInfo{
+				Framework: "express",
+				Language:  "typescript",
+			}
+			config.Stack.Database = &DatabaseInfo{
+				Provider: "postgres",
+				ORM:      "prisma",
+			}
+			config.Features.Auth = &AuthInfo{
+				Provider: "jwt",
+				Status:   "installed",
+			}
+			config.Features.Infrastructure = &Infrastructure{
+				DockerCompose: true,
+				CICD:          "github-actions",
+			}
 		}
 	} else {
 		// Manual Configuration mapping
@@ -242,7 +330,7 @@ func GenerateConfig(targetDir string, scaffoldCfg scaffold.ScaffoldConfig) error
 }
 
 func determineLayout(scaffoldCfg scaffold.ScaffoldConfig) string {
-	if scaffoldCfg.Recipe == "saas" || scaffoldCfg.Recipe == "pern" || scaffoldCfg.Recipe == "mern" {
+	if scaffoldCfg.Recipe != "" {
 		return "monorepo"
 	}
 	if scaffoldCfg.Frontend != "" && scaffoldCfg.Frontend != "none" && scaffoldCfg.Backend != "" && scaffoldCfg.Backend != "none" {
@@ -252,8 +340,13 @@ func determineLayout(scaffoldCfg scaffold.ScaffoldConfig) string {
 }
 
 func determinePackageManager(recipe string) string {
-	if recipe == "saas" || recipe == "pern" || recipe == "mern" {
+	norm := handlers.NormalizeRecipe(recipe)
+	switch norm {
+	case "mern":
+		return "npm"
+	case "saas", "pern", "enterprise_nestjs", "mobile_expo", "java_spring", "fastapi_react":
+		return "pnpm"
+	default:
 		return "pnpm"
 	}
-	return "npm"
 }
