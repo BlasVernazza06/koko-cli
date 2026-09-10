@@ -8,6 +8,7 @@ type ScaffoldConfig struct {
 	InitGit        bool
 	Frontend       string
 	Backend        string
+	API            string
 	PackageManager string
 	Database       string
 	ORM            string

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/BlasVernazza06/koko-cli/internal/scaffold"
@@ -36,6 +37,11 @@ type StackInfo struct {
 	Frontend *FrontendInfo `json:"frontend,omitempty"`
 	Backend  *BackendInfo  `json:"backend,omitempty"`
 	Database *DatabaseInfo `json:"database,omitempty"`
+	API      *APIInfo      `json:"api,omitempty"`
+}
+
+type APIInfo struct {
+	Layer string `json:"layer"` // "trpc", "orpc", "none"
 }
 
 type FrontendInfo struct {
@@ -271,14 +277,27 @@ func BuildKokoConfig(scaffoldCfg scaffold.ScaffoldConfig) KokoConfig {
 
 		if scaffoldCfg.Backend != "" && scaffoldCfg.Backend != "none" {
 			lang := "typescript"
+			framework := scaffoldCfg.Backend
 			if scaffoldCfg.Backend == "fastapi" {
 				lang = "python"
 			} else if scaffoldCfg.Backend == "go_chi" {
 				lang = "go"
+			} else if scaffoldCfg.Backend == "spring_boot" || scaffoldCfg.Backend == "java_spring" || scaffoldCfg.Backend == "spring" {
+				framework = "spring_boot"
+				lang = "java"
+			} else if scaffoldCfg.Backend == "self" {
+				framework = scaffoldCfg.Frontend
+				lang = "typescript"
 			}
 			config.Stack.Backend = &BackendInfo{
-				Framework: scaffoldCfg.Backend,
+				Framework: framework,
 				Language:  lang,
+			}
+		}
+
+		if scaffoldCfg.API != "" && scaffoldCfg.API != "none" {
+			config.Stack.API = &APIInfo{
+				Layer: scaffoldCfg.API,
 			}
 		}
 
@@ -296,10 +315,20 @@ func BuildKokoConfig(scaffoldCfg scaffold.ScaffoldConfig) KokoConfig {
 			}
 		}
 
-		docker := scaffoldCfg.Addons == "docker" || scaffoldCfg.Addons == "docker_cicd"
+		addons := strings.ToLower(scaffoldCfg.Addons)
+		docker := strings.Contains(addons, "docker")
 		ciCd := "none"
-		if scaffoldCfg.Addons == "github_actions" || scaffoldCfg.Addons == "docker_cicd" {
+		if strings.Contains(addons, "github_actions") || strings.Contains(addons, "cicd") {
 			ciCd = "github-actions"
+		}
+
+		if config.Stack.Frontend != nil {
+			if strings.Contains(addons, "shadcn") {
+				config.Stack.Frontend.UILibrary = "shadcn"
+			}
+			if strings.Contains(addons, "lucide") {
+				config.Stack.Frontend.Icons = "lucide"
+			}
 		}
 
 		config.Features.Infrastructure = &Infrastructure{
@@ -333,7 +362,7 @@ func determineLayout(scaffoldCfg scaffold.ScaffoldConfig) string {
 	if scaffoldCfg.Recipe != "" {
 		return "monorepo"
 	}
-	if scaffoldCfg.Frontend != "" && scaffoldCfg.Frontend != "none" && scaffoldCfg.Backend != "" && scaffoldCfg.Backend != "none" {
+	if scaffoldCfg.Frontend != "" && scaffoldCfg.Frontend != "none" && scaffoldCfg.Backend != "" && scaffoldCfg.Backend != "none" && scaffoldCfg.Backend != "self" {
 		return "monorepo"
 	}
 	return "standalone"

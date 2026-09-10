@@ -112,3 +112,35 @@ func TestBuildKokoConfigForRecipes(t *testing.T) {
 		})
 	}
 }
+
+func TestBuildKokoConfigForManual(t *testing.T) {
+	cfg := scaffold.ScaffoldConfig{
+		ProjectName:    "my-spring-app",
+		Frontend:       "react",
+		Backend:        "spring_boot",
+		API:            "orpc",
+		PackageManager: "pnpm",
+		Database:       "postgres",
+		ORM:            "jpa",
+		Auth:           "none",
+		Addons:         "shadcn,lucide,docker,github_actions",
+	}
+
+	kokoCfg := BuildKokoConfig(cfg)
+
+	if kokoCfg.Stack.Backend == nil || kokoCfg.Stack.Backend.Framework != "spring_boot" || kokoCfg.Stack.Backend.Language != "java" {
+		t.Errorf("Expected Spring Boot Java backend, got %+v", kokoCfg.Stack.Backend)
+	}
+
+	if kokoCfg.Stack.API == nil || kokoCfg.Stack.API.Layer != "orpc" {
+		t.Errorf("Expected API layer orpc, got %+v", kokoCfg.Stack.API)
+	}
+
+	if kokoCfg.Stack.Frontend == nil || kokoCfg.Stack.Frontend.UILibrary != "shadcn" || kokoCfg.Stack.Frontend.Icons != "lucide" {
+		t.Errorf("Expected frontend with shadcn and lucide, got %+v", kokoCfg.Stack.Frontend)
+	}
+
+	if kokoCfg.Features.Infrastructure == nil || !kokoCfg.Features.Infrastructure.DockerCompose || kokoCfg.Features.Infrastructure.CICD != "github-actions" {
+		t.Errorf("Expected Docker Compose and GitHub Actions CI, got %+v", kokoCfg.Features.Infrastructure)
+	}
+}
