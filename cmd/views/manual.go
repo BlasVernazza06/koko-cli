@@ -13,6 +13,7 @@ func RenderManual(
 	currentStepTitle string,
 	options []SelectOption,
 	cursor int,
+	isMultiSelect bool,
 ) string {
 	var b strings.Builder
 
@@ -32,10 +33,14 @@ func RenderManual(
 
 	// 3. Current interactive step
 	b.WriteString(fmt.Sprintf("%s  %s\n", ActiveDiamond, StylePromptTitle.Render(currentStepTitle)))
-	b.WriteString(RenderOptions(options, cursor))
+	b.WriteString(RenderOptionsCustom(options, cursor, isMultiSelect))
 
 	b.WriteString(fmt.Sprintf("%s\n", BarSymbol))
-	b.WriteString(fmt.Sprintf("%s  %s\n", BottomSymbol, StyleMuted.Render("[↑/↓] Navigate • [Enter] Next • [Esc] Go back")))
+	if isMultiSelect {
+		b.WriteString(fmt.Sprintf("%s  %s\n", BottomSymbol, StyleMuted.Render("[↑/↓] Navigate • [Space] Toggle • [Enter] Next • [Esc] Go back")))
+	} else {
+		b.WriteString(fmt.Sprintf("%s  %s\n", BottomSymbol, StyleMuted.Render("[↑/↓] Navigate • [Enter] Next • [Esc] Go back")))
+	}
 
 	return b.String()
 }
