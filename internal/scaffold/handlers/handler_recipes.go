@@ -58,5 +58,10 @@ func EvaluateRecipe(rel string, config types.ScaffoldConfig) (string, bool) {
 		}
 	}
 
+	// Archivo .gitignore compartido para recetas
+	if rel == "manual/root/.gitignore" {
+		return ".gitignore", true
+	}
+
 	return "", false
 }

@@ -2,15 +2,22 @@ package scaffold
 
 import (
 	"path/filepath"
+	"strings"
 
 	"github.com/BlasVernazza06/koko-cli/internal/scaffold/handlers"
 	"github.com/BlasVernazza06/koko-cli/internal/types"
 )
 
+
 // evaluatePath es el enrutador central que orquesta los handlers especializados
 // para determinar si un archivo de plantilla debe incluirse y cuál es su destino final.
 func evaluatePath(path string, config types.ScaffoldConfig) (string, bool) {
 	rel := filepath.ToSlash(path)
+
+	// Ignorar siempre archivos .gitkeep
+	if strings.HasSuffix(rel, ".gitkeep") {
+		return "", false
+	}
 
 	// 1. Modo Recetas predefinidas (SaaS, PERN, MERN, FastAPI+React)
 	if config.Recipe != "" {
@@ -42,6 +49,17 @@ func evaluatePath(path string, config types.ScaffoldConfig) (string, bool) {
 	if dest, ok := handlers.EvaluateAddons(rel, config); ok {
 		return dest, true
 	}
+
+	// F. Autenticación (Better-Auth, Clerk, NextAuth)
+	if dest, ok := handlers.EvaluateAuth(rel, config); ok {
+		return dest, true
+	}
+
+	// G. Capa de API (tRPC, oRPC)
+	if dest, ok := handlers.EvaluateAPI(rel, config); ok {
+		return dest, true
+	}
+
 
 	return "", false
 }

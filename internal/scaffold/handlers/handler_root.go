@@ -9,14 +9,13 @@ import (
 // evaluateRoot evalúa y mapea los archivos raíz del monorepo (configuración global)
 // y los paquetes compartidos en packages/.
 func EvaluateRoot(rel string, config types.ScaffoldConfig) (string, bool) {
+	// Ignorar siempre archivos .gitkeep
+	if strings.HasSuffix(rel, ".gitkeep") {
+		return "", false
+	}
+
 	// Archivos raíz del monorepo -> raíz del proyecto
 	if strings.HasPrefix(rel, "manual/root/") {
-		if rel == "manual/root/apps/.gitkeep" {
-			hasApps := (config.Frontend != "" && config.Frontend != "none") || (config.Backend != "" && config.Backend != "none")
-			if hasApps {
-				return "", false
-			}
-		}
 		dest := strings.TrimPrefix(rel, "manual/root/")
 		return dest, true
 	}
