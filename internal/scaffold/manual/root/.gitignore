@@ -1,18 +1,35 @@
 # Dependencies
-node_modules
-.pnpm-store
+node_modules/
+.pnpm-store/
 
 # Production outputs
-dist
-build
-.next
-out
-.output
-.nuxt
-.svelte-kit
+dist/
+build/
+[[- if eq .Frontend "nextjs" ]]
+.next/
+out/
+[[- end ]]
+[[- if eq .Frontend "nuxt" ]]
+.nuxt/
+.output/
+[[- end ]]
+[[- if eq .Frontend "svelte" ]]
+.svelte-kit/
+[[- end ]]
+[[- if eq .Frontend "astro" ]]
+.astro/
+[[- end ]]
+[[- if eq .Frontend "native" ]]
+.expo/
+.expo-shared/
+web-build/
+[[- end ]]
+[[- if eq .Frontend "react" ]]
+.vite/
+[[- end ]]
 
-# Turbo
-.turbo
+# Turborepo
+.turbo/
 
 # Environment variables
 .env
@@ -33,14 +50,42 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
-.idea
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+[[- if eq .Backend "fastapi" ]]
+
+# Python
+__pycache__/
+*.py[cod]
+*.class
+.pytest_cache/
+.venv/
+venv/
+env/
+[[- end ]]
+[[- if eq .Backend "go_chi" ]]
+
+# Go
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+[[- end ]]
+[[- if eq .Database "sqlite" ]]
 
 # Database / SQLite
 *.sqlite
 *.sqlite3
 *.db
+*.db-journal
+*.db-wal
+*.db-shm
+[[- end ]]

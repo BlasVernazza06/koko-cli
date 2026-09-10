@@ -1,0 +1,23 @@
+﻿{
+  "name": "app",
+  "version": "0.1.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "expo": "[[ version "expo" ]]",
+    "react": "[[ version "react" ]]",
+    "react-native": "[[ version "react-native" ]]",
+    "lucide-react-native": "[[ version "lucide-react-native" ]]"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/react": "[[ version "@types/react" ]]",
+    "typescript": "[[ version "typescript" ]]"
+  }
+}
