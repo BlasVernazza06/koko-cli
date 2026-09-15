@@ -602,8 +602,8 @@ func TestScaffoldManualAddonShadcnUI(t *testing.T) {
 	if !strings.Contains(webPkgStr, "lucide-react") {
 		t.Errorf("Expected apps/web/package.json to have lucide-react, got: %s", webPkgStr)
 	}
-	if !strings.Contains(webPkgStr, "@svgl/react") {
-		t.Errorf("Expected apps/web/package.json to have @svgl/react, got: %s", webPkgStr)
+	if !strings.Contains(webPkgStr, "@ridemountainpig/svgl-react") {
+		t.Errorf("Expected apps/web/package.json to have @ridemountainpig/svgl-react, got: %s", webPkgStr)
 	}
 	if !strings.Contains(webPkgStr, "framer-motion") {
 		t.Errorf("Expected apps/web/package.json to have framer-motion, got: %s", webPkgStr)

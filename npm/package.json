@@ -1,11 +1,11 @@
 {
-  "name": "koko-stack",
+  "name": "koko-app",
   "version": "1.0.0",
   "description": "Interactive CLI wizard to bootstrap production-ready monorepos",
   "main": "index.js",
   "bin": {
     "koko": "index.js",
-    "koko-stack": "index.js"
+    "koko-app": "index.js"
   },
   "engines": {
     "node": ">=14.0.0"

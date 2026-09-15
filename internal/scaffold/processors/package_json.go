@@ -293,7 +293,7 @@ func updateWorkspacePackageJSONs(v *vfs.VFS, cfg ProcessConfig) {
 			}
 
 			if strings.Contains(addons, "svgl") {
-				AddDependency(pkg, "@svgl/react", false)
+				AddDependency(pkg, "@ridemountainpig/svgl-react", false)
 			}
 
 			if strings.Contains(addons, "motion") {

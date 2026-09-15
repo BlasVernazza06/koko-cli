@@ -29,7 +29,7 @@ var DependencyVersions = map[string]string{
 	"lucide-react":                 "^0.446.0",
 	"framer-motion":                "^11.5.4",
 	"motion":                       "^11.11.17",
-	"@svgl/react":                  "^0.2.1",
+	"@ridemountainpig/svgl-react":  "^1.0.17",
 	"@radix-ui/react-slot":          "^1.1.0",
 	"@radix-ui/react-dialog":        "^1.1.2",
 	"@radix-ui/react-dropdown-menu":  "^2.1.2",
