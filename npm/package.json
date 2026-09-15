@@ -4,7 +4,8 @@
   "description": "Interactive CLI wizard to bootstrap production-ready monorepos",
   "main": "index.js",
   "bin": {
-    "koko": "./index.js"
+    "koko": "./index.js",
+    "koko-cli": "./index.js"
   },
   "engines": {
     "node": ">=14.0.0"
