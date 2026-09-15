@@ -30,6 +30,12 @@ func IsFullstackFrontend(frontend string) bool {
 	return f == "nextjs" || f == "nuxt" || f == "svelte" || f == "astro"
 }
 
+// IsReactFrontend returns true if the frontend belongs to the React ecosystem (Next.js, React + Vite, React Native).
+func IsReactFrontend(frontend string) bool {
+	f := strings.ToLower(frontend)
+	return f == "nextjs" || f == "react" || f == "native" || f == "react_native"
+}
+
 // IsClientSPA returns true if the frontend is a pure client-side Single Page Application or mobile app.
 func IsClientSPA(frontend string) bool {
 	f := strings.ToLower(frontend)
@@ -156,6 +162,14 @@ func BaseOptions(stepIdx int) []views.SelectOption {
 			{Label: "── Animations ──", IsHeader: true},
 			{Value: "motion", Label: "Framer Motion", Hint: "Production-ready declarative animations library"},
 
+			{Label: "── Pagos ──", IsHeader: true},
+			{Value: "stripe", Label: "Stripe", Hint: "Payments infrastructure and subscription billing"},
+			{Value: "polar", Label: "Polar (polar.sh)", Hint: "Developer-first monetization platform and billing engine"},
+
+			{Label: "── Servicio de Correo ──", IsHeader: true},
+			{Value: "resend", Label: "Resend", Hint: "Email API for developers with React email components"},
+			{Value: "brevo", Label: "Brevo", Hint: "Transactional email delivery and marketing automation"},
+
 			{Label: "── Validation & Typing ──", IsHeader: true},
 			{Value: "zod", Label: "Zod", Hint: "TypeScript-first schema declaration and validation"},
 
@@ -219,10 +233,18 @@ func GetStepOptions(stepIdx int, currentSelections []views.SelectOption) []views
 		for i := range options {
 			val := options[i].Value
 			switch val {
-			case "trpc", "orpc":
+			case "trpc":
 				if !isNode {
 					options[i].Disabled = true
-					options[i].DisabledReason = "Incompatible: tRPC/oRPC require TypeScript on frontend/backend"
+					options[i].DisabledReason = "Incompatible: tRPC requires TypeScript on frontend/backend"
+				} else if frontend != "" && frontend != "none" && !IsReactFrontend(frontend) {
+					options[i].Disabled = true
+					options[i].DisabledReason = fmt.Sprintf("Incompatible: tRPC requires a React frontend (Next.js, React + Vite, React Native), but '%s' was selected. Use oRPC or None", frontend)
+				}
+			case "orpc":
+				if !isNode {
+					options[i].Disabled = true
+					options[i].DisabledReason = "Incompatible: oRPC requires TypeScript on frontend/backend"
 				}
 			}
 		}
@@ -356,6 +378,12 @@ func GetStepOptions(stepIdx int, currentSelections []views.SelectOption) []views
 				if !isNode {
 					options[i].Disabled = true
 					options[i].DisabledReason = "Incompatible: Clerk requires a TypeScript/Node ecosystem"
+				} else if frontend != "" && frontend != "none" && !IsReactFrontend(frontend) {
+					options[i].Disabled = true
+					options[i].DisabledReason = fmt.Sprintf("Incompatible: Clerk requires a React frontend (Next.js, React + Vite, React Native), but '%s' was selected", frontend)
+				} else if backend == "self" && frontend != "nextjs" {
+					options[i].Disabled = true
+					options[i].DisabledReason = "Incompatible: Clerk with 'self' fullstack backend is only supported on Next.js"
 				}
 			}
 		}
@@ -398,6 +426,12 @@ func ValidateConfig(cfg scaffold.ScaffoldConfig) error {
 			return errors.NewValidationError(
 				fmt.Sprintf("'%s' requiere un entorno Node.js / TypeScript", api),
 				"Selecciona un frontend o backend TypeScript (Next.js, Express, Hono, etc.) o elige 'none' para la capa de API",
+			)
+		}
+		if api == "trpc" && frontend != "" && frontend != "none" && !IsReactFrontend(frontend) {
+			return errors.NewValidationError(
+				fmt.Sprintf("tRPC requiere un frontend basado en React (Next.js, React + Vite, React Native), pero se seleccionó '%s'", frontend),
+				"Para Nuxt, Svelte o Astro utiliza 'oRPC' o marca la API como 'none'",
 			)
 		}
 	}
@@ -523,6 +557,18 @@ func ValidateConfig(cfg scaffold.ScaffoldConfig) error {
 				return errors.NewValidationError(
 					"Clerk requiere un entorno Node.js / TypeScript",
 					"Agrega un frontend o backend compatible con TypeScript o cambia el proveedor de autenticación",
+				)
+			}
+			if frontend != "" && frontend != "none" && !IsReactFrontend(frontend) {
+				return errors.NewValidationError(
+					fmt.Sprintf("Clerk requiere un frontend basado en React (Next.js, React + Vite, React Native), pero se seleccionó '%s'", frontend),
+					"Selecciona un frontend React o utiliza 'Better Auth'",
+				)
+			}
+			if backend == "self" && frontend != "nextjs" {
+				return errors.NewValidationError(
+					"Clerk con backend fullstack 'self' solo es compatible con Next.js",
+					"Selecciona Next.js como frontend, utiliza un backend dedicado (Express, Hono, etc.) o cambia el proveedor de autenticación",
 				)
 			}
 		} else if auth == "next-auth" {

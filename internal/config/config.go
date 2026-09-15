@@ -66,6 +66,16 @@ type DatabaseInfo struct {
 type FeaturesInfo struct {
 	Auth           *AuthInfo       `json:"auth,omitempty"`
 	Infrastructure *Infrastructure `json:"infrastructure,omitempty"`
+	Payments       *PaymentInfo    `json:"payments,omitempty"`
+	Email          *EmailInfo      `json:"email,omitempty"`
+}
+
+type PaymentInfo struct {
+	Provider string `json:"provider"` // "stripe", "polar"
+}
+
+type EmailInfo struct {
+	Provider string `json:"provider"` // "resend", "brevo"
 }
 
 type AuthInfo struct {
@@ -124,6 +134,12 @@ func BuildKokoConfig(scaffoldCfg scaffold.ScaffoldConfig) KokoConfig {
 				Provider: "better-auth",
 				Status:   "installed",
 			}
+			config.Features.Payments = &PaymentInfo{
+				Provider: "stripe",
+			}
+			config.Features.Email = &EmailInfo{
+				Provider: "resend",
+			}
 			config.Features.Infrastructure = &Infrastructure{
 				DockerCompose: true,
 				CICD:          "github-actions",
@@ -167,6 +183,12 @@ func BuildKokoConfig(scaffoldCfg scaffold.ScaffoldConfig) KokoConfig {
 			config.Features.Auth = &AuthInfo{
 				Provider: "better-auth",
 				Status:   "installed",
+			}
+			config.Features.Payments = &PaymentInfo{
+				Provider: "stripe",
+			}
+			config.Features.Email = &EmailInfo{
+				Provider: "resend",
 			}
 			config.Features.Infrastructure = &Infrastructure{
 				DockerCompose: true,
@@ -320,6 +342,18 @@ func BuildKokoConfig(scaffoldCfg scaffold.ScaffoldConfig) KokoConfig {
 		ciCd := "none"
 		if strings.Contains(addons, "github_actions") || strings.Contains(addons, "cicd") {
 			ciCd = "github-actions"
+		}
+
+		if strings.Contains(addons, "stripe") {
+			config.Features.Payments = &PaymentInfo{Provider: "stripe"}
+		} else if strings.Contains(addons, "polar") {
+			config.Features.Payments = &PaymentInfo{Provider: "polar"}
+		}
+
+		if strings.Contains(addons, "resend") {
+			config.Features.Email = &EmailInfo{Provider: "resend"}
+		} else if strings.Contains(addons, "brevo") {
+			config.Features.Email = &EmailInfo{Provider: "brevo"}
 		}
 
 		if config.Stack.Frontend != nil {

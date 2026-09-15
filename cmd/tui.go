@@ -120,6 +120,28 @@ func findFirstEnabled(options []views.SelectOption) int {
 	return 0
 }
 
+// syncAddonOptions updates addon options with dynamically evaluated compatibility rules while preserving valid checked state.
+func syncAddonOptions(current []views.SelectOption, dynamic []views.SelectOption) []views.SelectOption {
+	out := make([]views.SelectOption, len(dynamic))
+	copy(out, dynamic)
+	for i := range out {
+		if out[i].IsHeader {
+			continue
+		}
+		for _, prev := range current {
+			if prev.Value == out[i].Value {
+				if !out[i].Disabled {
+					out[i].Checked = prev.Checked
+				} else {
+					out[i].Checked = false
+				}
+				break
+			}
+		}
+	}
+	return out
+}
+
 func initialModel(initialState sessionState, initialProjectName string) mainModel {
 	ti := textinput.New()
 	ti.Placeholder = "my-app"
@@ -385,6 +407,8 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			isAddonsStep := m.manualStepIdx == compatibility.StepAddons
 			var currentOptions []views.SelectOption
 			if isAddonsStep {
+				dynamic := compatibility.GetStepOptions(m.manualStepIdx, m.manualSelections)
+				m.addonOptions = syncAddonOptions(m.addonOptions, dynamic)
 				currentOptions = m.addonOptions
 			} else {
 				currentOptions = compatibility.GetStepOptions(m.manualStepIdx, m.manualSelections)
@@ -619,6 +643,8 @@ func (m mainModel) View() string {
 		isMulti := m.manualStepIdx == compatibility.StepAddons
 		var currentOptions []views.SelectOption
 		if isMulti {
+			dynamic := compatibility.GetStepOptions(m.manualStepIdx, m.manualSelections)
+			m.addonOptions = syncAddonOptions(m.addonOptions, dynamic)
 			currentOptions = m.addonOptions
 		} else {
 			currentOptions = compatibility.GetStepOptions(m.manualStepIdx, m.manualSelections)

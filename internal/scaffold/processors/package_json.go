@@ -223,6 +223,18 @@ func updateWorkspacePackageJSONs(v *vfs.VFS, cfg ProcessConfig) {
 			if strings.Contains(addons, "zod") {
 				AddDependency(pkg, "zod", false)
 			}
+			if strings.Contains(addons, "stripe") {
+				AddDependency(pkg, "stripe", false)
+			}
+			if strings.Contains(addons, "polar") {
+				AddDependency(pkg, "@polar-sh/sdk", false)
+			}
+			if strings.Contains(addons, "resend") {
+				AddDependency(pkg, "resend", false)
+			}
+			if strings.Contains(addons, "brevo") {
+				AddDependency(pkg, "@getbrevo/brevo", false)
+			}
 			if cfg.API == "trpc" || cfg.API == "orpc" {
 				deps, ok := pkg["dependencies"].(map[string]interface{})
 				if !ok {
@@ -290,6 +302,22 @@ func updateWorkspacePackageJSONs(v *vfs.VFS, cfg ProcessConfig) {
 
 			if strings.Contains(addons, "zod") {
 				AddDependency(pkg, "zod", false)
+			}
+
+			if strings.Contains(addons, "stripe") {
+				AddDependency(pkg, "stripe", false)
+			}
+
+			if strings.Contains(addons, "polar") {
+				AddDependency(pkg, "@polar-sh/sdk", false)
+			}
+
+			if strings.Contains(addons, "resend") {
+				AddDependency(pkg, "resend", false)
+			}
+
+			if strings.Contains(addons, "brevo") {
+				AddDependency(pkg, "@getbrevo/brevo", false)
 			}
 		}
 

@@ -55,6 +55,49 @@ func TestProcessPackageJSONs(t *testing.T) {
 	}
 }
 
+func TestProcessPackageJSONs_PaymentsAndEmailAddons(t *testing.T) {
+	v := vfs.New()
+	v.WriteString("package.json", `{"name": "placeholder"}`)
+	v.WriteString("apps/web/package.json", `{"name": "placeholder-web", "dependencies": {}}`)
+	v.WriteString("apps/api/package.json", `{"name": "placeholder-api", "dependencies": {}}`)
+
+	cfg := ProcessConfig{
+		ProjectName:    "acme-commerce",
+		PackageManager: "pnpm",
+		Frontend:       "nextjs",
+		Backend:        "express",
+		Addons:         "stripe,polar,resend,brevo",
+	}
+
+	if err := ProcessPackageJSONs(v, cfg); err != nil {
+		t.Fatalf("ProcessPackageJSONs failed: %v", err)
+	}
+
+	// Verify web package.json has payments & email deps
+	var webPkg map[string]interface{}
+	if err := v.ReadJSON("apps/web/package.json", &webPkg); err != nil {
+		t.Fatalf("Failed to read web package.json: %v", err)
+	}
+	webDeps := webPkg["dependencies"].(map[string]interface{})
+	for _, pkgName := range []string{"stripe", "@polar-sh/sdk", "resend", "@getbrevo/brevo"} {
+		if _, ok := webDeps[pkgName]; !ok {
+			t.Errorf("Expected %s in apps/web dependencies, got %+v", pkgName, webDeps)
+		}
+	}
+
+	// Verify api package.json has payments & email deps
+	var apiPkg map[string]interface{}
+	if err := v.ReadJSON("apps/api/package.json", &apiPkg); err != nil {
+		t.Fatalf("Failed to read api package.json: %v", err)
+	}
+	apiDeps := apiPkg["dependencies"].(map[string]interface{})
+	for _, pkgName := range []string{"stripe", "@polar-sh/sdk", "resend", "@getbrevo/brevo"} {
+		if _, ok := apiDeps[pkgName]; !ok {
+			t.Errorf("Expected %s in apps/api dependencies, got %+v", pkgName, apiDeps)
+		}
+	}
+}
+
 func TestAddDependency(t *testing.T) {
 	pkg := make(map[string]interface{})
 

@@ -8,8 +8,9 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "koko",
-	Short: "Koko CLI - Modern project initialization and scaffolding tool",
+	Use:     "koko",
+	Short:   "Koko CLI - Modern project initialization and scaffolding tool",
+	Version: "v0.1.0",
 	Run: func(cmd *cobra.Command, args []string) {
 		RunTUI()
 	},
@@ -21,4 +22,3 @@ func Execute() {
 		os.Exit(1)
 	}
 }
-

@@ -75,6 +75,23 @@ func TestGetStepOptions_API(t *testing.T) {
 		}
 	}
 
+	// For Nuxt / Svelte / Astro, tRPC must be disabled and oRPC enabled
+	for _, f := range []string{"nuxt", "svelte", "astro"} {
+		selectionsNonReact := []views.SelectOption{
+			{Value: f},
+			{Value: "self"},
+		}
+		opts := GetStepOptions(StepAPI, selectionsNonReact)
+		for _, opt := range opts {
+			if opt.Value == "trpc" && !opt.Disabled {
+				t.Errorf("Expected tRPC to be disabled for non-React frontend '%s'", f)
+			}
+			if opt.Value == "orpc" && opt.Disabled {
+				t.Errorf("Expected oRPC to be enabled for frontend '%s'", f)
+			}
+		}
+	}
+
 	// If pure Go backend, tRPC and oRPC must be disabled
 	selectionsGo := []views.SelectOption{
 		{Value: "none"},
@@ -211,6 +228,27 @@ func TestGetStepOptions_Auth(t *testing.T) {
 		}
 	}
 
+	// Non-React frontends (Nuxt, Svelte, Astro): Clerk disabled, Better-Auth enabled
+	for _, f := range []string{"nuxt", "svelte", "astro"} {
+		selectionsNonReact := []views.SelectOption{
+			{Value: f},
+			{Value: "express"},
+			{Value: "none"},
+			{Value: "pnpm"},
+			{Value: "postgres"},
+			{Value: "drizzle"},
+		}
+		optsNonReact := GetStepOptions(StepAuth, selectionsNonReact)
+		for _, opt := range optsNonReact {
+			if opt.Value == "clerk" && !opt.Disabled {
+				t.Errorf("Expected Clerk to be disabled for non-React frontend '%s'", f)
+			}
+			if opt.Value == "better-auth" && opt.Disabled {
+				t.Errorf("Expected Better Auth to be enabled for frontend '%s'", f)
+			}
+		}
+	}
+
 	// Pure Go backend: TS auth disabled
 	selectionsGo := []views.SelectOption{
 		{Value: "none"},
@@ -272,6 +310,33 @@ func TestGetStepOptions_ORM_Java(t *testing.T) {
 			if !opt.Disabled {
 				t.Errorf("Expected ORM '%s' to be disabled for Java Spring Boot", opt.Value)
 			}
+		}
+	}
+}
+
+func TestGetStepOptions_Addons(t *testing.T) {
+	opts := BaseOptions(StepAddons)
+	expectedValues := map[string]bool{
+		"stripe": false,
+		"polar":  false,
+		"resend": false,
+		"brevo":  false,
+		"shadcn": false,
+		"lucide": false,
+		"motion": false,
+		"zod":    false,
+		"docker": false,
+	}
+
+	for _, opt := range opts {
+		if _, exists := expectedValues[opt.Value]; exists {
+			expectedValues[opt.Value] = true
+		}
+	}
+
+	for val, found := range expectedValues {
+		if !found {
+			t.Errorf("Expected addon option '%s' to be present in StepAddons", val)
 		}
 	}
 }
@@ -452,6 +517,107 @@ func TestValidateConfig(t *testing.T) {
 				Frontend: "nextjs",
 				Backend:  "self",
 				Auth:     "clerk",
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid trpc on nuxt frontend",
+			cfg: scaffold.ScaffoldConfig{
+				Frontend: "nuxt",
+				Backend:  "self",
+				API:      "trpc",
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid trpc on svelte frontend",
+			cfg: scaffold.ScaffoldConfig{
+				Frontend: "svelte",
+				Backend:  "self",
+				API:      "trpc",
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid trpc on astro frontend",
+			cfg: scaffold.ScaffoldConfig{
+				Frontend: "astro",
+				Backend:  "self",
+				API:      "trpc",
+			},
+			wantErr: true,
+		},
+		{
+			name: "valid orpc on nuxt frontend",
+			cfg: scaffold.ScaffoldConfig{
+				Frontend: "nuxt",
+				Backend:  "self",
+				API:      "orpc",
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid clerk on nuxt frontend",
+			cfg: scaffold.ScaffoldConfig{
+				Frontend: "nuxt",
+				Backend:  "express",
+				Auth:     "clerk",
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid clerk on svelte frontend",
+			cfg: scaffold.ScaffoldConfig{
+				Frontend: "svelte",
+				Backend:  "express",
+				Auth:     "clerk",
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid clerk on astro frontend",
+			cfg: scaffold.ScaffoldConfig{
+				Frontend: "astro",
+				Backend:  "express",
+				Auth:     "clerk",
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid clerk on nuxt with self backend",
+			cfg: scaffold.ScaffoldConfig{
+				Frontend: "nuxt",
+				Backend:  "self",
+				Auth:     "clerk",
+			},
+			wantErr: true,
+		},
+		{
+			name: "valid clerk on react + express",
+			cfg: scaffold.ScaffoldConfig{
+				Frontend: "react",
+				Backend:  "express",
+				Auth:     "clerk",
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid polar and stripe addons with clerk",
+			cfg: scaffold.ScaffoldConfig{
+				Frontend: "nextjs",
+				Backend:  "self",
+				Auth:     "clerk",
+				Addons:   "polar,stripe,resend,brevo,zod",
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid polar addon with better-auth",
+			cfg: scaffold.ScaffoldConfig{
+				Frontend: "nextjs",
+				Backend:  "self",
+				Auth:     "better-auth",
+				Addons:   "polar,zod",
 			},
 			wantErr: false,
 		},

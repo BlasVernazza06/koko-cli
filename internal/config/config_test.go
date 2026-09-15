@@ -123,7 +123,7 @@ func TestBuildKokoConfigForManual(t *testing.T) {
 		Database:       "postgres",
 		ORM:            "jpa",
 		Auth:           "none",
-		Addons:         "shadcn,lucide,docker,github_actions",
+		Addons:         "shadcn,lucide,docker,github_actions,stripe,resend",
 	}
 
 	kokoCfg := BuildKokoConfig(cfg)
@@ -142,5 +142,13 @@ func TestBuildKokoConfigForManual(t *testing.T) {
 
 	if kokoCfg.Features.Infrastructure == nil || !kokoCfg.Features.Infrastructure.DockerCompose || kokoCfg.Features.Infrastructure.CICD != "github-actions" {
 		t.Errorf("Expected Docker Compose and GitHub Actions CI, got %+v", kokoCfg.Features.Infrastructure)
+	}
+
+	if kokoCfg.Features.Payments == nil || kokoCfg.Features.Payments.Provider != "stripe" {
+		t.Errorf("Expected Stripe payments, got %+v", kokoCfg.Features.Payments)
+	}
+
+	if kokoCfg.Features.Email == nil || kokoCfg.Features.Email.Provider != "resend" {
+		t.Errorf("Expected Resend email, got %+v", kokoCfg.Features.Email)
 	}
 }
