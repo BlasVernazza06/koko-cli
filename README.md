@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🦾 Koko CLI
+# <img src="assets/koko.png" alt="Koko CLI Logo" width="38" style="vertical-align: middle;" /> Koko CLI
 
 ### *Grab your stack, structure your project, and start building instantly.*
 

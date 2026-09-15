@@ -27,6 +27,11 @@ var (
 	CrossError       = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF4444")).Render("✗")
 	DiamondPending   = lipgloss.NewStyle().Foreground(ColorMuted).Render("◇")
 
+	CheckboxChecked       = lipgloss.NewStyle().Foreground(ColorGreenCheck).Render("[✓]")
+	CheckboxUnchecked     = lipgloss.NewStyle().Foreground(ColorMuted).Render("[ ]")
+	CheckboxCheckedActive = lipgloss.NewStyle().Foreground(ColorGreenCheck).Bold(true).Render("[✓]")
+	CheckboxUncheckedActive = lipgloss.NewStyle().Foreground(ColorViolet).Bold(true).Render("[ ]")
+
 	// Estilos Lipgloss
 	StyleHeader = lipgloss.NewStyle().
 			Bold(true).
@@ -35,6 +40,10 @@ var (
 	StylePromptTitle = lipgloss.NewStyle().
 				Bold(true).
 				Foreground(lipgloss.Color("#FFFFFF"))
+
+	StyleCategoryHeader = lipgloss.NewStyle().
+				Bold(true).
+				Foreground(ColorLightViolet)
 
 	StyleValue = lipgloss.NewStyle().
 			Foreground(ColorLightViolet)
@@ -68,14 +77,53 @@ var (
 				Italic(true)
 )
 
-// RenderOptions dibuja una lista de opciones con el cursor y estilo de selección
+// RenderOptions dibuja una lista de opciones con soporte para radio, multiselect y encabezados de categoría
 func RenderOptions(options []SelectOption, cursor int) string {
+	return RenderOptionsCustom(options, cursor, false)
+}
+
+// RenderOptionsCustom dibuja opciones permitiendo especificar si es multiselect
+func RenderOptionsCustom(options []SelectOption, cursor int, isMultiSelect bool) string {
 	var b strings.Builder
 	for i, opt := range options {
+		if opt.IsHeader {
+			b.WriteString(fmt.Sprintf("%s\n%s  %s\n", BarSymbol, BarSymbol, StyleCategoryHeader.Render(opt.Label)))
+			continue
+		}
+
 		if opt.Disabled {
-			b.WriteString(fmt.Sprintf("%s  %s %s", BarSymbol, RadioInactive, StyleDisabledItem.Render(opt.Label)))
+			indicator := RadioInactive
+			if isMultiSelect {
+				indicator = CheckboxUnchecked
+			}
+			b.WriteString(fmt.Sprintf("%s  %s %s", BarSymbol, indicator, StyleDisabledItem.Render(opt.Label)))
 			if opt.DisabledReason != "" {
 				b.WriteString(fmt.Sprintf("  %s", StyleDisabledReason.Render("("+opt.DisabledReason+")")))
+			}
+		} else if isMultiSelect {
+			var checkMark string
+			if opt.Checked {
+				if i == cursor {
+					checkMark = CheckboxCheckedActive
+				} else {
+					checkMark = CheckboxChecked
+				}
+			} else {
+				if i == cursor {
+					checkMark = CheckboxUncheckedActive
+				} else {
+					checkMark = CheckboxUnchecked
+				}
+			}
+
+			if i == cursor {
+				b.WriteString(fmt.Sprintf("%s  %s %s", BarSymbol, checkMark, StyleActiveItem.Render(opt.Label)))
+			} else {
+				b.WriteString(fmt.Sprintf("%s  %s %s", BarSymbol, checkMark, StyleInactiveItem.Render(opt.Label)))
+			}
+
+			if opt.Hint != "" {
+				b.WriteString(fmt.Sprintf("  %s", StyleHint.Render(opt.Hint)))
 			}
 		} else if i == cursor {
 			b.WriteString(fmt.Sprintf("%s  %s %s", BarSymbol, RadioActive, StyleActiveItem.Render(opt.Label)))

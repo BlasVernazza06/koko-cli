@@ -17,10 +17,12 @@ func GetRecipeLabel(recipeOptions []SelectOption, recipeVal string) string {
 
 // GetPackageManager returns the package manager for a given recipe
 func GetPackageManager(recipeVal string) string {
-	if recipeVal == "saas" || recipeVal == "pern" || recipeVal == "mern" {
-		return "pnpm"
+	r := strings.ToLower(strings.TrimSpace(recipeVal))
+	r = strings.ReplaceAll(r, "-", "_")
+	if r == "mern" {
+		return "npm"
 	}
-	return "npm"
+	return "pnpm"
 }
 
 // RenderRecipe renders the project recipe selection screen

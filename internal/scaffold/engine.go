@@ -80,11 +80,10 @@ func GenerateVFS(config ScaffoldConfig) (*vfs.VFS, error) {
 		return nil, err
 	}
 
-	// Limpieza: si hay frontend o backend, remover el .gitkeep de apps/
-	hasApps := (config.Frontend != "" && config.Frontend != "none") || (config.Backend != "" && config.Backend != "none")
-	if hasApps {
-		v.DeleteFile("apps/.gitkeep")
-	}
+	// Limpieza: asegurar que ningún .gitkeep quede en el VFS
+	v.DeleteFile("apps/.gitkeep")
+	v.DeleteFile("packages/.gitkeep")
+
 
 	// Fase de Post-procesamiento en memoria (ajuste de package.json y .env)
 	procCfg := processors.ProcessConfig{
@@ -92,11 +91,13 @@ func GenerateVFS(config ScaffoldConfig) (*vfs.VFS, error) {
 		PackageManager: config.PackageManager,
 		Frontend:       config.Frontend,
 		Backend:        config.Backend,
+		API:            config.API,
 		Database:       config.Database,
 		ORM:            config.ORM,
 		Auth:           config.Auth,
 		Addons:         config.Addons,
 	}
+
 
 	if err := processors.ProcessPackageJSONs(v, procCfg); err != nil {
 		return nil, errors.NewPostProcessError("package.json", "Fallo al configurar scripts y dependencias", err)

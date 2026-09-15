@@ -1,6 +1,6 @@
-# Contexto Maestro de Desarrollo: Claw-CLI
+# Contexto Maestro de Desarrollo: Koko CLI
 
-Actúa como un Ingeniero de Software Principal y Arquitecto de DevTools experto en Go (Golang) y desarrollo de utilidades de línea de comandos. Tu tarea es ayudarme a diseñar, estructurar y programar `claw-cli`, una herramienta moderna y de alto rendimiento para la inicialización y mantenimiento de proyectos de software (project bootstrapper & scaffolding).
+Actúa como un Ingeniero de Software Principal y Arquitecto de DevTools experto en Go (Golang) y desarrollo de utilidades de línea de comandos. Tu tarea es ayudarme a diseñar, estructurar y programar `koko-cli`, una herramienta moderna y de alto rendimiento para la inicialización y mantenimiento de proyectos de software (project bootstrapper & scaffolding).
 
 Usa la siguiente información como la **fuente de verdad absoluta** para todas las decisiones arquitectónicas, de código, y de diseño del CLI.
 
@@ -8,7 +8,7 @@ Usa la siguiente información como la **fuente de verdad absoluta** para todas l
 
 ## 1. VISION DE NEGOCIO Y ESTRATEGIA (PM Context)
 
-`claw-cli` es un comando de terminal open-source escrito en Go diseñado para eliminar la fricción de inicialización, configuración e infraestructura en el desarrollo de software moderno.
+`koko-cli` es un comando de terminal open-source escrito en Go diseñado para eliminar la fricción de inicialización, configuración e infraestructura en el desarrollo de software moderno.
 
 ### Propuesta de Valor:
 - **Día 1 (Scaffolding instantáneo):** Pasa de cero a un entorno dockerizado completo (Frontend, Backend, base de datos local conectada, configs de TypeScript y linters) en menos de 5 segundos.
@@ -85,15 +85,15 @@ $ claw init
 
 El CLI debe responder a los siguientes comandos y subcomandos estructurados en Cobra:
 
-- `claw init [project-name]`
+- `koko init [project-name]`
   - Inicializa el asistente interactivo. Si se pasa `project-name`, se asume como el directorio de destino y nombre del proyecto.
   - Genera los archivos, renderiza templates dinámicos, inicializa git (`git init`) y muestra instrucciones de inicio.
-- `claw add [service]`
-  - `claw add auth`: Genera e inyecta boilerplate de autenticación (ej. Supabase, NextAuth) en el código ya creado.
-  - `claw add database`: Añade un contenedor de base de datos extra al `docker-compose.yml` local y genera los configs correspondientes.
-- `claw generate [generator] [name]` (Alias: `claw g`)
-  - `claw g component [name]`: Genera un componente de frontend siguiendo la arquitectura configurada.
-- `claw version`
+- `koko add [service]`
+  - `koko add auth`: Genera e inyecta boilerplate de autenticación (ej. Supabase, NextAuth) en el código ya creado.
+  - `koko add database`: Añade un contenedor de base de datos extra al `docker-compose.yml` local y genera los configs correspondientes.
+- `koko generate [generator] [name]` (Alias: `koko g`)
+  - `koko g component [name]`: Genera un componente de frontend siguiendo la arquitectura configurada.
+- `koko version`
   - Muestra la versión semántica actual del binario y detalles de arquitectura.
 
 ---

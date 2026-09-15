@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const os = require('os');
+const fs = require('fs');
 const { execFileSync } = require('child_process');
 const path = require('path');
 
@@ -25,6 +26,21 @@ if (platform === 'win32') {
 }
 
 const binaryPath = path.join(__dirname, 'bin', binaryName);
+
+// Ensure binary exists
+if (!fs.existsSync(binaryPath)) {
+  console.error(`Koko binary not found for platform ${platform}-${arch} at: ${binaryPath}`);
+  process.exit(1);
+}
+
+// Ensure execution permissions on Unix systems (macOS / Linux)
+if (platform !== 'win32') {
+  try {
+    fs.chmodSync(binaryPath, 0o755);
+  } catch (_) {
+    // Ignore if permission change is not permitted
+  }
+}
 
 try {
   // Execute the native binary with all forwarded arguments

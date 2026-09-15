@@ -238,7 +238,7 @@ func init() {
 	initCmd.Flags().StringVar(&authFlag, "auth", "", "Auth Provider (ej: Better-auth, clerk, NextAuth.js)")
 	initCmd.Flags().StringVar(&gitFlag, "git", "no", "Initialize Git Repository")
 
-	initCmd.Flags().StringVarP(&recipieFlag, "recipie", "r", "saas", "Choose a recipie template (ej: SaaS, PERN, MERN, FAST_API_REACT)")
+	initCmd.Flags().StringVarP(&recipieFlag, "recipie", "r", "saas", "Choose a recipe template (ej: saas, enterprise_nestjs, java_spring, pern, mern, fastapi_react, mobile_expo)")
 
 	rootCmd.AddCommand(initCmd)
 }

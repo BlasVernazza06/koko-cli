@@ -136,11 +136,10 @@ func walkAndCopy(targetDir string, config ScaffoldConfig, filterFn func(string) 
 	})
 
 	if err == nil {
-		hasApps := (config.Frontend != "" && config.Frontend != "none") || (config.Backend != "" && config.Backend != "none")
-		if hasApps {
-			_ = os.Remove(filepath.Join(targetDir, "apps", ".gitkeep"))
-		}
+		_ = os.Remove(filepath.Join(targetDir, "apps", ".gitkeep"))
+		_ = os.Remove(filepath.Join(targetDir, "packages", ".gitkeep"))
 	}
+
 
 	return err
 }
@@ -186,8 +185,15 @@ func shouldParseAsTemplate(content []byte) bool {
 		strings.Contains(s, "[[ version ") ||
 		strings.Contains(s, "[[version ") ||
 		strings.Contains(s, "[[if ") ||
+		strings.Contains(s, "[[ if ") ||
+		strings.Contains(s, "[[- if ") ||
+		strings.Contains(s, "[[-if ") ||
 		strings.Contains(s, "[[range ") ||
+		strings.Contains(s, "[[ range ") ||
+		strings.Contains(s, "[[- range ") ||
 		strings.Contains(s, "[[with ") ||
+		strings.Contains(s, "[[ with ") ||
+		strings.Contains(s, "[[- with ") ||
 		strings.Contains(s, "[[define ") ||
 		strings.Contains(s, "[[template ") ||
 		strings.Contains(s, "[[/*")

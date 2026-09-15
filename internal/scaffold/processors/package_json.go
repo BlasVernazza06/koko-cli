@@ -24,11 +24,13 @@ type ProcessConfig struct {
 	PackageManager string
 	Frontend       string
 	Backend        string
+	API            string
 	Database       string
 	ORM            string
 	Auth           string
 	Addons         string
 }
+
 
 // AddDependency agrega o actualiza una dependencia en un objeto package.json en memoria,
 // consultando la versión oficial registrada en el catálogo maestro.
@@ -138,6 +140,23 @@ func updateRootPackageJSON(v *vfs.VFS, cfg ProcessConfig) {
 	_ = v.WriteJSON("package.json", pkg, "  ")
 }
 
+func replaceRepoReferences(pkg map[string]interface{}, projectName string) {
+	for _, field := range []string{"dependencies", "devDependencies", "peerDependencies"} {
+		if deps, ok := pkg[field].(map[string]interface{}); ok {
+			newDeps := make(map[string]interface{}, len(deps))
+			for k, v := range deps {
+				if strings.HasPrefix(k, "@repo/") {
+					newKey := fmt.Sprintf("@%s/%s", projectName, strings.TrimPrefix(k, "@repo/"))
+					newDeps[newKey] = v
+				} else {
+					newDeps[k] = v
+				}
+			}
+			pkg[field] = newDeps
+		}
+	}
+}
+
 func updateWorkspacePackageJSONs(v *vfs.VFS, cfg ProcessConfig) {
 	// Actualizar nombres en apps/ y packages/
 	workspacePaths := []struct {
@@ -146,12 +165,16 @@ func updateWorkspacePackageJSONs(v *vfs.VFS, cfg ProcessConfig) {
 	}{
 		{"apps/web/package.json", "web"},
 		{"apps/api/package.json", "api"},
+		{"packages/api/package.json", "api"},
 		{"packages/db/package.json", "db"},
+		{"packages/auth/package.json", "auth"},
 		{"packages/config/package.json", "config"},
 		{"packages/ui/package.json", "ui"},
 		{"packages/eslint-config/package.json", "eslint-config"},
 		{"packages/typescript-config/package.json", "typescript-config"},
 	}
+
+	addons := strings.ToLower(cfg.Addons)
 
 	for _, wp := range workspacePaths {
 		if !v.Exists(wp.file) {
@@ -163,8 +186,28 @@ func updateWorkspacePackageJSONs(v *vfs.VFS, cfg ProcessConfig) {
 		}
 
 		pkg["name"] = fmt.Sprintf("@%s/%s", cfg.ProjectName, wp.suffix)
+		replaceRepoReferences(pkg, cfg.ProjectName)
 
 		// Inyección dinámica de dependencias opcionales
+		if wp.file == "packages/api/package.json" {
+			if cfg.Database != "" && cfg.Database != "none" && cfg.ORM != "" && cfg.ORM != "none" {
+				deps, ok := pkg["dependencies"].(map[string]interface{})
+				if !ok {
+					deps = make(map[string]interface{})
+				}
+				deps[fmt.Sprintf("@%s/db", cfg.ProjectName)] = "workspace:*"
+				pkg["dependencies"] = deps
+			}
+			if cfg.Auth != "" && cfg.Auth != "none" {
+				deps, ok := pkg["dependencies"].(map[string]interface{})
+				if !ok {
+					deps = make(map[string]interface{})
+				}
+				deps[fmt.Sprintf("@%s/auth", cfg.ProjectName)] = "workspace:*"
+				pkg["dependencies"] = deps
+			}
+		}
+
 		if wp.suffix == "db" && cfg.ORM == "drizzle" {
 			if cfg.Database == "postgres" {
 				AddDependency(pkg, "postgres", false)
@@ -173,14 +216,112 @@ func updateWorkspacePackageJSONs(v *vfs.VFS, cfg ProcessConfig) {
 			}
 		}
 
-		if wp.suffix == "api" && strings.Contains(cfg.Auth, "better") {
-			AddDependency(pkg, "better-auth", false)
+		if wp.file == "apps/api/package.json" {
+			if strings.Contains(cfg.Auth, "better") {
+				AddDependency(pkg, "better-auth", false)
+			}
+			if strings.Contains(addons, "zod") {
+				AddDependency(pkg, "zod", false)
+			}
+			if strings.Contains(addons, "stripe") {
+				AddDependency(pkg, "stripe", false)
+			}
+			if strings.Contains(addons, "polar") {
+				AddDependency(pkg, "@polar-sh/sdk", false)
+			}
+			if strings.Contains(addons, "resend") {
+				AddDependency(pkg, "resend", false)
+			}
+			if strings.Contains(addons, "brevo") {
+				AddDependency(pkg, "@getbrevo/brevo", false)
+			}
+			if cfg.API == "trpc" || cfg.API == "orpc" {
+				deps, ok := pkg["dependencies"].(map[string]interface{})
+				if !ok {
+					deps = make(map[string]interface{})
+				}
+				deps[fmt.Sprintf("@%s/api", cfg.ProjectName)] = "workspace:*"
+				pkg["dependencies"] = deps
+
+				if cfg.API == "trpc" {
+					AddDependency(pkg, "@trpc/server", false)
+				} else if cfg.API == "orpc" {
+					AddDependency(pkg, "@orpc/server", false)
+					AddDependency(pkg, "@orpc/openapi", false)
+				}
+			}
 		}
 
-		if wp.suffix == "web" && strings.Contains(cfg.Auth, "clerk") {
-			AddDependency(pkg, "@clerk/nextjs", false)
+		if wp.file == "apps/web/package.json" {
+			if strings.Contains(cfg.Auth, "better") {
+				AddDependency(pkg, "better-auth", false)
+			}
+
+			if strings.Contains(cfg.Auth, "clerk") {
+				AddDependency(pkg, "@clerk/nextjs", false)
+			}
+
+			if cfg.API == "trpc" || cfg.API == "orpc" {
+				deps, ok := pkg["dependencies"].(map[string]interface{})
+				if !ok {
+					deps = make(map[string]interface{})
+				}
+				deps[fmt.Sprintf("@%s/api", cfg.ProjectName)] = "workspace:*"
+				pkg["dependencies"] = deps
+
+				AddDependency(pkg, "@tanstack/react-query", false)
+				if cfg.API == "trpc" {
+					AddDependency(pkg, "@trpc/client", false)
+					AddDependency(pkg, "@trpc/react-query", false)
+				} else if cfg.API == "orpc" {
+					AddDependency(pkg, "@orpc/client", false)
+					AddDependency(pkg, "@orpc/react-query", false)
+				}
+			}
+
+			if strings.Contains(addons, "shadcn") {
+				deps, ok := pkg["dependencies"].(map[string]interface{})
+				if !ok {
+					deps = make(map[string]interface{})
+				}
+				deps[fmt.Sprintf("@%s/ui", cfg.ProjectName)] = "workspace:*"
+				pkg["dependencies"] = deps
+			}
+
+			if strings.Contains(addons, "lucide") {
+				AddDependency(pkg, "lucide-react", false)
+			}
+
+			if strings.Contains(addons, "svgl") {
+				AddDependency(pkg, "@svgl/react", false)
+			}
+
+			if strings.Contains(addons, "motion") {
+				AddDependency(pkg, "framer-motion", false)
+			}
+
+			if strings.Contains(addons, "zod") {
+				AddDependency(pkg, "zod", false)
+			}
+
+			if strings.Contains(addons, "stripe") {
+				AddDependency(pkg, "stripe", false)
+			}
+
+			if strings.Contains(addons, "polar") {
+				AddDependency(pkg, "@polar-sh/sdk", false)
+			}
+
+			if strings.Contains(addons, "resend") {
+				AddDependency(pkg, "resend", false)
+			}
+
+			if strings.Contains(addons, "brevo") {
+				AddDependency(pkg, "@getbrevo/brevo", false)
+			}
 		}
 
 		_ = v.WriteJSON(wp.file, pkg, "  ")
 	}
 }
+

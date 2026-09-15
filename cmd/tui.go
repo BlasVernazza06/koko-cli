@@ -73,6 +73,7 @@ type mainModel struct {
 	manualStepIdx    int
 	manualCursors    []int
 	manualSelections []views.SelectOption
+	addonOptions     []views.SelectOption
 
 	// Initialization fields
 	projectNameInput textinput.Model
@@ -101,7 +102,7 @@ func findNextEnabled(options []views.SelectOption, currentIdx int, delta int) in
 	}
 	next := currentIdx + delta
 	for next >= 0 && next < len(options) {
-		if !options[next].Disabled {
+		if !options[next].Disabled && !options[next].IsHeader {
 			return next
 		}
 		next += delta
@@ -112,11 +113,33 @@ func findNextEnabled(options []views.SelectOption, currentIdx int, delta int) in
 // findFirstEnabled returns the index of the first enabled option.
 func findFirstEnabled(options []views.SelectOption) int {
 	for i, opt := range options {
-		if !opt.Disabled {
+		if !opt.Disabled && !opt.IsHeader {
 			return i
 		}
 	}
 	return 0
+}
+
+// syncAddonOptions updates addon options with dynamically evaluated compatibility rules while preserving valid checked state.
+func syncAddonOptions(current []views.SelectOption, dynamic []views.SelectOption) []views.SelectOption {
+	out := make([]views.SelectOption, len(dynamic))
+	copy(out, dynamic)
+	for i := range out {
+		if out[i].IsHeader {
+			continue
+		}
+		for _, prev := range current {
+			if prev.Value == out[i].Value {
+				if !out[i].Disabled {
+					out[i].Checked = prev.Checked
+				} else {
+					out[i].Checked = false
+				}
+				break
+			}
+		}
+	}
+	return out
 }
 
 func initialModel(initialState sessionState, initialProjectName string) mainModel {
@@ -152,6 +175,11 @@ func initialModel(initialState sessionState, initialProjectName string) mainMode
 			options: compatibility.BaseOptions(compatibility.StepBackend),
 		},
 		{
+			title:   "Select API Layer",
+			label:   "API",
+			options: compatibility.BaseOptions(compatibility.StepAPI),
+		},
+		{
 			title:   "Select Package Manager",
 			label:   "Package Manager",
 			options: compatibility.BaseOptions(compatibility.StepPackageManager),
@@ -165,6 +193,11 @@ func initialModel(initialState sessionState, initialProjectName string) mainMode
 			title:   "Select ORM / Query Builder",
 			label:   "ORM / Tool",
 			options: compatibility.BaseOptions(compatibility.StepORM),
+		},
+		{
+			title:   "Select Auth Provider",
+			label:   "Auth",
+			options: compatibility.BaseOptions(compatibility.StepAuth),
 		},
 		{
 			title:   "Select Addons / Tooling",
@@ -197,15 +230,19 @@ func initialModel(initialState sessionState, initialProjectName string) mainMode
 			{Value: "manual", Label: "Manual Configuration", Hint: "Choose stack step-by-step (Frontend, Backend, DB, ORM, Auth, etc.)"},
 		},
 		recipeOptions: []views.SelectOption{
-			{Value: "saas", Label: "⚡ SaaS Starter", Hint: "Next.js + Drizzle + Better-Auth + Stripe"},
-			{Value: "mern", Label: "💻 MERN Stack", Hint: "React + Express + MongoDB"},
-			{Value: "pern", Label: "🚀 PERN Stack", Hint: "React + Express + PostgreSQL"},
-			{Value: "fastapi_react", Label: "🐍 FastAPI + React", Hint: "FastAPI Backend + React SPA"},
+			{Value: "saas", Label: "⚡ SaaS Next.js Boilerplate", Hint: "Next.js App Router + Postgres + Better-Auth + Stripe + Resend"},
+			{Value: "enterprise_nestjs", Label: "🏢 Enterprise NestJS + Next.js", Hint: "Next.js + NestJS + PostgreSQL (Prisma) + Better-Auth + Stripe"},
+			{Value: "java_spring", Label: "☕ Enterprise Java Spring Boot", Hint: "React SPA + Java Spring Boot 3 + PostgreSQL + Docker"},
+			{Value: "pern", Label: "🚀 Modern PERN Stack", Hint: "React SPA + Node Express + PostgreSQL + Prisma ORM"},
+			{Value: "mern", Label: "💻 Classic MERN Stack", Hint: "React SPA + Node Express + MongoDB + Mongoose"},
+			{Value: "fastapi_react", Label: "🐍 FastAPI + React SPA", Hint: "React SPA + Python FastAPI + PostgreSQL + Docker"},
+			{Value: "mobile_expo", Label: "📱 Mobile Expo + Express API", Hint: "Expo React Native + Node Express API + PostgreSQL + Prisma"},
 		},
 		manualSteps:      manualSteps,
 		manualStepIdx:    0,
 		manualCursors:    make([]int, len(manualSteps)),
 		manualSelections: make([]views.SelectOption, len(manualSteps)),
+		addonOptions:     compatibility.BaseOptions(compatibility.StepAddons),
 		projectNameInput: ti,
 		spinner:          s,
 	}
@@ -367,20 +404,54 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case stateInitManual:
-			currentOptions := compatibility.GetStepOptions(m.manualStepIdx, m.manualSelections)
+			isAddonsStep := m.manualStepIdx == compatibility.StepAddons
+			var currentOptions []views.SelectOption
+			if isAddonsStep {
+				dynamic := compatibility.GetStepOptions(m.manualStepIdx, m.manualSelections)
+				m.addonOptions = syncAddonOptions(m.addonOptions, dynamic)
+				currentOptions = m.addonOptions
+			} else {
+				currentOptions = compatibility.GetStepOptions(m.manualStepIdx, m.manualSelections)
+			}
 			cursor := m.manualCursors[m.manualStepIdx]
-			if cursor >= len(currentOptions) || currentOptions[cursor].Disabled {
+			if cursor >= len(currentOptions) || currentOptions[cursor].Disabled || currentOptions[cursor].IsHeader {
 				cursor = findFirstEnabled(currentOptions)
 				m.manualCursors[m.manualStepIdx] = cursor
 			}
 
 			switch msg.String() {
+			case " ":
+				if isAddonsStep && cursor >= 0 && cursor < len(m.addonOptions) && !m.addonOptions[cursor].Disabled && !m.addonOptions[cursor].IsHeader {
+					m.addonOptions[cursor].Checked = !m.addonOptions[cursor].Checked
+				}
 			case "up", "k":
 				m.manualCursors[m.manualStepIdx] = findNextEnabled(currentOptions, cursor, -1)
 			case "down", "j":
 				m.manualCursors[m.manualStepIdx] = findNextEnabled(currentOptions, cursor, 1)
 			case "enter":
-				if cursor >= 0 && cursor < len(currentOptions) && !currentOptions[cursor].Disabled {
+				if isAddonsStep {
+					var selectedValues []string
+					var selectedLabels []string
+					for _, opt := range m.addonOptions {
+						if opt.Checked && !opt.IsHeader && !opt.Disabled {
+							selectedValues = append(selectedValues, opt.Value)
+							selectedLabels = append(selectedLabels, opt.Label)
+						}
+					}
+					val := strings.Join(selectedValues, ",")
+					lbl := strings.Join(selectedLabels, ", ")
+					if len(selectedValues) == 0 {
+						val = "none"
+						lbl = "None"
+					}
+					m.manualSelections[m.manualStepIdx] = views.SelectOption{
+						Value: val,
+						Label: lbl,
+					}
+					m.manualStepIdx++
+					nextOpts := compatibility.GetStepOptions(m.manualStepIdx, m.manualSelections)
+					m.manualCursors[m.manualStepIdx] = findFirstEnabled(nextOpts)
+				} else if cursor >= 0 && cursor < len(currentOptions) && !currentOptions[cursor].Disabled && !currentOptions[cursor].IsHeader {
 					selectedOpt := currentOptions[cursor]
 					m.manualSelections[m.manualStepIdx] = selectedOpt
 
@@ -398,9 +469,11 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							InitGit:        initGit,
 							Frontend:       m.manualSelections[compatibility.StepFrontend].Value,
 							Backend:        m.manualSelections[compatibility.StepBackend].Value,
+							API:            m.manualSelections[compatibility.StepAPI].Value,
 							PackageManager: m.manualSelections[compatibility.StepPackageManager].Value,
 							Database:       m.manualSelections[compatibility.StepDatabase].Value,
 							ORM:            m.manualSelections[compatibility.StepORM].Value,
+							Auth:           m.manualSelections[compatibility.StepAuth].Value,
 							Addons:         m.manualSelections[compatibility.StepAddons].Value,
 						}
 
@@ -424,8 +497,13 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "esc":
 				if m.manualStepIdx > 0 {
 					m.manualStepIdx--
-					prevOpts := compatibility.GetStepOptions(m.manualStepIdx, m.manualSelections)
-					if m.manualCursors[m.manualStepIdx] >= len(prevOpts) || prevOpts[m.manualCursors[m.manualStepIdx]].Disabled {
+					var prevOpts []views.SelectOption
+					if m.manualStepIdx == compatibility.StepAddons {
+						prevOpts = m.addonOptions
+					} else {
+						prevOpts = compatibility.GetStepOptions(m.manualStepIdx, m.manualSelections)
+					}
+					if m.manualCursors[m.manualStepIdx] >= len(prevOpts) || prevOpts[m.manualCursors[m.manualStepIdx]].Disabled || prevOpts[m.manualCursors[m.manualStepIdx]].IsHeader {
 						m.manualCursors[m.manualStepIdx] = findFirstEnabled(prevOpts)
 					}
 				} else {
@@ -562,12 +640,20 @@ func (m mainModel) View() string {
 			})
 		}
 		currentStep := m.manualSteps[m.manualStepIdx]
-		currentOptions := compatibility.GetStepOptions(m.manualStepIdx, m.manualSelections)
+		isMulti := m.manualStepIdx == compatibility.StepAddons
+		var currentOptions []views.SelectOption
+		if isMulti {
+			dynamic := compatibility.GetStepOptions(m.manualStepIdx, m.manualSelections)
+			m.addonOptions = syncAddonOptions(m.addonOptions, dynamic)
+			currentOptions = m.addonOptions
+		} else {
+			currentOptions = compatibility.GetStepOptions(m.manualStepIdx, m.manualSelections)
+		}
 		cursor := m.manualCursors[m.manualStepIdx]
-		if cursor >= len(currentOptions) || currentOptions[cursor].Disabled {
+		if cursor >= len(currentOptions) || currentOptions[cursor].Disabled || currentOptions[cursor].IsHeader {
 			cursor = findFirstEnabled(currentOptions)
 		}
-		return views.RenderManual(m.chosenName, history, currentStep.title, currentOptions, cursor)
+		return views.RenderManual(m.chosenName, history, currentStep.title, currentOptions, cursor, isMulti)
 
 	case stateInitRecipe:
 		return views.RenderRecipe(m.chosenName, m.recipeOptions, m.recipeCursor)

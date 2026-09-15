@@ -1,0 +1,9 @@
+import { createAuthClient } from "better-auth/react";
+
+export const authClient = createAuthClient({
+  [[ if ne .Backend "self" ]]
+  baseURL: process.env.EXPO_PUBLIC_SERVER_URL || "http://localhost:3001",
+  [[ end ]]
+});
+
+export const { signIn, signUp, signOut, useSession } = authClient;

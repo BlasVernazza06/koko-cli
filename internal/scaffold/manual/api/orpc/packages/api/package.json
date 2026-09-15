@@ -1,0 +1,22 @@
+{
+  "name": "@[[ .ProjectName ]]/api",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "lint": "eslint .",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@orpc/server": "[[ version "@orpc/server" ]]",
+    "@orpc/client": "[[ version "@orpc/client" ]]",
+    "@orpc/openapi": "[[ version "@orpc/openapi" ]]",
+    "zod": "[[ version "zod" ]]"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "[[ version "@types/node" ]]",
+    "typescript": "[[ version "typescript" ]]"
+  }
+}

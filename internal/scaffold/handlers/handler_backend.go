@@ -8,7 +8,7 @@ import (
 
 // evaluateBackend evalúa y mapea los archivos del servidor Backend seleccionado hacia apps/api/.
 func EvaluateBackend(rel string, config types.ScaffoldConfig) (string, bool) {
-	if config.Backend == "" || config.Backend == "none" {
+	if config.Backend == "" || config.Backend == "none" || config.Backend == "self" {
 		return "", false
 	}
 

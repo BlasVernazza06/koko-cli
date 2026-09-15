@@ -25,7 +25,26 @@ var DependencyVersions = map[string]string{
 	"autoprefixer":                 "^10.4.20",
 	"clsx":                         "^2.1.1",
 	"tailwind-merge":               "^2.5.2",
+	"class-variance-authority":     "^0.7.0",
 	"lucide-react":                 "^0.446.0",
+	"framer-motion":                "^11.5.4",
+	"motion":                       "^11.11.17",
+	"@svgl/react":                  "^0.2.1",
+	"@radix-ui/react-slot":          "^1.1.0",
+	"@radix-ui/react-dialog":        "^1.1.2",
+	"@radix-ui/react-dropdown-menu":  "^2.1.2",
+	"@radix-ui/react-label":          "^2.1.0",
+	"@radix-ui/react-select":         "^2.1.2",
+	"@radix-ui/react-separator":      "^1.1.0",
+	"@radix-ui/react-tooltip":        "^1.1.3",
+	"@radix-ui/react-collapsible":    "^1.1.1",
+	"sonner":                       "^1.5.0",
+	"next-themes":                  "^0.3.0",
+	"astro":                        "^4.15.9",
+	"@astrojs/tailwind":            "^5.1.1",
+	"expo":                         "^51.0.0",
+	"react-native":                 "0.74.5",
+	"lucide-react-native":          "^0.446.0",
 
 	// ----------------------------------------------------
 	// ⚙️ Backend Frameworks & Runtimes
@@ -48,6 +67,20 @@ var DependencyVersions = map[string]string{
 	"go-chi":                   "v5.0.12",
 
 	// ----------------------------------------------------
+	// 🔌 API Layer (RPC & Data Fetching)
+	// ----------------------------------------------------
+	"@trpc/server":         "^10.45.2",
+	"@trpc/client":         "^10.45.2",
+	"@trpc/react-query":    "^10.45.2",
+	"@trpc/next":           "^10.45.2",
+	"@orpc/server":         "^0.80.0",
+	"@orpc/client":         "^0.80.0",
+	"@orpc/react-query":    "^0.80.0",
+	"@orpc/openapi":        "^0.80.0",
+	"@tanstack/react-query": "^5.56.2",
+
+
+	// ----------------------------------------------------
 	// 🗄️ Databases, ORMs & Drivers
 	// ----------------------------------------------------
 	"drizzle-orm":    "^0.30.10",
@@ -63,12 +96,27 @@ var DependencyVersions = map[string]string{
 	// ----------------------------------------------------
 	// 🔐 Authentication, Validation & Utilities
 	// ----------------------------------------------------
-	"better-auth":   "^1.1.0",
-	"@clerk/nextjs": "^5.7.0",
-	"next-auth":     "^4.24.8",
-	"zod":           "^3.23.8",
-	"cors":          "^2.8.5",
-	"dotenv":        "^16.4.5",
+	"better-auth":         "^1.1.0",
+	"@better-auth/cli":    "^1.1.0",
+	"@clerk/nextjs":       "^5.7.0",
+	"@clerk/clerk-react":  "^5.10.0",
+	"@clerk/express":      "^1.3.0",
+	"next-auth":           "^4.24.8",
+	"zod":                 "^3.23.8",
+	"cors":                "^2.8.5",
+	"dotenv":              "^16.4.5",
+
+	// ----------------------------------------------------
+	// 💳 Payments & Billing
+	// ----------------------------------------------------
+	"stripe":        "^17.7.0",
+	"@polar-sh/sdk": "^0.49.0",
+
+	// ----------------------------------------------------
+	// 📧 Email Services
+	// ----------------------------------------------------
+	"resend":          "^4.1.2",
+	"@getbrevo/brevo": "^2.2.0",
 
 	// ----------------------------------------------------
 	// 🛠️ Tooling, TypeScript & Types
