@@ -2,6 +2,7 @@ package processors
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/BlasVernazza06/koko-cli/internal/catalog"
@@ -329,18 +330,9 @@ func updateWorkspacePackageJSONs(v *vfs.VFS, cfg ProcessConfig) {
 
 func updateWorkspaceTSConfigsAndConfigs(v *vfs.VFS, cfg ProcessConfig) {
 	for _, f := range v.ListFiles() {
-		// Actualizar extends en archivos tsconfig.json
-		if strings.HasSuffix(f, "tsconfig.json") || strings.Contains(f, "tsconfig.") {
-			if content, ok := v.ReadString(f); ok {
-				if strings.Contains(content, "@repo/typescript-config") {
-					newContent := strings.ReplaceAll(content, "@repo/typescript-config", "@"+cfg.ProjectName+"/typescript-config")
-					v.WriteString(f, newContent)
-				}
-			}
-		}
-
-		// Actualizar referencias en next.config y eslint.config
-		if strings.HasSuffix(f, "next.config.mjs") || strings.HasSuffix(f, "next.config.js") || strings.HasSuffix(f, "eslint.config.mjs") {
+		ext := strings.ToLower(filepath.Ext(f))
+		switch ext {
+		case ".json", ".ts", ".tsx", ".js", ".mjs", ".cjs", ".vue", ".svelte", ".yml", ".yaml", ".md":
 			if content, ok := v.ReadString(f); ok {
 				if strings.Contains(content, "@repo/") {
 					newContent := strings.ReplaceAll(content, "@repo/", "@"+cfg.ProjectName+"/")

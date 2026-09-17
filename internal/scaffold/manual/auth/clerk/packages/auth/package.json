@@ -12,7 +12,7 @@
     "@clerk/nextjs": "[[ version "@clerk/nextjs" ]]"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*",
+    "@[[ .ProjectName ]]/typescript-config": "workspace:*",
     "@types/node": "[[ version "@types/node" ]]",
     "typescript": "[[ version "typescript" ]]"
   }
