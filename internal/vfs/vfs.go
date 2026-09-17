@@ -81,6 +81,7 @@ func (v *VFS) ReadJSON(filePath string, target any) error {
 	if !exists {
 		return path.ErrBadPattern
 	}
+	data = bytes.TrimPrefix(data, []byte("\xef\xbb\xbf"))
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	return decoder.Decode(target)
 }

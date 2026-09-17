@@ -48,6 +48,7 @@ func GenerateVFS(config ScaffoldConfig) (*vfs.VFS, error) {
 		if readErr != nil {
 			return errors.NewTemplateError(path, "Fallo al leer plantilla embebida", readErr, "Verifica el archivo de plantilla")
 		}
+		content = bytes.TrimPrefix(content, []byte("\xef\xbb\xbf"))
 
 		// 1. Si es archivo binario, guardarlo directamente en VFS sin parsear
 		if bytes.IndexByte(content, 0) != -1 || isBinaryExtension(destSubPath) {

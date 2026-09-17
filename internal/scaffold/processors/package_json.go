@@ -55,6 +55,7 @@ func AddDependency(pkg map[string]interface{}, pkgName string, isDev bool) {
 func ProcessPackageJSONs(v *vfs.VFS, cfg ProcessConfig) error {
 	updateRootPackageJSON(v, cfg)
 	updateWorkspacePackageJSONs(v, cfg)
+	updateWorkspaceTSConfigsAndConfigs(v, cfg)
 	return nil
 }
 
@@ -172,6 +173,7 @@ func updateWorkspacePackageJSONs(v *vfs.VFS, cfg ProcessConfig) {
 		{"packages/ui/package.json", "ui"},
 		{"packages/eslint-config/package.json", "eslint-config"},
 		{"packages/typescript-config/package.json", "typescript-config"},
+		{"packages/validators/package.json", "validators"},
 	}
 
 	addons := strings.ToLower(cfg.Addons)
@@ -322,6 +324,30 @@ func updateWorkspacePackageJSONs(v *vfs.VFS, cfg ProcessConfig) {
 		}
 
 		_ = v.WriteJSON(wp.file, pkg, "  ")
+	}
+}
+
+func updateWorkspaceTSConfigsAndConfigs(v *vfs.VFS, cfg ProcessConfig) {
+	for _, f := range v.ListFiles() {
+		// Actualizar extends en archivos tsconfig.json
+		if strings.HasSuffix(f, "tsconfig.json") || strings.Contains(f, "tsconfig.") {
+			if content, ok := v.ReadString(f); ok {
+				if strings.Contains(content, "@repo/typescript-config") {
+					newContent := strings.ReplaceAll(content, "@repo/typescript-config", "@"+cfg.ProjectName+"/typescript-config")
+					v.WriteString(f, newContent)
+				}
+			}
+		}
+
+		// Actualizar referencias en next.config y eslint.config
+		if strings.HasSuffix(f, "next.config.mjs") || strings.HasSuffix(f, "next.config.js") || strings.HasSuffix(f, "eslint.config.mjs") {
+			if content, ok := v.ReadString(f); ok {
+				if strings.Contains(content, "@repo/") {
+					newContent := strings.ReplaceAll(content, "@repo/", "@"+cfg.ProjectName+"/")
+					v.WriteString(f, newContent)
+				}
+			}
+		}
 	}
 }
 
