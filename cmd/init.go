@@ -22,6 +22,8 @@ var (
 	databaseFlag string
 	ormFlag      string
 	authFlag     string
+	addonsFlag   string
+	apiFlag      string
 	gitFlag      string
 	recipieFlag  string
 )
@@ -36,7 +38,19 @@ var initCmd = &cobra.Command{
 			projectName = args[0]
 		}
 
-		if defaultFlag {
+		isDefault, _ := cmd.Flags().GetBool("default")
+		frontend, _ := cmd.Flags().GetString("frontend")
+		backend, _ := cmd.Flags().GetString("backend")
+		pm, _ := cmd.Flags().GetString("package-manager")
+		database, _ := cmd.Flags().GetString("database")
+		orm, _ := cmd.Flags().GetString("orm")
+		auth, _ := cmd.Flags().GetString("auth")
+		addons, _ := cmd.Flags().GetString("addons")
+		api, _ := cmd.Flags().GetString("api")
+		git, _ := cmd.Flags().GetString("git")
+		recipie, _ := cmd.Flags().GetString("recipie")
+
+		if isDefault {
 			if projectName == "" {
 				projectName = "my-project"
 			}
@@ -44,10 +58,10 @@ var initCmd = &cobra.Command{
 				fmt.Printf("\n\033[31m✗ Error: %s\033[0m\n\n", err.Error())
 				os.Exit(1)
 			}
-			runDefaultInit(projectName, recipieFlag)
+			runDefaultInit(projectName, recipie)
 			return
 		}
-		if frontendFlag != "" || backendFlag != "" || databaseFlag != "" || ormFlag != "" || authFlag != "" {
+		if frontend != "" || backend != "" || database != "" || orm != "" || auth != "" || addons != "" || api != "" {
 			if projectName == "" {
 				projectName = "my-project"
 			}
@@ -55,19 +69,20 @@ var initCmd = &cobra.Command{
 				fmt.Printf("\n\033[31m✗ Error: %s\033[0m\n\n", err.Error())
 				os.Exit(1)
 			}
-			pm := pmFlag
 			if pm == "" {
 				pm = "pnpm"
 			}
-			initGit := strings.ToLower(gitFlag) == "yes" || strings.ToLower(gitFlag) == "true" || strings.ToLower(gitFlag) == "y"
+			initGit := strings.ToLower(git) == "yes" || strings.ToLower(git) == "true" || strings.ToLower(git) == "y"
 			cfg := scaffold.ScaffoldConfig{
 				ProjectName:    projectName,
-				Frontend:       frontendFlag,
-				Backend:        backendFlag,
+				Frontend:       frontend,
+				Backend:        backend,
+				API:            api,
 				PackageManager: pm,
-				Database:       databaseFlag,
-				ORM:            ormFlag,
-				Auth:           authFlag,
+				Database:       database,
+				ORM:            orm,
+				Auth:           auth,
+				Addons:         addons,
 				InitGit:        initGit,
 			}
 			if err := compatibility.ValidateConfig(cfg); err != nil {
@@ -154,6 +169,9 @@ func runManualInit(cfg scaffold.ScaffoldConfig) {
 	if cfg.Backend != "" {
 		fmt.Printf("\033[90m│\033[0m  \033[38;2;0;255;127m◆\033[0m  \033[1mBackend\033[0m          \033[90m·\033[0m  \033[38;2;167;139;250m%s\033[0m\n", cfg.Backend)
 	}
+	if cfg.API != "" && cfg.API != "none" {
+		fmt.Printf("\033[90m│\033[0m  \033[38;2;0;255;127m◆\033[0m  \033[1mAPI\033[0m              \033[90m·\033[0m  \033[38;2;167;139;250m%s\033[0m\n", cfg.API)
+	}
 	if cfg.Database != "" {
 		fmt.Printf("\033[90m│\033[0m  \033[38;2;0;255;127m◆\033[0m  \033[1mDatabase\033[0m         \033[90m·\033[0m  \033[38;2;167;139;250m%s\033[0m\n", cfg.Database)
 	}
@@ -232,10 +250,12 @@ func init() {
 
 	initCmd.Flags().StringVarP(&frontendFlag, "frontend", "f", "", "Frontend Framework (ej: Nextjs, react, vue)")
 	initCmd.Flags().StringVarP(&backendFlag, "backend", "b", "", "Backend Framework (ej: express, hono, fiber)")
+	initCmd.Flags().StringVar(&apiFlag, "api", "", "API Layer (ej: trpc, orpc, none)")
 	initCmd.Flags().StringVarP(&pmFlag, "package-manager", "p", "pnpm", "Package Manager to use (ej: bun, pnpm, npm, yarn)")
 	initCmd.Flags().StringVar(&databaseFlag, "database", "", "Database (ej: postgres, mysql, mongodb)")
 	initCmd.Flags().StringVar(&ormFlag, "orm", "", "ORM (ej: drizzle, prisma, mongoose)")
 	initCmd.Flags().StringVar(&authFlag, "auth", "", "Auth Provider (ej: Better-auth, clerk, NextAuth.js)")
+	initCmd.Flags().StringVar(&addonsFlag, "addons", "", "Addons / Tooling (ej: shadcn, lucide, svgl, motion, stripe, polar, resend, brevo, zod, docker, github_actions)")
 	initCmd.Flags().StringVar(&gitFlag, "git", "no", "Initialize Git Repository")
 
 	initCmd.Flags().StringVarP(&recipieFlag, "recipie", "r", "saas", "Choose a recipe template (ej: saas, enterprise_nestjs, java_spring, pern, mern, fastapi_react, mobile_expo)")

@@ -1,16 +1,25 @@
 <div align="center">
 
-# <img src="assets/koko.png" alt="Koko CLI Logo" width="38" style="vertical-align: middle;" /> Koko CLI
+# <img src="assets/koko.png" alt="Koko CLI Logo" width="42" style="vertical-align: middle;" /> Koko CLI
 
 ### *Grab your stack, structure your project, and start building instantly.*
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat-square&logo=go&logoColor=white)](https://golang.org)
+[![NPM Version](https://img.shields.io/npm/v/koko-app?style=flat-square&color=CB3837&logo=npm)](https://www.npmjs.com/package/koko-app)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
+[![Turborepo](https://img.shields.io/badge/Monorepo-Turborepo-EF4444?style=flat-square&logo=turborepo&logoColor=white)](https://turbo.build)
+
+<br />
+
+<p align="center">
+  <img src="assets/demo.gif" alt="Koko CLI Interactive Demo" width="92%" style="border-radius: 8px; box-shadow: 0 8px 30px rgba(0,0,0,0.25);" />
+</p>
 
 </div>
 
 ---
 
-**Koko CLI** is an ultra-fast interactive terminal project initializer written in Go. Forget about manually setting up complex TypeScript configurations, monorepo workspaces, databases, or Docker containers. Koko lets you pick your ideal production recipe or design a custom stack step-by-step, generating ready-to-run projects in milliseconds.
+**Koko CLI** is an ultra-fast interactive terminal project initializer written in Go. Forget about manually wiring TypeScript monorepo workspaces, database schemas, Docker containers, authentication providers, and client SDKs. Koko generates clean, fully-typed, production-ready fullstack architectures in milliseconds.
 
 ```text
      .---.   .---.
@@ -25,8 +34,9 @@
 
 ## ⚡ Quick Start
 
-### Instant Run (Zero Installation)
-Bootstrap a production-ready project immediately with your favorite package manager:
+Bootstrap a production-ready project immediately with zero prior setup:
+
+### Instant Execution
 
 ```bash
 # Node.js (NPX)
@@ -39,13 +49,13 @@ pnpm dlx koko-app init
 bunx koko-app init
 ```
 
-### Native Go Installation
-```bash
-go install github.com/BlasVernazza06/koko-cli@latest
-```
+### Global / Native Installation
 
-### Global CLI Installation
 ```bash
+# Go Native Binary
+go install github.com/BlasVernazza06/koko-cli@latest
+
+# Global NPM / PNPM / Bun
 npm install -g koko-app
 # or
 pnpm add -g koko-app
@@ -53,52 +63,54 @@ pnpm add -g koko-app
 bun add -g koko-app
 ```
 
+Then run anywhere:
+```bash
+koko init
+```
+
 ---
 
-## 🔮 What's New in v2.0.0
+## ✨ Key Features
 
-* ⚡ **100% Go-Template Engine**: All codebase templates, configurations, environment variables, and SDK clients are pre-compiled and interpolated directly at generation time. Zero post-install tweaks required—run `pnpm install` and your monorepo is ready to develop.
-* 🧩 **Smart `koko add` Command**: Expand your monorepo anytime without starting from scratch.
-  * **Fresh Projects (No custom code changes):** Performs a full scaffold of the selected addon (e.g. `koko add stripe`, `koko add clerk`, `koko add zod`), injecting client libraries, database schemas, and example API routes.
-  * **Modified Projects (Code changes detected):** Safely injects dependencies and `.env.example` keys without overwriting your custom logic.
-  * **New Apps / Workspaces:** If you started with only a frontend or backend, `koko add backend` or `koko add mobile` creates the new workspace folder (`apps/api`, `apps/mobile`) and links it to the monorepo automatically.
-* 🛡️ **Workspace Integrity Engine**: Real-time cross-validation prevents invalid architectural pairings and guarantees 100% valid `workspace:*` links.
+* ⚡ **Ultra-Fast In-Memory VFS**: All project files, configurations, and templates are rendered in memory before touching the disk, creating clean projects in under a second.
+* 🛡️ **Workspace Integrity Engine**: Built-in real-time validation guarantees valid `workspace:*` links, preventing incompatible architectural combinations.
+* 🎨 **Interactive TUI**: Intuitive terminal UI built with Charm Bubbletea featuring smart recipes, step-by-step custom wizard, and live progress indicators.
+* 🧩 **Modular Day-2 Addons (`koko add`)**: Expand existing projects seamlessly with authentication, payments, database models, or new workspace apps (`apps/api`, `apps/mobile`) without breaking custom logic.
+* 🩺 **Health Check & Diagnostics (`koko doctor`)**: Inspect dependencies, catalog updates, and monorepo workspace alignment in a single command.
 
 ---
 
 ## 🛠️ Supported Technology Stack
 
-Koko supports a diverse set of production-ready technologies:
+### 📦 1. Production-Ready Recipes
+* ⚡ **SaaS Starter:** Next.js App Router + Drizzle ORM + PostgreSQL + Better-Auth + Docker Compose + Stripe.
+* 🏢 **Enterprise NestJS:** Next.js + NestJS API + PostgreSQL (Prisma) + Better-Auth + Stripe.
+* 🚀 **PERN Stack:** React (Vite) + Node.js Express + PostgreSQL + Prisma ORM.
+* 💻 **MERN Stack:** React (Vite) + Node.js Express + MongoDB + Mongoose.
+* 🐍 **FastAPI + React:** React SPA + Python FastAPI + PostgreSQL + Docker.
+* 📱 **Mobile Expo:** React Native Expo + Express Backend + Shared Database.
 
-### 📦 1. Pre-configured Production Recipes
-* ⚡ **SaaS Starter:** Next.js + Drizzle ORM + Better-Auth + Docker Compose + Stripe.
-* 💻 **MERN Stack:** React (Vite) + Express + MongoDB.
-* 🚀 **PERN Stack:** React (Vite) + Express + PostgreSQL.
-* 🐍 **FastAPI + React:** Python FastAPI + React (Vite) SPA.
-* ☕ **Enterprise NestJS:** NestJS API + Next.js + Prisma + PostgreSQL.
-* 📱 **Mobile Expo:** React Native Expo + Express Backend + Shared DB.
-
-### ⚙️ 2. Step-by-Step Modular Stacks
+### ⚙️ 2. Modular Stack Matrix
 
 | Layer | Supported Technologies |
 | :--- | :--- |
-| **Frontend Framework** | `Next.js` (App Router) • `React (Vite)` • `Astro` • `Nuxt (Vue)` • `Svelte` • `None` |
-| **Backend Runtime** | `Node.js Express` • `NestJS` • `Hono` • `Go Chi Router` • `Python FastAPI` • `None` |
-| **Database Server** | `PostgreSQL` • `MySQL` • `MongoDB` • `SQLite` • `None` |
-| **ORM / Query Builder** | `Drizzle ORM` • `Prisma` • `Mongoose` • `GORM (Go)` • `SQLAlchemy / SQLModel (Python)` • `None` |
-| **Authentication** | `Better-Auth` • `Clerk` • `NextAuth` • `None` |
+| **Frontend** | `Next.js` (App Router) • `React (Vite)` • `Astro` • `Nuxt (Vue)` • `Svelte` • `None` |
+| **Backend** | `Node.js Express` • `NestJS` • `Hono` • `Go Chi Router` • `Python FastAPI` • `None` |
+| **Database** | `PostgreSQL` • `MySQL` • `MongoDB` • `SQLite` • `None` |
+| **ORM / Client** | `Drizzle ORM` • `Prisma` • `Mongoose` • `GORM (Go)` • `SQLAlchemy / SQLModel (Python)` • `None` |
+| **Authentication** | `Better-Auth` • `Clerk` • `NextAuth.js` • `None` |
 | **API Layer** | `tRPC` • `oRPC` • `REST` |
-| **Package Managers** | `pnpm` • `bun` • `npm` • `Go Modules` • `pip` |
-| **Addons & Tooling** | `Shadcn UI` • `Stripe` • `Polar` • `Zod` • `Docker Compose` • `GitHub Actions CI` |
+| **Package Managers**| `pnpm` • `bun` • `npm` • `Go Modules` • `pip` |
+| **Addons & Tooling**| `Shadcn UI` • `Stripe` • `Polar` • `Zod` • `Docker Compose` • `GitHub Actions CI` |
 
 ---
 
 ## 🧩 The `koko add` Workflow
 
-Forgot to select an addon during initialization? Add it in seconds:
+Need to add new capabilities to an existing workspace? Use `koko add`:
 
 ```bash
-# Add payments & billing
+# Add payment & subscription providers
 koko add stripe
 koko add polar
 
@@ -106,18 +118,18 @@ koko add polar
 koko add clerk
 koko add better-auth
 
-# Add UI or schema validators
+# Add UI components & validation
 koko add shadcn
 koko add zod
 
-# Add a new workspace application to an existing monorepo
-koko add backend    # Scaffolds apps/api and links workspace
-koko add mobile     # Scaffolds apps/mobile (Expo) and links workspace
+# Expand monorepo workspaces
+koko add backend    # Scaffolds apps/api and links workspace packages
+koko add mobile     # Scaffolds apps/mobile (Expo) and connects to shared DB
 ```
 
 ---
 
-## 📁 Generated Monorepo Layout
+## 📁 Generated Monorepo Architecture
 
 ```text
 my-koko-app/
@@ -141,13 +153,13 @@ my-koko-app/
 
 ## ⚙️ Configuration Manifest (`koko.config.json`)
 
-Koko stores project configuration in a root manifest to power Day-2 operations (`koko add`, `koko doctor`, etc.):
+Koko records your stack specification in a root manifest to automate Day-2 maintenance, tooling, and doctor validations:
 
 ```json
 {
   "$schema": "https://koko-cli.dev/schema.json",
   "project": {
-    "name": "my-super-app",
+    "name": "my-modern-stack",
     "cliVersion": "v2.0.0",
     "createdAt": "2026-09-17T20:50:00Z"
   },
@@ -183,8 +195,9 @@ Koko stores project configuration in a root manifest to power Day-2 operations (
 
 ## 🤝 Contributing
 
-Contributions are welcome! Check out our [Contributing Guide](CONTRIBUTING.md) to get started.
+Contributions, issues, and feature requests are welcome! Feel free to check the [Contributing Guide](CONTRIBUTING.md).
 
 ## 📄 License
 
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
+

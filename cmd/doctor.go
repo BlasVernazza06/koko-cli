@@ -17,10 +17,11 @@ var doctorCmd = &cobra.Command{
 	Use:   "doctor",
 	Short: "Diagnose your project stack, detect discrepancies and update koko.config.json",
 	Run: func(cmd *cobra.Command, args []string) {
-		targetDir := dirFlag
+		targetDir, _ := cmd.Flags().GetString("dir")
 		if targetDir == "" {
 			targetDir = "."
 		}
+		isFix, _ := cmd.Flags().GetBool("fix")
 
 		fmt.Println("\n\033[90m┌\033[0m  \033[1mKoko Doctor · Project Diagnostics\033[0m")
 		fmt.Println("\033[90m│\033[0m")
@@ -78,7 +79,7 @@ var doctorCmd = &cobra.Command{
 		}
 
 		fmt.Printf("\033[90m│\033[0m\n")
-		if fixFlag {
+		if isFix {
 			if err := doctor.ApplyFixes(targetDir, result.DetectedConfig, result.ExistingConfig); err != nil {
 				fmt.Printf("\033[90m└\033[0m  \033[31m✗ Failed to update koko.config.json: %v\033[0m\n\n", err)
 				os.Exit(1)

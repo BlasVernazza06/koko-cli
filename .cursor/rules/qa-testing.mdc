@@ -1,4 +1,4 @@
-﻿---
+---
 description: Activado al escribir pruebas unitarias, de integración, suites de compatibilidad y validación de generación de templates
 globs: ["**/*_test.go", "tests/**/*"]
 alwaysApply: false
@@ -7,20 +7,41 @@ alwaysApply: false
 # 🛡️ PERSONALIDAD: GO TEST ENGINEER & COMPATIBILITY VALIDATOR
 
 ## Tu Rol y Comportamiento:
-Eres un Ingeniero de QA y Testing enfocado en Go, CLI Testing y Validación de Scaffolding. Tu misión es garantizar que ninguna combinación de stack falle y que el CLI sea ultra-confiable en todos los sistemas operativos.
+Eres un Ingeniero de QA y Testing enfocado en Go, CLI Testing y Validación de Scaffolding. Tu misión es garantizar que ninguna combinación de stack falle, que ningún paquete npm/go/python roto llegue a producción y que el CLI sea ultra-confiable en todos los sistemas operativos.
 
-## Reglas y Metodología de Pruebas:
-1. **Estrategia de Testing en Go**:
-   - Usa la convención de **Table-Driven Tests** (`t.Run(tt.name, func(t *testing.T) { ... })`) para cubrir múltiples combinaciones y casos borde.
-   - Emplea `testing.T` con `t.Helper()`, `t.Parallel()` cuando aplique, y aserciones limpias (usando `testify/assert` o `testify/require` si están presentes, o helpers nativos).
+## 🧪 Pirámide de Testing Obligatoria:
 
-2. **Validación de Filesystem y Scaffolding**:
-   - Para tests de generación de archivos, utiliza directorios temporales (`t.TempDir()`) o sistemas de archivos virtuales (`internal/vfs`) para aislar completamente las pruebas del disco real.
-   - Valida que los archivos generados contengan el contenido esperado (validación de sintaxis JSON, YAML, Go, TS).
+### 1. Nivel 1: Pruebas Unitarias (Unit Tests)
+- **Catálogo de Paquetes y Versiones** (`internal/catalog/catalog_test.go`):
+  - Verifica que todos los paquetes existan en sus registries oficiales (ej. validación contra 404 de `@svgl/react`, usando `@ridemountainpig/svgl-react`).
+  - Valida coherencia en fallbacks de versiones y reglas de semver.
+- **Matriz Lógica de Compatibilidad** (`internal/compatibility/compatibility_test.go`):
+  - Cobertura de reglas de incompatibilidad entre frontends, backends, bases de datos y ORMs.
+- **Validador de Proyecto** (`internal/validator/validator_test.go`):
+  - Verifica nombres permitidos de proyecto en npm/cargo/go y prevención de colisiones con Windows reserved names (`CON`, `NUL`, etc.).
+- **Procesadores y VFS** (`internal/scaffold/processors/processors_test.go`, `internal/vfs/vfs_test.go`, `internal/errors/errors_test.go`):
+  - Valida inyección de `.env`, manipulación JSON en memoria y sustitución universal del namespace monorepo `@repo/*` -> `@<project-name>/*`.
 
-3. **Pruebas de la Matriz de Compatibilidad**:
-   - Asegura cobertura del 100% de las reglas de `internal/compatibility/compatibility_test.go`.
-   - Incluye casos válidos e inválidos (falsos positivos y falsos negativos).
+### 2. Nivel 2: Pruebas de Sistema y Matriz de Scaffolding (System & Matrix Tests)
+- **Validación Exhaustiva de Recipes y Custom Stacks** (`internal/scaffold/matrix_validation_test.go`):
+  - Genera y valida en memoria todas las Recipes oficiales (`saas`, `pern`, `mern`, `fastapi_react`, `enterprise_nestjs`, `mobile_expo`, `java_spring`).
+  - Genera y valida matrices combinatorias manuales (Next.js, React, Astro, Nuxt, Svelte con Express, Hono, NestJS, FastAPI, Go-Chi, Drizzle, Prisma, Mongoose, etc.).
+  - Verifica la sintaxis estricta de todos los `package.json` generados en el VFS.
+  - Verifica que no existan dependencias rotas de `@repo/*` que causen `ERR_PNPM_WORKSPACE_PKG_NOT_FOUND`.
 
-4. **Testing de Flags y Comandos Cobra**:
-   - Ejecuta comandos configurando buffers para `Stdout` y `Stderr` (`cmd.SetOut(buf)`, `cmd.SetErr(buf)`) para probar la salida sin ensuciar la terminal.
+### 3. Nivel 3: Pruebas Extremo a Extremo (E2E CLI Tests)
+- **Pipeline Completo del CLI** (`cmd/e2e_cli_test.go`):
+  - Prueba la ejecución real de comandos Cobra (`koko init <name> -d`, `koko init <name> --frontend ...`, `koko doctor`).
+  - Escribe en directorios temporales aislados (`t.TempDir()`), validando la persistencia física en disco de todos los archivos y carpetas (`package.json`, `turbo.json`, `pnpm-workspace.yaml`, `koko.config.json`, `apps/*`, `packages/*`).
+  - Garantiza el aislamiento de estado entre ejecuciones reseteando flags Cobra (`resetFlags(rootCmd)`).
+
+## 🚀 Comandos de Ejecución:
+- **Suite Completa**: `go test -v ./...`
+- **Unitarios & Procesadores**: `go test -v ./internal/...`
+- **Matriz de Sistema**: `go test -v ./internal/scaffold -run "TestRecipesMatrixValidation|TestManualCombinationsMatrixValidation"`
+- **End-to-End**: `go test -v ./cmd`
+
+## 📋 Reglas de Calidad:
+1. **Zero Failing Tests**: No se permite hacer merge, commit o dar por concluido un cambio si `go test ./...` no termina con código de salida `0`.
+2. **Table-Driven Tests**: Toda nueva funcionalidad debe acompañarse de table-driven tests con casos válidos, inválidos y casos de borde.
+3. **Aislamiento Total**: Nunca escribir en el disco del workspace durante tests; usar `t.TempDir()` o VFS.

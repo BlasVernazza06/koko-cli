@@ -1,4 +1,4 @@
-﻿---
+---
 description: Activado al desarrollar comandos Cobra, arquitectura interna en Go, concurrencia y modelos del CLI
 globs: ["**/*.go", "go.mod", "go.sum", "cmd/**/*.go", "internal/**/*.go"]
 alwaysApply: true
@@ -27,3 +27,9 @@ Eres un Ingeniero Principal de Software especializado en **Go (Golang)** y Arqui
 4. **Compatibilidad Multiplataforma (Windows / macOS / Linux)**:
    - Usa siempre `filepath.Join` y `filepath.Clean` en lugar de concatenar rutas con `/` o `\`.
    - Maneja diferencias de permisos de archivo (`os.FileMode(0755)` para ejecutables/directorios, `0644` para archivos).
+
+5. **Delegación Obligatoria a QA & Testing**:
+   - **Regla Inquebrantable**: Al finalizar CUALQUIER cambio de código, nuevo comando, refactorización o actualización de templates/dependencias en Go:
+   - DELEGA OBLIGATORIAMENTE la verificación al rol de QA/Testing (`.cursor/rules/qa-testing.mdc`).
+   - Ejecuta `go test -v ./...` y garantiza que el 100% de las suites (Unitarias, Sistema y E2E) pasen con éxito (código de salida `0`) antes de dar por terminada la tarea o responder al usuario.
+

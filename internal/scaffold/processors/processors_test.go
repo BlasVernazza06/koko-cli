@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/BlasVernazza06/koko-cli/internal/catalog"
 	"github.com/BlasVernazza06/koko-cli/internal/vfs"
 )
 
@@ -50,8 +51,8 @@ func TestProcessPackageJSONs(t *testing.T) {
 	var dbPkg map[string]interface{}
 	_ = v.ReadJSON("packages/db/package.json", &dbPkg)
 	deps := dbPkg["dependencies"].(map[string]interface{})
-	if deps["postgres"] != "^3.4.4" {
-		t.Errorf("Expected dynamically added postgres dependency '^3.4.4', got '%v'", deps["postgres"])
+	if deps["postgres"] != catalog.GetVersion("postgres") {
+		t.Errorf("Expected dynamically added postgres dependency '%s', got '%v'", catalog.GetVersion("postgres"), deps["postgres"])
 	}
 }
 
@@ -105,13 +106,13 @@ func TestAddDependency(t *testing.T) {
 	AddDependency(pkg, "typescript", true)
 
 	deps := pkg["dependencies"].(map[string]interface{})
-	if deps["drizzle-orm"] != "^0.30.10" {
-		t.Errorf("Expected drizzle-orm version '^0.30.10', got '%v'", deps["drizzle-orm"])
+	if deps["drizzle-orm"] != catalog.GetVersion("drizzle-orm") {
+		t.Errorf("Expected drizzle-orm version '%s', got '%v'", catalog.GetVersion("drizzle-orm"), deps["drizzle-orm"])
 	}
 
 	devDeps := pkg["devDependencies"].(map[string]interface{})
-	if devDeps["typescript"] != "^5.6.2" {
-		t.Errorf("Expected typescript version '^5.6.2', got '%v'", devDeps["typescript"])
+	if devDeps["typescript"] != catalog.GetVersion("typescript") {
+		t.Errorf("Expected typescript version '%s', got '%v'", catalog.GetVersion("typescript"), devDeps["typescript"])
 	}
 }
 
