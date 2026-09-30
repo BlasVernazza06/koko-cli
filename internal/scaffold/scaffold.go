@@ -15,7 +15,7 @@ import (
 	"github.com/BlasVernazza06/koko-cli/internal/types"
 )
 
-//go:embed all:templates all:manual
+//go:embed all:templates all:recipes
 var templateFs embed.FS
 
 type ScaffoldConfig = types.ScaffoldConfig

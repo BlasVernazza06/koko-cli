@@ -15,19 +15,19 @@ func EvaluateAddons(rel string, config types.ScaffoldConfig) (string, bool) {
 	// Addon: Docker Compose
 	hasDocker := strings.Contains(addons, "docker") || (db != "" && db != "none" && db != "sqlite")
 	if hasDocker {
-		if (db == "postgres" || db == "postgresql" || ((db == "" || db == "none") && strings.Contains(addons, "docker"))) && rel == "manual/docker/postgres/docker-compose.yml" {
+		if (db == "postgres" || db == "postgresql" || ((db == "" || db == "none") && strings.Contains(addons, "docker"))) && rel == "templates/docker/postgres/docker-compose.yml" {
 			return "docker-compose.yml", true
 		}
-		if db == "mysql" && rel == "manual/docker/mysql/docker-compose.yml" {
+		if db == "mysql" && rel == "templates/docker/mysql/docker-compose.yml" {
 			return "docker-compose.yml", true
 		}
-		if (db == "mongodb" || orm == "mongoose" || orm == "moongose") && rel == "manual/docker/mongoose/docker-compose.yml" {
+		if (db == "mongodb" || orm == "mongoose" || orm == "moongose") && rel == "templates/docker/mongoose/docker-compose.yml" {
 			return "docker-compose.yml", true
 		}
 	}
 
 	// Addon: GitHub Actions CI
-	if rel == "manual/github/ci.yml" {
+	if rel == "templates/github/ci.yml" {
 		if strings.Contains(addons, "github_actions") || strings.Contains(addons, "cicd") {
 			return ".github/workflows/ci.yml", true
 		}
@@ -35,7 +35,7 @@ func EvaluateAddons(rel string, config types.ScaffoldConfig) (string, bool) {
 
 	// Addon: shadcn/ui -> packages/ui
 	if strings.Contains(addons, "shadcn") {
-		prefix := "manual/addons/shadcn/"
+		prefix := "templates/addons/shadcn/"
 		if strings.HasPrefix(rel, prefix) {
 			dest := "packages/ui/" + strings.TrimPrefix(rel, prefix)
 			return dest, true

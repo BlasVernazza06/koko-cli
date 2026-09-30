@@ -12,7 +12,7 @@ func EvaluateAuth(rel string, config types.ScaffoldConfig) (string, bool) {
 		return "", false
 	}
 
-	authPrefix := "manual/auth/" + config.Auth + "/"
+	authPrefix := "templates/auth/" + config.Auth + "/"
 	if !strings.HasPrefix(rel, authPrefix) {
 		return "", false
 	}

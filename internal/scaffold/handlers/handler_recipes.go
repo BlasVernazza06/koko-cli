@@ -38,28 +38,28 @@ func EvaluateRecipe(rel string, config types.ScaffoldConfig) (string, bool) {
 
 	normRecipe := NormalizeRecipe(config.Recipe)
 
-	recipePrefix := "templates/recipes/" + normRecipe + "/"
+	recipePrefix := "recipes/" + normRecipe + "/"
 	if strings.HasPrefix(rel, recipePrefix) {
 		dest := strings.TrimPrefix(rel, recipePrefix)
 		return dest, true
 	}
 
 	// Archivos compartidos de Docker para recetas (si la receta no incluye su propio docker-compose)
-	if rel == "manual/docker/docker-compose.yml" || rel == "templates/docker/docker-compose.yml" {
+	if rel == "templates/docker/docker-compose.yml" {
 		if normRecipe == "saas" || normRecipe == "pern" || normRecipe == "mern" || normRecipe == "fastapi_react" || normRecipe == "java_spring" || normRecipe == "enterprise_nestjs" || normRecipe == "mobile_expo" {
 			return "docker-compose.yml", true
 		}
 	}
 
 	// Archivos de CI/CD para recetas (si la receta no incluye su propio workflow)
-	if rel == "manual/github/ci.yml" || rel == "templates/github/ci.yml" {
+	if rel == "templates/github/ci.yml" {
 		if normRecipe == "saas" || normRecipe == "enterprise_nestjs" || normRecipe == "mobile_expo" || normRecipe == "java_spring" {
 			return ".github/workflows/ci.yml", true
 		}
 	}
 
 	// Archivo .gitignore compartido para recetas
-	if rel == "manual/root/.gitignore" {
+	if rel == "templates/root/.gitignore" {
 		return ".gitignore", true
 	}
 

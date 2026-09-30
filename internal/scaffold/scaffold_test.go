@@ -10,14 +10,14 @@ import (
 func TestManualTemplatesCompleteness(t *testing.T) {
 	// 1. Check root template files
 	requiredRootFiles := []string{
-		"manual/root/package.json",
-		"manual/root/turbo.json",
-		"manual/root/pnpm-workspace.yaml",
-		"manual/root/.gitignore",
-		"manual/root/.npmrc",
-		"manual/root/README.md",
-		"manual/root/apps/.gitkeep",
-		"manual/root/packages/.gitkeep",
+		"templates/root/package.json",
+		"templates/root/turbo.json",
+		"templates/root/pnpm-workspace.yaml",
+		"templates/root/.gitignore",
+		"templates/root/.npmrc",
+		"templates/root/README.md",
+		"templates/root/apps/.gitkeep",
+		"templates/root/packages/.gitkeep",
 	}
 	for _, f := range requiredRootFiles {
 		if _, err := templateFs.ReadFile(f); err != nil {
@@ -30,14 +30,14 @@ func TestManualTemplatesCompleteness(t *testing.T) {
 		name  string
 		files []string
 	}{
-		{"nextjs", []string{"package.json", "tsconfig.json", "next.config.mjs", "app/layout.tsx", "app/page.tsx", "app/globals.css"}},
+		{"nextjs", []string{"package.json", "tsconfig.json", "next.config.mjs", "app/layout.tsx.tmpl", "app/page.tsx.tmpl", "app/globals.css"}},
 		{"react", []string{"package.json", "tsconfig.json", "vite.config.ts", "index.html", "src/main.tsx", "src/App.tsx"}},
 		{"nuxt", []string{"package.json", "tsconfig.json", "nuxt.config.ts", "app.vue"}},
 		{"svelte", []string{"package.json", "svelte.config.js", "vite.config.ts", "src/routes/+page.svelte", "src/routes/+layout.svelte"}},
 	}
 	for _, fe := range frontends {
 		for _, f := range fe.files {
-			fullPath := "manual/frontend/" + fe.name + "/" + f
+			fullPath := "templates/frontend/" + fe.name + "/" + f
 			if _, err := templateFs.ReadFile(fullPath); err != nil {
 				t.Errorf("Missing frontend template file for %s: %s (err: %v)", fe.name, fullPath, err)
 			}
@@ -58,7 +58,7 @@ func TestManualTemplatesCompleteness(t *testing.T) {
 	}
 	for _, be := range backends {
 		for _, f := range be.files {
-			fullPath := "manual/backend/" + be.name + "/" + f
+			fullPath := "templates/backend/" + be.name + "/" + f
 			if _, err := templateFs.ReadFile(fullPath); err != nil {
 				t.Errorf("Missing backend template file for %s: %s (err: %v)", be.name, fullPath, err)
 			}
@@ -67,30 +67,30 @@ func TestManualTemplatesCompleteness(t *testing.T) {
 
 	// 4. Check DB and ORM templates
 	dbs := []string{
-		"manual/db/drizzle/drizzle.config.ts",
-		"manual/db/drizzle/package.json",
-		"manual/db/drizzle/postgres/schema.ts",
-		"manual/db/drizzle/postgres/db.ts",
-		"manual/db/drizzle/mysql/schema.ts",
-		"manual/db/drizzle/mysql/db.ts",
-		"manual/db/drizzle/sqlite/schema.ts",
-		"manual/db/drizzle/sqlite/db.ts",
-		"manual/db/prisma/package.json",
-		"manual/db/prisma/postgres/schema.prisma",
-		"manual/db/prisma/mysql/schema.prisma",
-		"manual/db/prisma/mongodb/schema.prisma",
-		"manual/db/prisma/sqlite/schema.prisma",
-		"manual/db/mongoose/mongodb/package.json",
-		"manual/db/mongoose/mongodb/src/db.ts",
-		"manual/db/mongoose/mongodb/src/models/user.ts",
-		"manual/db/sqlalchemy/postgres/database.py",
-		"manual/db/sqlalchemy/postgres/models.py",
-		"manual/db/sqlalchemy/mysql/database.py",
-		"manual/db/sqlalchemy/sqlite/database.py",
-		"manual/db/gorm/postgres/database.go.tmpl",
-		"manual/db/gorm/postgres/models.go.tmpl",
-		"manual/db/gorm/mysql/database.go.tmpl",
-		"manual/db/gorm/sqlite/database.go.tmpl",
+		"templates/db/drizzle/drizzle.config.ts",
+		"templates/db/drizzle/package.json",
+		"templates/db/drizzle/postgres/schema.ts",
+		"templates/db/drizzle/postgres/db.ts",
+		"templates/db/drizzle/mysql/schema.ts",
+		"templates/db/drizzle/mysql/db.ts",
+		"templates/db/drizzle/sqlite/schema.ts",
+		"templates/db/drizzle/sqlite/db.ts",
+		"templates/db/prisma/package.json",
+		"templates/db/prisma/postgres/schema.prisma",
+		"templates/db/prisma/mysql/schema.prisma",
+		"templates/db/prisma/mongodb/schema.prisma",
+		"templates/db/prisma/sqlite/schema.prisma",
+		"templates/db/mongoose/mongodb/package.json",
+		"templates/db/mongoose/mongodb/src/db.ts",
+		"templates/db/mongoose/mongodb/src/models/user.ts",
+		"templates/db/sqlalchemy/postgres/database.py",
+		"templates/db/sqlalchemy/postgres/models.py",
+		"templates/db/sqlalchemy/mysql/database.py",
+		"templates/db/sqlalchemy/sqlite/database.py",
+		"templates/db/gorm/postgres/database.go.tmpl",
+		"templates/db/gorm/postgres/models.go.tmpl",
+		"templates/db/gorm/mysql/database.go.tmpl",
+		"templates/db/gorm/sqlite/database.go.tmpl",
 	}
 	for _, dbFile := range dbs {
 		if _, err := templateFs.ReadFile(dbFile); err != nil {
@@ -100,24 +100,24 @@ func TestManualTemplatesCompleteness(t *testing.T) {
 
 	// 5. Check packages, docker, github
 	shared := []string{
-		"manual/root/packages/typescript-config/package.json",
-		"manual/root/packages/typescript-config/base.json",
-		"manual/root/packages/typescript-config/nextjs.json",
-		"manual/root/packages/typescript-config/react-library.json",
-		"manual/root/packages/eslint-config/package.json",
-		"manual/root/packages/eslint-config/base.js",
-		"manual/docker/postgres/docker-compose.yml",
-		"manual/docker/mysql/docker-compose.yml",
-		"manual/docker/mongoose/docker-compose.yml",
-		"manual/github/ci.yml",
-		"manual/api/trpc/packages/api/package.json",
-		"manual/api/trpc/packages/api/src/index.ts",
-		"manual/api/trpc/packages/api/src/root.ts",
-		"manual/api/trpc/packages/api/src/trpc.ts",
-		"manual/api/orpc/packages/api/package.json",
-		"manual/api/orpc/packages/api/src/index.ts",
-		"manual/api/orpc/packages/api/src/root.ts",
-		"manual/api/orpc/packages/api/src/orpc.ts",
+		"templates/root/packages/typescript-config/package.json",
+		"templates/root/packages/typescript-config/base.json",
+		"templates/root/packages/typescript-config/nextjs.json",
+		"templates/root/packages/typescript-config/react-library.json",
+		"templates/root/packages/eslint-config/package.json",
+		"templates/root/packages/eslint-config/base.js",
+		"templates/docker/postgres/docker-compose.yml",
+		"templates/docker/mysql/docker-compose.yml",
+		"templates/docker/mongoose/docker-compose.yml",
+		"templates/github/ci.yml",
+		"templates/api/trpc/packages/api/package.json",
+		"templates/api/trpc/packages/api/src/index.ts",
+		"templates/api/trpc/packages/api/src/root.ts",
+		"templates/api/trpc/packages/api/src/trpc.ts",
+		"templates/api/orpc/packages/api/package.json",
+		"templates/api/orpc/packages/api/src/index.ts",
+		"templates/api/orpc/packages/api/src/root.ts",
+		"templates/api/orpc/packages/api/src/orpc.ts",
 	}
 	for _, sh := range shared {
 		if _, err := templateFs.ReadFile(sh); err != nil {

@@ -12,7 +12,7 @@ func EvaluateAPI(rel string, config types.ScaffoldConfig) (string, bool) {
 		return "", false
 	}
 
-	apiPrefix := "manual/api/" + config.API + "/"
+	apiPrefix := "templates/api/" + config.API + "/"
 	if !strings.HasPrefix(rel, apiPrefix) {
 		return "", false
 	}

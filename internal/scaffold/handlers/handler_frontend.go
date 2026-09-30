@@ -12,7 +12,7 @@ func EvaluateFrontend(rel string, config types.ScaffoldConfig) (string, bool) {
 		return "", false
 	}
 
-	frontendPrefix := "manual/frontend/" + config.Frontend + "/"
+	frontendPrefix := "templates/frontend/" + config.Frontend + "/"
 	if strings.HasPrefix(rel, frontendPrefix) {
 		dest := "apps/web/" + strings.TrimPrefix(rel, frontendPrefix)
 		return dest, true
