@@ -4,6 +4,9 @@
 *.dll
 *.so
 *.dylib
+*.class
+target/
+build/
 claw
 claw-cli
 builds/
