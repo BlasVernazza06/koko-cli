@@ -15,14 +15,14 @@ func EvaluateRoot(rel string, config types.ScaffoldConfig) (string, bool) {
 	}
 
 	// Archivos raíz del monorepo -> raíz del proyecto
-	if strings.HasPrefix(rel, "manual/root/") {
-		dest := strings.TrimPrefix(rel, "manual/root/")
+	if strings.HasPrefix(rel, "templates/root/") {
+		dest := strings.TrimPrefix(rel, "templates/root/")
 		return dest, true
 	}
 
 	// Paquetes compartidos -> packages/
-	if strings.HasPrefix(rel, "manual/packages/") {
-		dest := strings.TrimPrefix(rel, "manual/")
+	if strings.HasPrefix(rel, "templates/packages/") {
+		dest := strings.TrimPrefix(rel, "templates/")
 		return dest, true
 	}
 
