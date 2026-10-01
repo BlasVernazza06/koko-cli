@@ -17,20 +17,8 @@
 
 </div>
 
----
-
 **Koko CLI** is an ultra-fast interactive terminal project initializer written in Go. Forget about manually wiring TypeScript monorepo workspaces, database schemas, Docker containers, authentication providers, and client SDKs. Koko generates clean, fully-typed, production-ready fullstack architectures in milliseconds.
 
-```text
-     .---.   .---.
-    /  _  \_/  _  \       _  ______  _  ______
-   |  (o)     (o)  |     | |/ / __ \| |/ / __ \
-   |     (..)      |     | ' / /  | | ' / /  | |
-    \   (____)    /      | . \ \__| | . \ \__| |
-     '-----------'       |_|\_\____/|_|\_\____/  v2.0.0
-```
-
----
 
 ## ⚡ Quick Start
 
