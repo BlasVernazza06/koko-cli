@@ -124,24 +124,51 @@ func TestProcessEnvVariables(t *testing.T) {
 		Frontend:    "nextjs",
 		Database:    "postgres",
 		Auth:        "better-auth",
+		Addons:      "stripe,polar,resend",
 	}
-
 	if err := ProcessEnvVariables(v, cfg); err != nil {
 		t.Fatalf("ProcessEnvVariables failed: %v", err)
 	}
-
+	// 1. Validaciones en .env (Archivo Local)
 	envContent, ok := v.ReadString(".env")
 	if !ok {
 		t.Fatalf("Expected .env file to be created")
 	}
-
+	// Database URL
 	if !strings.Contains(envContent, "DATABASE_URL=\"postgresql://postgres:password@localhost:5432/shop-app?schema=public\"") {
 		t.Errorf("Expected Postgres connection string in .env, got: %s", envContent)
 	}
-	if !strings.Contains(envContent, "BETTER_AUTH_SECRET") {
-		t.Errorf("Expected Better Auth secret in .env, got: %s", envContent)
-	}
+	// URLs de API
 	if !strings.Contains(envContent, "NEXT_PUBLIC_API_URL=http://localhost:4000") {
 		t.Errorf("Expected Next.js API url in .env, got: %s", envContent)
+	}
+	// Better-Auth Secret: Verificar que no sea el placeholder estático y tenga formato base64 seguro
+	if strings.Contains(envContent, "supersecret-auth-key") {
+		t.Errorf("Expected generated random secret, but found static placeholder in .env")
+	}
+	if !strings.Contains(envContent, "BETTER_AUTH_SECRET=\"") {
+		t.Errorf("Expected BETTER_AUTH_SECRET in .env, got: %s", envContent)
+	}
+	// Addons de Pagos y Email en .env
+	if !strings.Contains(envContent, "STRIPE_SECRET_KEY=\"sk_test_...\"") {
+		t.Errorf("Expected Stripe secret key in .env, got: %s", envContent)
+	}
+	if !strings.Contains(envContent, "POLAR_ACCESS_TOKEN=\"polar_atfs_...\"") {
+		t.Errorf("Expected Polar access token in .env, got: %s", envContent)
+	}
+	if !strings.Contains(envContent, "RESEND_API_KEY=\"re_...\"") {
+		t.Errorf("Expected Resend API key in .env, got: %s", envContent)
+	}
+	// 2. Validaciones en .env.example (Archivo para Git)
+	exampleContent, ok := v.ReadString(".env.example")
+	if !ok {
+		t.Fatalf("Expected .env.example file to be created")
+	}
+	// En .env.example debe mantenerse el placeholder seguro para Git
+	if !strings.Contains(exampleContent, "BETTER_AUTH_SECRET=\"your-better-auth-secret\"") {
+		t.Errorf("Expected generic placeholder in .env.example, got: %s", exampleContent)
+	}
+	if !strings.Contains(exampleContent, "STRIPE_SECRET_KEY=\"sk_test_...\"") {
+		t.Errorf("Expected Stripe placeholder in .env.example, got: %s", exampleContent)
 	}
 }
