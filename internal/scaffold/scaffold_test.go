@@ -737,3 +737,20 @@ func TestScaffoldManualORPC(t *testing.T) {
 	}
 }
 
+func TestInitGit(t *testing.T) {
+	tmpDir := t.TempDir()
+	dummyFile := filepath.Join(tmpDir, "README.md")
+	if err := os.WriteFile(dummyFile, []byte("# Test Project"), 0644); err != nil {
+		t.Fatalf("Failed to create dummy file: %v", err)
+	}
+
+	if err := InitGit(tmpDir); err != nil {
+		t.Fatalf("InitGit failed: %v", err)
+	}
+
+	gitDir := filepath.Join(tmpDir, ".git")
+	if _, err := os.Stat(gitDir); os.IsNotExist(err) {
+		t.Errorf("Expected .git directory to exist")
+	}
+}
+

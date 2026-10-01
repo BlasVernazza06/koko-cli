@@ -140,7 +140,6 @@ func walkAndCopy(targetDir string, config ScaffoldConfig, filterFn func(string) 
 		_ = os.Remove(filepath.Join(targetDir, "packages", ".gitkeep"))
 	}
 
-
 	return err
 }
 
@@ -160,11 +159,33 @@ func InitGit(targetDir string) error {
 		return nil
 	}
 
-	cmd := exec.Command("git", "init")
-	cmd.Dir = targetDir
-
-	if err := cmd.Run(); err != nil {
+	initCmd := exec.Command("git", "init")
+	initCmd.Dir = targetDir
+	if err := initCmd.Run(); err != nil {
 		return fmt.Errorf("failed to initialize git repository: %w", err)
+	}
+
+	addCmd := exec.Command("git", "add", "-A")
+	addCmd.Dir = targetDir
+	if err := addCmd.Run(); err != nil {
+		return fmt.Errorf("failed to stage initial changes: %w", err)
+	}
+
+	commitCmd := exec.Command("git", "commit", "-m", "chore: initial commit from koko-cli")
+	commitCmd.Dir = targetDir
+	if err := commitCmd.Run(); err != nil {
+
+		fallbackCommit := exec.Command(
+			"git",
+			"-c", "user.name=koko-cli",
+			"-c", "user.email=koko@local",
+			"commit",
+			"-m", "chore: initial commit from koko-cli",
+		)
+		fallbackCommit.Dir = targetDir
+		if err := fallbackCommit.Run(); err != nil {
+			return fmt.Errorf("failed to create initial commit: %w", err)
+		}
 	}
 
 	return nil
