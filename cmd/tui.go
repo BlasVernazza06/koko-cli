@@ -200,6 +200,16 @@ func initialModel(initialState sessionState, initialProjectName string) mainMode
 			options: compatibility.BaseOptions(compatibility.StepAuth),
 		},
 		{
+			title:   "Select Payment Provider",
+			label:   "Payments",
+			options: compatibility.BaseOptions(compatibility.StepPayments),
+		},
+		{
+			title:   "Select Email Provider",
+			label:   "Email",
+			options: compatibility.BaseOptions(compatibility.StepEmail),
+		},
+		{
 			title:   "Select Addons / Tooling",
 			label:   "Addons",
 			options: compatibility.BaseOptions(compatibility.StepAddons),
@@ -474,6 +484,8 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							Database:       m.manualSelections[compatibility.StepDatabase].Value,
 							ORM:            m.manualSelections[compatibility.StepORM].Value,
 							Auth:           m.manualSelections[compatibility.StepAuth].Value,
+							Payments:       m.manualSelections[compatibility.StepPayments].Value,
+							Email:          m.manualSelections[compatibility.StepEmail].Value,
 							Addons:         m.manualSelections[compatibility.StepAddons].Value,
 						}
 

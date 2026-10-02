@@ -100,6 +100,7 @@ var DependencyVersions = map[string]string{
 	"@better-auth/cli":    "^1.1.16",
 	"@clerk/nextjs":       "^6.9.9",
 	"@clerk/clerk-react":  "^5.22.0",
+	"@clerk/clerk-expo":   "^2.6.10",
 	"@clerk/express":      "^1.3.36",
 	"next-auth":           "^4.24.11",
 	"zod":                 "^3.24.1",
