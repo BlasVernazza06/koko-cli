@@ -45,17 +45,17 @@ type APIInfo struct {
 }
 
 type FrontendInfo struct {
-	Framework string   `json:"framework"`          // "next", "react" (Vite), "vue"
-	Language  string   `json:"language"`           // "typescript", "javascript"
-	Styling   string   `json:"styling"`            // "tailwindcss", "css-modules", "none"
-	UILibrary string   `json:"uiLibrary,omitempty"` // "shadcn", "radix", etc. (Futura expansión)
-	Icons     string   `json:"icons,omitempty"`     // "lucide", "react-icons", etc. (Futura expansión)
+	Framework string `json:"framework"`           // "next", "react" (Vite), "vue"
+	Language  string `json:"language"`            // "typescript", "javascript"
+	Styling   string `json:"styling"`             // "tailwindcss", "css-modules", "none"
+	UILibrary string `json:"uiLibrary,omitempty"` // "shadcn", "radix", etc. (Futura expansión)
+	Icons     string `json:"icons,omitempty"`     // "lucide", "react-icons", etc. (Futura expansión)
 }
 
 type BackendInfo struct {
 	Framework    string   `json:"framework"`              // "express", "fiber", "hono", "fastapi"
 	Language     string   `json:"language"`               // "typescript", "go", "python"
-	Dependencies []string `json:"dependencies,omitempty"`  // ["zod", "cors", "dotenv"] (Para inyecciones)
+	Dependencies []string `json:"dependencies,omitempty"` // ["zod", "cors", "dotenv"] (Para inyecciones)
 }
 
 type DatabaseInfo struct {
@@ -344,16 +344,14 @@ func BuildKokoConfig(scaffoldCfg scaffold.ScaffoldConfig) KokoConfig {
 			ciCd = "github-actions"
 		}
 
-		if strings.Contains(addons, "stripe") {
-			config.Features.Payments = &PaymentInfo{Provider: "stripe"}
-		} else if strings.Contains(addons, "polar") {
-			config.Features.Payments = &PaymentInfo{Provider: "polar"}
+		payments := strings.ToLower(scaffoldCfg.Payments)
+		if payments != "" && payments != "none" {
+			config.Features.Payments = &PaymentInfo{Provider: payments}
 		}
 
-		if strings.Contains(addons, "resend") {
-			config.Features.Email = &EmailInfo{Provider: "resend"}
-		} else if strings.Contains(addons, "brevo") {
-			config.Features.Email = &EmailInfo{Provider: "brevo"}
+		email := strings.ToLower(scaffoldCfg.Email)
+		if email != "" && email != "none" {
+			config.Features.Email = &EmailInfo{Provider: email}
 		}
 
 		if config.Stack.Frontend != nil {

@@ -123,7 +123,9 @@ func TestBuildKokoConfigForManual(t *testing.T) {
 		Database:       "postgres",
 		ORM:            "jpa",
 		Auth:           "none",
-		Addons:         "shadcn,lucide,docker,github_actions,stripe,resend",
+		Payments:       "stripe",
+		Email:          "resend",
+		Addons:         "shadcn,lucide,docker,github_actions",
 	}
 
 	kokoCfg := BuildKokoConfig(cfg)

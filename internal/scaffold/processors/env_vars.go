@@ -109,20 +109,22 @@ func ProcessEnvVariables(v *vfs.VFS, cfg ProcessConfig) error {
 	}
 
 	// 4. Addons de Pagos (Stripe, Polar) y Email (Resend, Brevo)
-	addons := strings.ToLower(cfg.Addons)
-	if strings.Contains(addons, "stripe") {
+	payments := strings.ToLower(cfg.Payments)
+	if strings.Contains(payments, "stripe") {
 		envLines = append(envLines, "# Stripe Payments", "STRIPE_SECRET_KEY=\"sk_test_...\"", "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=\"pk_test_...\"", "")
 		exampleLines = append(exampleLines, "# Stripe Payments", "STRIPE_SECRET_KEY=\"sk_test_...\"", "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=\"pk_test_...\"", "")
 	}
-	if strings.Contains(addons, "polar") {
+	if strings.Contains(payments, "polar") {
 		envLines = append(envLines, "# Polar Payments", "POLAR_ACCESS_TOKEN=\"polar_atfs_...\"", "POLAR_ORGANIZATION_ID=\"...\"", "")
 		exampleLines = append(exampleLines, "# Polar Payments", "POLAR_ACCESS_TOKEN=\"polar_atfs_...\"", "POLAR_ORGANIZATION_ID=\"...\"", "")
 	}
-	if strings.Contains(addons, "resend") {
+
+	email := strings.ToLower(cfg.Email)
+	if strings.Contains(email, "resend") {
 		envLines = append(envLines, "# Resend Email", "RESEND_API_KEY=\"re_...\"", "")
 		exampleLines = append(exampleLines, "# Resend Email", "RESEND_API_KEY=\"re_...\"", "")
 	}
-	if strings.Contains(addons, "brevo") {
+	if strings.Contains(email, "brevo") {
 		envLines = append(envLines, "# Brevo Email", "BREVO_API_KEY=\"xkeysib-...\"", "")
 		exampleLines = append(exampleLines, "# Brevo Email", "BREVO_API_KEY=\"xkeysib-...\"", "")
 	}

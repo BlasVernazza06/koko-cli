@@ -18,6 +18,8 @@ const (
 	StepDatabase
 	StepORM
 	StepAuth
+	StepPayments
+	StepEmail
 	StepAddons
 	StepGit
 )
@@ -150,6 +152,18 @@ func BaseOptions(stepIdx int) []views.SelectOption {
 			{Value: "next-auth", Label: "NextAuth / Auth.js", Hint: "Authentication solution for Next.js apps"},
 			{Value: "none", Label: "None", Hint: "No authentication layer"},
 		}
+	case StepPayments:
+		return []views.SelectOption{
+			{Value: "stripe", Label: "Stripe", Hint: "Global payments infrastructure, subscriptions & checkout (Recommended)"},
+			{Value: "polar", Label: "Polar.sh", Hint: "Merchant of record & digital product monetization for developers"},
+			{Value: "none", Label: "None", Hint: "No payment processing integration"},
+		}
+	case StepEmail:
+		return []views.SelectOption{
+			{Value: "resend", Label: "Resend", Hint: "Modern email API built for developers with React Email (Recommended)"},
+			{Value: "brevo", Label: "Brevo", Hint: "Transactional email, SMS & marketing delivery platform"},
+			{Value: "none", Label: "None", Hint: "No email delivery service"},
+		}
 	case StepAddons:
 		return []views.SelectOption{
 			{Label: "── UI & Components ──", IsHeader: true},
@@ -161,14 +175,6 @@ func BaseOptions(stepIdx int) []views.SelectOption {
 
 			{Label: "── Animations ──", IsHeader: true},
 			{Value: "motion", Label: "Framer Motion", Hint: "Production-ready declarative animations library"},
-
-			{Label: "── Pagos ──", IsHeader: true},
-			{Value: "stripe", Label: "Stripe", Hint: "Payments infrastructure and subscription billing"},
-			{Value: "polar", Label: "Polar (polar.sh)", Hint: "Developer-first monetization platform and billing engine"},
-
-			{Label: "── Servicio de Correo ──", IsHeader: true},
-			{Value: "resend", Label: "Resend", Hint: "Email API for developers with React email components"},
-			{Value: "brevo", Label: "Brevo", Hint: "Transactional email delivery and marketing automation"},
 
 			{Label: "── Validation & Typing ──", IsHeader: true},
 			{Value: "zod", Label: "Zod", Hint: "TypeScript-first schema declaration and validation"},
@@ -583,4 +589,3 @@ func ValidateConfig(cfg scaffold.ScaffoldConfig) error {
 
 	return nil
 }
-

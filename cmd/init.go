@@ -22,6 +22,8 @@ var (
 	databaseFlag string
 	ormFlag      string
 	authFlag     string
+	paymentsFlag string
+	emailFlag    string
 	addonsFlag   string
 	apiFlag      string
 	gitFlag      string
@@ -38,19 +40,7 @@ var initCmd = &cobra.Command{
 			projectName = args[0]
 		}
 
-		isDefault, _ := cmd.Flags().GetBool("default")
-		frontend, _ := cmd.Flags().GetString("frontend")
-		backend, _ := cmd.Flags().GetString("backend")
-		pm, _ := cmd.Flags().GetString("package-manager")
-		database, _ := cmd.Flags().GetString("database")
-		orm, _ := cmd.Flags().GetString("orm")
-		auth, _ := cmd.Flags().GetString("auth")
-		addons, _ := cmd.Flags().GetString("addons")
-		api, _ := cmd.Flags().GetString("api")
-		git, _ := cmd.Flags().GetString("git")
-		recipie, _ := cmd.Flags().GetString("recipie")
-
-		if isDefault {
+		if defaultFlag {
 			if projectName == "" {
 				projectName = "my-project"
 			}
@@ -58,10 +48,11 @@ var initCmd = &cobra.Command{
 				fmt.Printf("\n\033[31m✗ Error: %s\033[0m\n\n", err.Error())
 				os.Exit(1)
 			}
-			runDefaultInit(projectName, recipie)
+			runDefaultInit(projectName, recipieFlag)
 			return
 		}
-		if frontend != "" || backend != "" || database != "" || orm != "" || auth != "" || addons != "" || api != "" {
+
+		if frontendFlag != "" || backendFlag != "" || databaseFlag != "" || ormFlag != "" || authFlag != "" || paymentsFlag != "" || emailFlag != "" || addonsFlag != "" || apiFlag != "" {
 			if projectName == "" {
 				projectName = "my-project"
 			}
@@ -69,20 +60,22 @@ var initCmd = &cobra.Command{
 				fmt.Printf("\n\033[31m✗ Error: %s\033[0m\n\n", err.Error())
 				os.Exit(1)
 			}
-			if pm == "" {
-				pm = "pnpm"
+			if pmFlag == "" {
+				pmFlag = "pnpm"
 			}
-			initGit := strings.ToLower(git) == "yes" || strings.ToLower(git) == "true" || strings.ToLower(git) == "y"
+			initGit := strings.ToLower(gitFlag) == "yes" || strings.ToLower(gitFlag) == "true" || strings.ToLower(gitFlag) == "y"
 			cfg := scaffold.ScaffoldConfig{
 				ProjectName:    projectName,
-				Frontend:       frontend,
-				Backend:        backend,
-				API:            api,
-				PackageManager: pm,
-				Database:       database,
-				ORM:            orm,
-				Auth:           auth,
-				Addons:         addons,
+				Frontend:       frontendFlag,
+				Backend:        backendFlag,
+				API:            apiFlag,
+				PackageManager: pmFlag,
+				Database:       databaseFlag,
+				ORM:            ormFlag,
+				Auth:           authFlag,
+				Payments:       paymentsFlag,
+				Email:          emailFlag,
+				Addons:         addonsFlag,
 				InitGit:        initGit,
 			}
 			if err := compatibility.ValidateConfig(cfg); err != nil {
@@ -254,11 +247,13 @@ func init() {
 	initCmd.Flags().StringVarP(&pmFlag, "package-manager", "p", "pnpm", "Package Manager to use (ej: bun, pnpm, npm, yarn)")
 	initCmd.Flags().StringVar(&databaseFlag, "database", "", "Database (ej: postgres, mysql, mongodb)")
 	initCmd.Flags().StringVar(&ormFlag, "orm", "", "ORM (ej: drizzle, prisma, mongoose)")
-	initCmd.Flags().StringVar(&authFlag, "auth", "", "Auth Provider (ej: Better-auth, clerk, NextAuth.js)")
-	initCmd.Flags().StringVar(&addonsFlag, "addons", "", "Addons / Tooling (ej: shadcn, lucide, svgl, motion, stripe, polar, resend, brevo, zod, docker, github_actions)")
+	initCmd.Flags().StringVar(&authFlag, "auth", "", "Auth Provider (ej: Better-auth, clerk, Auth.js)")
+	initCmd.Flags().StringVar(&paymentsFlag, "payments", "", "Payment Service (ej: Stripe, Polar)")
+	initCmd.Flags().StringVar(&emailFlag, "email", "", "Email Service (ej: Resend, Brevo)")
+	initCmd.Flags().StringVar(&addonsFlag, "addons", "", "Addons / Tooling (ej: shadcn, lucide, svgl, motion, zod, docker, github_actions)")
 	initCmd.Flags().StringVar(&gitFlag, "git", "no", "Initialize Git Repository")
 
-	initCmd.Flags().StringVarP(&recipieFlag, "recipie", "r", "saas", "Choose a recipe template (ej: saas, enterprise_nestjs, java_spring, pern, mern, fastapi_react, mobile_expo)")
+	initCmd.Flags().StringVarP(&recipieFlag, "recipie", "r", "saas", "Choose a recipe template (ej: saas, java_spring, mern, fastapi_react, mobile_expo)")
 
 	rootCmd.AddCommand(initCmd)
 }
