@@ -56,7 +56,7 @@ func TestProcessPackageJSONs(t *testing.T) {
 	}
 }
 
-func TestProcessPackageJSONs_PaymentsAndEmailAddons(t *testing.T) {
+func TestProcessPackageJSONs_PaymentsAndEmail(t *testing.T) {
 	v := vfs.New()
 	v.WriteString("package.json", `{"name": "placeholder"}`)
 	v.WriteString("apps/web/package.json", `{"name": "placeholder-web", "dependencies": {}}`)
@@ -67,7 +67,8 @@ func TestProcessPackageJSONs_PaymentsAndEmailAddons(t *testing.T) {
 		PackageManager: "pnpm",
 		Frontend:       "nextjs",
 		Backend:        "express",
-		Addons:         "stripe,polar,resend,brevo",
+		Payments:       "stripe",
+		Email:          "resend",
 	}
 
 	if err := ProcessPackageJSONs(v, cfg); err != nil {
@@ -80,7 +81,7 @@ func TestProcessPackageJSONs_PaymentsAndEmailAddons(t *testing.T) {
 		t.Fatalf("Failed to read web package.json: %v", err)
 	}
 	webDeps := webPkg["dependencies"].(map[string]interface{})
-	for _, pkgName := range []string{"stripe", "@polar-sh/sdk", "resend", "@getbrevo/brevo"} {
+	for _, pkgName := range []string{"stripe", "resend"} {
 		if _, ok := webDeps[pkgName]; !ok {
 			t.Errorf("Expected %s in apps/web dependencies, got %+v", pkgName, webDeps)
 		}
@@ -92,7 +93,7 @@ func TestProcessPackageJSONs_PaymentsAndEmailAddons(t *testing.T) {
 		t.Fatalf("Failed to read api package.json: %v", err)
 	}
 	apiDeps := apiPkg["dependencies"].(map[string]interface{})
-	for _, pkgName := range []string{"stripe", "@polar-sh/sdk", "resend", "@getbrevo/brevo"} {
+	for _, pkgName := range []string{"stripe", "resend"} {
 		if _, ok := apiDeps[pkgName]; !ok {
 			t.Errorf("Expected %s in apps/api dependencies, got %+v", pkgName, apiDeps)
 		}
@@ -124,7 +125,8 @@ func TestProcessEnvVariables(t *testing.T) {
 		Frontend:    "nextjs",
 		Database:    "postgres",
 		Auth:        "better-auth",
-		Addons:      "stripe,polar,resend",
+		Payments:    "stripe",
+		Email:       "resend",
 	}
 	if err := ProcessEnvVariables(v, cfg); err != nil {
 		t.Fatalf("ProcessEnvVariables failed: %v", err)
@@ -149,12 +151,9 @@ func TestProcessEnvVariables(t *testing.T) {
 	if !strings.Contains(envContent, "BETTER_AUTH_SECRET=\"") {
 		t.Errorf("Expected BETTER_AUTH_SECRET in .env, got: %s", envContent)
 	}
-	// Addons de Pagos y Email en .env
+	// Pagos y Email en .env
 	if !strings.Contains(envContent, "STRIPE_SECRET_KEY=\"sk_test_...\"") {
 		t.Errorf("Expected Stripe secret key in .env, got: %s", envContent)
-	}
-	if !strings.Contains(envContent, "POLAR_ACCESS_TOKEN=\"polar_atfs_...\"") {
-		t.Errorf("Expected Polar access token in .env, got: %s", envContent)
 	}
 	if !strings.Contains(envContent, "RESEND_API_KEY=\"re_...\"") {
 		t.Errorf("Expected Resend API key in .env, got: %s", envContent)

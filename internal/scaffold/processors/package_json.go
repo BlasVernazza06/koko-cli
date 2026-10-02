@@ -29,9 +29,10 @@ type ProcessConfig struct {
 	Database       string
 	ORM            string
 	Auth           string
+	Payments       string
+	Email          string
 	Addons         string
 }
-
 
 // AddDependency agrega o actualiza una dependencia en un objeto package.json en memoria,
 // consultando la versión oficial registrada en el catálogo maestro.
@@ -226,16 +227,16 @@ func updateWorkspacePackageJSONs(v *vfs.VFS, cfg ProcessConfig) {
 			if strings.Contains(addons, "zod") {
 				AddDependency(pkg, "zod", false)
 			}
-			if strings.Contains(addons, "stripe") {
+			if strings.Contains(strings.ToLower(cfg.Payments), "stripe") {
 				AddDependency(pkg, "stripe", false)
 			}
-			if strings.Contains(addons, "polar") {
+			if strings.Contains(strings.ToLower(cfg.Payments), "polar") {
 				AddDependency(pkg, "@polar-sh/sdk", false)
 			}
-			if strings.Contains(addons, "resend") {
+			if strings.Contains(strings.ToLower(cfg.Email), "resend") {
 				AddDependency(pkg, "resend", false)
 			}
-			if strings.Contains(addons, "brevo") {
+			if strings.Contains(strings.ToLower(cfg.Email), "brevo") {
 				AddDependency(pkg, "@getbrevo/brevo", false)
 			}
 			if cfg.API == "trpc" || cfg.API == "orpc" {
@@ -261,7 +262,17 @@ func updateWorkspacePackageJSONs(v *vfs.VFS, cfg ProcessConfig) {
 			}
 
 			if strings.Contains(cfg.Auth, "clerk") {
-				AddDependency(pkg, "@clerk/nextjs", false)
+				if cfg.Frontend == "react" {
+					AddDependency(pkg, "@clerk/clerk-react", false)
+				} else if cfg.Frontend == "native" {
+					AddDependency(pkg, "@clerk/clerk-expo", false)
+				} else {
+					AddDependency(pkg, "@clerk/nextjs", false)
+				}
+			}
+
+			if strings.Contains(cfg.Auth, "next-auth") {
+				AddDependency(pkg, "next-auth", false)
 			}
 
 			if cfg.API == "trpc" || cfg.API == "orpc" {
@@ -307,19 +318,19 @@ func updateWorkspacePackageJSONs(v *vfs.VFS, cfg ProcessConfig) {
 				AddDependency(pkg, "zod", false)
 			}
 
-			if strings.Contains(addons, "stripe") {
+			if strings.Contains(strings.ToLower(cfg.Payments), "stripe") {
 				AddDependency(pkg, "stripe", false)
 			}
 
-			if strings.Contains(addons, "polar") {
+			if strings.Contains(strings.ToLower(cfg.Payments), "polar") {
 				AddDependency(pkg, "@polar-sh/sdk", false)
 			}
 
-			if strings.Contains(addons, "resend") {
+			if strings.Contains(strings.ToLower(cfg.Email), "resend") {
 				AddDependency(pkg, "resend", false)
 			}
 
-			if strings.Contains(addons, "brevo") {
+			if strings.Contains(strings.ToLower(cfg.Email), "brevo") {
 				AddDependency(pkg, "@getbrevo/brevo", false)
 			}
 		}
@@ -342,4 +353,3 @@ func updateWorkspaceTSConfigsAndConfigs(v *vfs.VFS, cfg ProcessConfig) {
 		}
 	}
 }
-

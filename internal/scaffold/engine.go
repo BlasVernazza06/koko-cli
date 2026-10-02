@@ -22,6 +22,11 @@ func GenerateVFS(config ScaffoldConfig) (*vfs.VFS, error) {
 		"version": func(pkg string) string {
 			return catalog.GetVersion(pkg)
 		},
+		"contains":  strings.Contains,
+		"hasPrefix": strings.HasPrefix,
+		"hasSuffix": strings.HasSuffix,
+		"lower":     strings.ToLower,
+		"upper":     strings.ToUpper,
 	}
 
 	v := vfs.New()
@@ -85,7 +90,6 @@ func GenerateVFS(config ScaffoldConfig) (*vfs.VFS, error) {
 	v.DeleteFile("apps/.gitkeep")
 	v.DeleteFile("packages/.gitkeep")
 
-
 	// Fase de Post-procesamiento en memoria (ajuste de package.json y .env)
 	procCfg := processors.ProcessConfig{
 		ProjectName:    config.ProjectName,
@@ -98,7 +102,6 @@ func GenerateVFS(config ScaffoldConfig) (*vfs.VFS, error) {
 		Auth:           config.Auth,
 		Addons:         config.Addons,
 	}
-
 
 	if err := processors.ProcessPackageJSONs(v, procCfg); err != nil {
 		return nil, errors.NewPostProcessError("package.json", "Fallo al configurar scripts y dependencias", err)
