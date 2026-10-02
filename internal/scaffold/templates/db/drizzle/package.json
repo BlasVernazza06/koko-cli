@@ -1,16 +1,17 @@
 {
-  "name": "@[[.ProjectName]]/db",
+  "name": "@repo/db",
   "version": "0.1.0",
   "private": true,
-  "main": "dist/index.js",
+  "main": "src/index.ts",
   "scripts": {
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
-    "drizzle-orm": "[[ version "drizzle-orm" ]]",
-    "postgres": "[[ version "postgres" ]]",
-    "mysql2": "[[ version "mysql2" ]]"
+    "drizzle-orm": "[[ version "drizzle-orm" ]]"[[ if eq .Database "postgres" ]],
+    "postgres": "[[ version "postgres" ]]"[[ else if eq .Database "mysql" ]],
+    "mysql2": "[[ version "mysql2" ]]"[[ else if eq .Database "sqlite" ]],
+    "better-sqlite3": "[[ version "better-sqlite3" ]]"[[ end ]]
   },
   "devDependencies": {
     "drizzle-kit": "[[ version "drizzle-kit" ]]",

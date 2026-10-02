@@ -3,3 +3,12 @@ uvicorn[standard]>=0.30.6
 pydantic>=2.9.1
 pydantic-settings>=2.5.2
 python-dotenv>=1.0.1
+[[ if eq .ORM "sqlalchemy" ]]
+sqlalchemy>=2.0.35
+[[ if eq .Database "postgres" ]]
+psycopg2-binary>=2.9.9
+[[ else if eq .Database "mysql" ]]
+pymysql>=1.1.1
+cryptography>=43.0.1
+[[ end ]]
+[[ end ]]

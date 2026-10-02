@@ -1,11 +1,35 @@
 import express from 'express';
 import cors from 'cors';
+[[ if eq .API "trpc" ]]
+import { trpcMiddleware } from './trpc';
+[[ else if eq .API "orpc" ]]
+import { orpcMiddleware } from './orpc';
+[[ end ]]
+[[ if and (ne .Database "") (ne .Database "none") ]]
+[[ if eq .ORM "prisma" ]]
+import { prisma } from '@repo/db';
+[[ else if eq .ORM "drizzle" ]]
+import { db } from '@repo/db';
+[[ else if eq .ORM "mongoose" ]]
+import { connectDB } from '@repo/db';
+[[ end ]]
+[[ end ]]
 
 const app = express();
 const port = process.env.PORT || 8080;
 
 app.use(cors());
 app.use(express.json());
+
+[[ if eq .API "trpc" ]]
+// Mount tRPC router middleware
+app.use('/api/trpc', trpcMiddleware);
+app.use('/trpc', trpcMiddleware);
+[[ else if eq .API "orpc" ]]
+// Mount oRPC router middleware
+app.use('/api/orpc', orpcMiddleware);
+app.use('/orpc', orpcMiddleware);
+[[ end ]]
 
 interface Todo {
   id: number;
@@ -77,6 +101,10 @@ app.delete('/api/todos/:id', (req, res) => {
   todos = todos.filter((t) => t.id !== id);
   res.json({ message: 'Todo deleted successfully' });
 });
+
+[[ if eq .ORM "mongoose" ]]
+connectDB();
+[[ end ]]
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);

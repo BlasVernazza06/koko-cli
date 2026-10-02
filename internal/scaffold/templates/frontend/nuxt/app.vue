@@ -14,3 +14,8 @@
     </div>
   </div>
 </template>
+[[ if eq .Auth "better-auth" ]]
+<script setup lang="ts">
+import { authClient } from '~/utils/auth-client';
+</script>
+[[ end ]]

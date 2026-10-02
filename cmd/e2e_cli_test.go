@@ -89,7 +89,8 @@ func TestE2ECLIInitManualFlags(t *testing.T) {
 		"--database", "postgres",
 		"--orm", "drizzle",
 		"--auth", "better-auth",
-		"--addons", "shadcn,stripe,docker",
+		"--payments", "stripe",
+		"--addons", "shadcn,docker",
 		"--package-manager", "pnpm",
 		"--git", "no",
 	})

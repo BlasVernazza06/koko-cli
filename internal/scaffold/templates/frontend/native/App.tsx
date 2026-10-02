@@ -1,15 +1,32 @@
-﻿import React from 'react';
+import React from 'react';
 import { StyleSheet, Text, View, StatusBar } from 'react-native';
+[[ if eq .Auth "clerk" ]]
+import { ClerkProvider } from '@clerk/clerk-expo';
+[[ end ]]
+[[ if eq .Auth "better-auth" ]]
+import { authClient } from './src/lib/auth-client';
+[[ end ]]
 
 export default function App() {
-  return (
+  const content = (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
       <View style={styles.card}>
-        <Text style={styles.title}>Welcome to Expo & React Native</Text>
-        <Text style={styles.subtitle}>Scaffolded with Koko CLI</Text>
+        <Text style={styles.title}>[[.ProjectName]]</Text>
+        <Text style={styles.subtitle}>Welcome to Expo & React Native</Text>
+        <Text style={styles.footer}>Scaffolded with Koko CLI</Text>
       </View>
     </View>
+  );
+
+  return (
+[[ if eq .Auth "clerk" ]]
+    <ClerkProvider publishableKey={process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY || ""}>
+      {content}
+    </ClerkProvider>
+[[ else ]]
+    content
+[[ end ]]
   );
 }
 
@@ -30,13 +47,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#f8fafc',
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 16,
+    color: '#38bdf8',
+    marginBottom: 4,
+  },
+  footer: {
+    fontSize: 12,
     color: '#94a3b8',
+    marginTop: 8,
   },
 });

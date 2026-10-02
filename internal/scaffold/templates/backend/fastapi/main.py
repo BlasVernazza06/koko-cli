@@ -1,6 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import health, todos
+[[ if eq .ORM "sqlalchemy" ]]
+from app.db import database, models
+
+models.Base.metadata.create_all(bind=database.engine)
+[[ end ]]
 
 app = FastAPI(
     title="[[.ProjectName]] API",
