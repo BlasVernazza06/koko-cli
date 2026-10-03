@@ -1,6 +1,6 @@
 <script>
   let count = 0;
-[[ if eq .Auth "better-auth" ]]
+[[ if hasAuth "better-auth" ]]
   import { authClient } from "$lib/auth-client";
 [[ end ]]
 </script>

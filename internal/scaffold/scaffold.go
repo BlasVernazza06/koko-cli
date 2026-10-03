@@ -243,5 +243,22 @@ func shouldParseAsTemplate(content []byte) bool {
 		strings.Contains(s, "[[ not ") ||
 		strings.Contains(s, "[[contains ") ||
 		strings.Contains(s, "[[ contains ") ||
-		(strings.Contains(s, "[[") && strings.Contains(s, "]]"))
+		strings.Contains(s, "[[hasAddon ") ||
+		strings.Contains(s, "[[ hasAddon ") ||
+		strings.Contains(s, "[[hasAuth ") ||
+		strings.Contains(s, "[[ hasAuth ") ||
+		strings.Contains(s, "[[hasPayment ") ||
+		strings.Contains(s, "[[ hasPayment ") ||
+		strings.Contains(s, "[[hasEmail ") ||
+		strings.Contains(s, "[[ hasEmail ") ||
+		strings.Contains(s, "[[hasDB ") ||
+		strings.Contains(s, "[[ hasDB ") ||
+		strings.Contains(s, "[[isORM ") ||
+		strings.Contains(s, "[[ isORM ") ||
+		strings.Contains(s, "[[isFrontend ") ||
+		strings.Contains(s, "[[ isFrontend ") ||
+		strings.Contains(s, "[[isBackend ") ||
+		strings.Contains(s, "[[ isBackend ") ||
+		strings.Contains(s, "[[isAPI ") ||
+		strings.Contains(s, "[[ isAPI ")
 }

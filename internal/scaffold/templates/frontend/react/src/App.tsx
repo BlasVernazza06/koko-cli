@@ -1,8 +1,8 @@
 import { useState } from "react";
-[[ if contains .Addons "lucide" ]]
+[[ if hasAddon "lucide" ]]
 import { Sparkles } from "lucide-react";
 [[ end ]]
-[[ if eq .Auth "better-auth" ]]
+[[ if hasAuth "better-auth" ]]
 import { authClient } from "./lib/auth-client";
 [[ end ]]
 
@@ -13,7 +13,7 @@ export default function App() {
     <div className="flex min-h-screen flex-col items-center justify-center p-8 text-center bg-[#09090b] text-[#fafafa]">
       <div className="max-w-2xl space-y-6">
         <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-1 text-sm text-cyan-400">
-          [[ if contains .Addons "lucide" ]]<Sparkles className="h-4 w-4" />[[ else ]]<span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />[[ end ]]
+          [[ if hasAddon "lucide" ]]<Sparkles className="h-4 w-4" />[[ else ]]<span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />[[ end ]]
           React + Vite SPA
         </div>
         <h1 className="text-4xl sm:text-6xl font-bold tracking-tight bg-gradient-to-r from-white via-cyan-200 to-cyan-400 bg-clip-text text-transparent">

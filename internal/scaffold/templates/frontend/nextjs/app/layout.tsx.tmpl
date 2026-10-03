@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import "./globals.css";
-[[ if eq .Auth "clerk" ]]
+[[ if hasAuth "clerk" ]]
 import { ClerkProvider } from "@clerk/nextjs";
 [[ end ]]
-[[ if eq .Auth "next-auth" ]]
+[[ if hasAuth "next-auth" ]]
 import { SessionProvider } from "next-auth/react";
 [[ end ]]
-[[ if eq .API "trpc" ]]
+[[ if isAPI "trpc" ]]
 import { TRPCReactProvider } from "@/trpc/provider";
-[[ else if eq .API "orpc" ]]
+[[ else if isAPI "orpc" ]]
 import { ORPCReactProvider } from "@/orpc/provider";
 [[ end ]]
 
@@ -23,31 +23,31 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-[[ if eq .Auth "clerk" ]]
+[[ if hasAuth "clerk" ]]
     <ClerkProvider>
 [[ end ]]
       <html lang="en">
         <body className="antialiased min-h-screen bg-[#09090b] text-[#fafafa]">
-[[ if eq .Auth "next-auth" ]]
+[[ if hasAuth "next-auth" ]]
           <SessionProvider>
 [[ end ]]
-[[ if eq .API "trpc" ]]
+[[ if isAPI "trpc" ]]
             <TRPCReactProvider>
               {children}
             </TRPCReactProvider>
-[[ else if eq .API "orpc" ]]
+[[ else if isAPI "orpc" ]]
             <ORPCReactProvider>
               {children}
             </ORPCReactProvider>
 [[ else ]]
             {children}
 [[ end ]]
-[[ if eq .Auth "next-auth" ]]
+[[ if hasAuth "next-auth" ]]
           </SessionProvider>
 [[ end ]]
         </body>
       </html>
-[[ if eq .Auth "clerk" ]]
+[[ if hasAuth "clerk" ]]
     </ClerkProvider>
 [[ end ]]
   );
