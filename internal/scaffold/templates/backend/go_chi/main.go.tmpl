@@ -5,6 +5,9 @@ import (
 	"net/http"
 
 	"api/handlers"
+[[ if eq .ORM "gorm" ]]
+	"api/db"
+[[ end ]]
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -12,6 +15,10 @@ import (
 )
 
 func main() {
+[[ if eq .ORM "gorm" ]]
+	db.Connect()
+[[ end ]]
+
 	r := chi.NewRouter()
 
 	r.Use(middleware.Logger)
@@ -34,7 +41,7 @@ func main() {
 	})
 
 	port := ":8080"
-	log.Printf("Server starting on port %s", port)
+	log.Printf("[[.ProjectName]] API starting on port %s", port)
 	if err := http.ListenAndServe(port, r); err != nil {
 		log.Fatalf("Server error: %v", err)
 	}

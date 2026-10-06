@@ -39,7 +39,9 @@ func TestManualTemplatesCompleteness(t *testing.T) {
 		for _, f := range fe.files {
 			fullPath := "templates/frontend/" + fe.name + "/" + f
 			if _, err := templateFs.ReadFile(fullPath); err != nil {
-				t.Errorf("Missing frontend template file for %s: %s (err: %v)", fe.name, fullPath, err)
+				if _, errTmpl := templateFs.ReadFile(fullPath + ".tmpl"); errTmpl != nil {
+					t.Errorf("Missing frontend template file for %s: %s (err: %v)", fe.name, fullPath, err)
+				}
 			}
 		}
 	}
@@ -60,7 +62,9 @@ func TestManualTemplatesCompleteness(t *testing.T) {
 		for _, f := range be.files {
 			fullPath := "templates/backend/" + be.name + "/" + f
 			if _, err := templateFs.ReadFile(fullPath); err != nil {
-				t.Errorf("Missing backend template file for %s: %s (err: %v)", be.name, fullPath, err)
+				if _, errTmpl := templateFs.ReadFile(fullPath + ".tmpl"); errTmpl != nil {
+					t.Errorf("Missing backend template file for %s: %s (err: %v)", be.name, fullPath, err)
+				}
 			}
 		}
 	}
@@ -94,7 +98,9 @@ func TestManualTemplatesCompleteness(t *testing.T) {
 	}
 	for _, dbFile := range dbs {
 		if _, err := templateFs.ReadFile(dbFile); err != nil {
-			t.Errorf("Missing DB/ORM template file: %s (err: %v)", dbFile, err)
+			if _, errTmpl := templateFs.ReadFile(dbFile + ".tmpl"); errTmpl != nil {
+				t.Errorf("Missing DB/ORM template file: %s (err: %v)", dbFile, err)
+			}
 		}
 	}
 
@@ -121,7 +127,9 @@ func TestManualTemplatesCompleteness(t *testing.T) {
 	}
 	for _, sh := range shared {
 		if _, err := templateFs.ReadFile(sh); err != nil {
-			t.Errorf("Missing shared template file: %s (err: %v)", sh, err)
+			if _, errTmpl := templateFs.ReadFile(sh + ".tmpl"); errTmpl != nil {
+				t.Errorf("Missing shared template file: %s (err: %v)", sh, err)
+			}
 		}
 	}
 }
@@ -734,6 +742,23 @@ func TestScaffoldManualORPC(t *testing.T) {
 	}
 	if !strings.Contains(apiPkgStr, "@orpc/server") {
 		t.Errorf("Expected apps/api/package.json to have @orpc/server, got: %s", apiPkgStr)
+	}
+}
+
+func TestInitGit(t *testing.T) {
+	tmpDir := t.TempDir()
+	dummyFile := filepath.Join(tmpDir, "README.md")
+	if err := os.WriteFile(dummyFile, []byte("# Test Project"), 0644); err != nil {
+		t.Fatalf("Failed to create dummy file: %v", err)
+	}
+
+	if err := InitGit(tmpDir); err != nil {
+		t.Fatalf("InitGit failed: %v", err)
+	}
+
+	gitDir := filepath.Join(tmpDir, ".git")
+	if _, err := os.Stat(gitDir); os.IsNotExist(err) {
+		t.Errorf("Expected .git directory to exist")
 	}
 }
 

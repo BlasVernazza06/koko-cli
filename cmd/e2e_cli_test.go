@@ -89,7 +89,8 @@ func TestE2ECLIInitManualFlags(t *testing.T) {
 		"--database", "postgres",
 		"--orm", "drizzle",
 		"--auth", "better-auth",
-		"--addons", "shadcn,stripe,docker",
+		"--payments", "stripe",
+		"--addons", "shadcn,docker",
 		"--package-manager", "pnpm",
 		"--git", "no",
 	})
@@ -172,3 +173,26 @@ func TestE2ECLIDoctorCommand(t *testing.T) {
 		t.Fatalf("koko doctor in-sync check failed: %v (stderr: %s)", err, errBuf.String())
 	}
 }
+
+func TestE2ECLIVersionCommand(t *testing.T) {
+	if rootCmd.Version != "v2.0" {
+		t.Errorf("Expected rootCmd.Version to be 'v2.0', got %q", rootCmd.Version)
+	}
+
+	resetFlags(rootCmd)
+	cmd := rootCmd
+	var outBuf, errBuf bytes.Buffer
+	cmd.SetOut(&outBuf)
+	cmd.SetErr(&errBuf)
+	cmd.SetArgs([]string{"--version"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("koko --version failed: %v (stderr: %s)", err, errBuf.String())
+	}
+
+	output := outBuf.String()
+	if !bytes.Contains(outBuf.Bytes(), []byte("v2.0")) {
+		t.Errorf("Expected version output to contain 'v2.0', got %q", output)
+	}
+}
+

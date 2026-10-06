@@ -1,0 +1,99 @@
+import { betterAuth } from "better-auth";
+[[ if contains .Addons "resend" ]]
+import { Resend } from "resend";
+const resend = new Resend(process.env.RESEND_API_KEY);
+[[ else if contains .Addons "brevo" ]]
+import { TransactionalEmailsApi, SendSmtpEmail } from "@getbrevo/brevo";
+const brevo = new TransactionalEmailsApi();
+brevo.setApiKey(0, process.env.BREVO_API_KEY || "");
+[[ end ]]
+[[ if eq .ORM "drizzle" ]]
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { db } from "@[[ .ProjectName ]]/db";
+
+export const auth = betterAuth({
+  database: drizzleAdapter(db, {
+    provider: "[[ if eq .Database "sqlite" ]]sqlite[[ else if eq .Database "mysql" ]]mysql[[ else ]]pg[[ end ]]",
+  }),
+  emailAndPassword: {
+    enabled: true,
+[[ if contains .Addons "resend" ]]
+    async sendResetPassword({ user, url }) {
+      await resend.emails.send({
+        from: process.env.EMAIL_FROM || "onboarding@resend.dev",
+        to: user.email,
+        subject: "Reset your password",
+        text: `Click the link to reset your password: ${url}`,
+      });
+    },
+[[ else if contains .Addons "brevo" ]]
+    async sendResetPassword({ user, url }) {
+      const email = new SendSmtpEmail();
+      email.sender = { email: process.env.EMAIL_FROM || "no-reply@example.com" };
+      email.to = [{ email: user.email }];
+      email.subject = "Reset your password";
+      email.textContent = `Click the link to reset your password: ${url}`;
+      await brevo.sendTransacEmail(email);
+    },
+[[ end ]]
+  },
+});
+[[ else if eq .ORM "prisma" ]]
+import { prismaAdapter } from "better-auth/adapters/prisma";
+import { prisma } from "@[[ .ProjectName ]]/db";
+
+export const auth = betterAuth({
+  database: prismaAdapter(prisma, {
+    provider: "[[ if eq .Database "sqlite" ]]sqlite[[ else if eq .Database "mysql" ]]mysql[[ else ]]postgresql[[ end ]]",
+  }),
+  emailAndPassword: {
+    enabled: true,
+[[ if contains .Addons "resend" ]]
+    async sendResetPassword({ user, url }) {
+      await resend.emails.send({
+        from: process.env.EMAIL_FROM || "onboarding@resend.dev",
+        to: user.email,
+        subject: "Reset your password",
+        text: `Click the link to reset your password: ${url}`,
+      });
+    },
+[[ else if contains .Addons "brevo" ]]
+    async sendResetPassword({ user, url }) {
+      const email = new SendSmtpEmail();
+      email.sender = { email: process.env.EMAIL_FROM || "no-reply@example.com" };
+      email.to = [{ email: user.email }];
+      email.subject = "Reset your password";
+      email.textContent = `Click the link to reset your password: ${url}`;
+      await brevo.sendTransacEmail(email);
+    },
+[[ end ]]
+  },
+});
+[[ else ]]
+export const auth = betterAuth({
+  emailAndPassword: {
+    enabled: true,
+[[ if contains .Addons "resend" ]]
+    async sendResetPassword({ user, url }) {
+      await resend.emails.send({
+        from: process.env.EMAIL_FROM || "onboarding@resend.dev",
+        to: user.email,
+        subject: "Reset your password",
+        text: `Click the link to reset your password: ${url}`,
+      });
+    },
+[[ else if contains .Addons "brevo" ]]
+    async sendResetPassword({ user, url }) {
+      const email = new SendSmtpEmail();
+      email.sender = { email: process.env.EMAIL_FROM || "no-reply@example.com" };
+      email.to = [{ email: user.email }];
+      email.subject = "Reset your password";
+      email.textContent = `Click the link to reset your password: ${url}`;
+      await brevo.sendTransacEmail(email);
+    },
+[[ end ]]
+  },
+});
+[[ end ]]
+
+export type Auth = typeof auth;

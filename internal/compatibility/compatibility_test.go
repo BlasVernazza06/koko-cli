@@ -278,7 +278,7 @@ func TestGetStepOptions_ORM_MongoDB(t *testing.T) {
 	opts := GetStepOptions(StepORM, selections)
 	for _, opt := range opts {
 		switch opt.Value {
-		case "moongose", "prisma", "none":
+		case "mongoose", "moongose", "prisma", "none":
 			if opt.Disabled {
 				t.Errorf("Expected ORM '%s' to be enabled for Node.js + MongoDB", opt.Value)
 			}
@@ -317,15 +317,13 @@ func TestGetStepOptions_ORM_Java(t *testing.T) {
 func TestGetStepOptions_Addons(t *testing.T) {
 	opts := BaseOptions(StepAddons)
 	expectedValues := map[string]bool{
-		"stripe": false,
-		"polar":  false,
-		"resend": false,
-		"brevo":  false,
-		"shadcn": false,
-		"lucide": false,
-		"motion": false,
-		"zod":    false,
-		"docker": false,
+		"shadcn":         false,
+		"lucide":         false,
+		"svgl":           false,
+		"motion":         false,
+		"zod":            false,
+		"docker":         false,
+		"github_actions": false,
 	}
 
 	for _, opt := range opts {
@@ -337,6 +335,40 @@ func TestGetStepOptions_Addons(t *testing.T) {
 	for val, found := range expectedValues {
 		if !found {
 			t.Errorf("Expected addon option '%s' to be present in StepAddons", val)
+		}
+	}
+}
+
+func TestGetStepOptions_Payments(t *testing.T) {
+	opts := BaseOptions(StepPayments)
+	expected := []string{"stripe", "polar", "none"}
+	for _, exp := range expected {
+		found := false
+		for _, opt := range opts {
+			if opt.Value == exp {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("Expected payment option '%s' in StepPayments", exp)
+		}
+	}
+}
+
+func TestGetStepOptions_Email(t *testing.T) {
+	opts := BaseOptions(StepEmail)
+	expected := []string{"resend", "brevo", "none"}
+	for _, exp := range expected {
+		found := false
+		for _, opt := range opts {
+			if opt.Value == exp {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("Expected email option '%s' in StepEmail", exp)
 		}
 	}
 }
@@ -607,7 +639,9 @@ func TestValidateConfig(t *testing.T) {
 				Frontend: "nextjs",
 				Backend:  "self",
 				Auth:     "clerk",
-				Addons:   "polar,stripe,resend,brevo,zod",
+				Payments: "polar",
+				Email:    "resend",
+				Addons:   "zod",
 			},
 			wantErr: false,
 		},
@@ -617,7 +651,8 @@ func TestValidateConfig(t *testing.T) {
 				Frontend: "nextjs",
 				Backend:  "self",
 				Auth:     "better-auth",
-				Addons:   "polar,zod",
+				Payments: "polar",
+				Addons:   "zod",
 			},
 			wantErr: false,
 		},

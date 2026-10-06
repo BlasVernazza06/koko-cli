@@ -56,46 +56,54 @@ func TestProcessPackageJSONs(t *testing.T) {
 	}
 }
 
-func TestProcessPackageJSONs_PaymentsAndEmailAddons(t *testing.T) {
+func TestProcessPackageJSONs_PaymentsAndEmail(t *testing.T) {
 	v := vfs.New()
 	v.WriteString("package.json", `{"name": "placeholder"}`)
 	v.WriteString("apps/web/package.json", `{"name": "placeholder-web", "dependencies": {}}`)
 	v.WriteString("apps/api/package.json", `{"name": "placeholder-api", "dependencies": {}}`)
+	v.WriteString("packages/auth/package.json", `{"name": "placeholder-auth", "dependencies": {}}`)
 
 	cfg := ProcessConfig{
 		ProjectName:    "acme-commerce",
 		PackageManager: "pnpm",
 		Frontend:       "nextjs",
 		Backend:        "express",
-		Addons:         "stripe,polar,resend,brevo",
+		Payments:       "stripe",
+		Email:          "resend",
 	}
 
 	if err := ProcessPackageJSONs(v, cfg); err != nil {
 		t.Fatalf("ProcessPackageJSONs failed: %v", err)
 	}
 
-	// Verify web package.json has payments & email deps
+	// Verify web package.json has payments deps
 	var webPkg map[string]interface{}
 	if err := v.ReadJSON("apps/web/package.json", &webPkg); err != nil {
 		t.Fatalf("Failed to read web package.json: %v", err)
 	}
 	webDeps := webPkg["dependencies"].(map[string]interface{})
-	for _, pkgName := range []string{"stripe", "@polar-sh/sdk", "resend", "@getbrevo/brevo"} {
-		if _, ok := webDeps[pkgName]; !ok {
-			t.Errorf("Expected %s in apps/web dependencies, got %+v", pkgName, webDeps)
-		}
+	if _, ok := webDeps["stripe"]; !ok {
+		t.Errorf("Expected stripe in apps/web dependencies, got %+v", webDeps)
 	}
 
-	// Verify api package.json has payments & email deps
+	// Verify api package.json has payments deps
 	var apiPkg map[string]interface{}
 	if err := v.ReadJSON("apps/api/package.json", &apiPkg); err != nil {
 		t.Fatalf("Failed to read api package.json: %v", err)
 	}
 	apiDeps := apiPkg["dependencies"].(map[string]interface{})
-	for _, pkgName := range []string{"stripe", "@polar-sh/sdk", "resend", "@getbrevo/brevo"} {
-		if _, ok := apiDeps[pkgName]; !ok {
-			t.Errorf("Expected %s in apps/api dependencies, got %+v", pkgName, apiDeps)
-		}
+	if _, ok := apiDeps["stripe"]; !ok {
+		t.Errorf("Expected stripe in apps/api dependencies, got %+v", apiDeps)
+	}
+
+	// Verify auth package.json has email deps
+	var authPkg map[string]interface{}
+	if err := v.ReadJSON("packages/auth/package.json", &authPkg); err != nil {
+		t.Fatalf("Failed to read auth package.json: %v", err)
+	}
+	authDeps := authPkg["dependencies"].(map[string]interface{})
+	if _, ok := authDeps["resend"]; !ok {
+		t.Errorf("Expected resend in packages/auth dependencies, got %+v", authDeps)
 	}
 }
 
@@ -124,24 +132,49 @@ func TestProcessEnvVariables(t *testing.T) {
 		Frontend:    "nextjs",
 		Database:    "postgres",
 		Auth:        "better-auth",
+		Payments:    "stripe",
+		Email:       "resend",
 	}
-
 	if err := ProcessEnvVariables(v, cfg); err != nil {
 		t.Fatalf("ProcessEnvVariables failed: %v", err)
 	}
-
+	// 1. Validaciones en .env (Archivo Local)
 	envContent, ok := v.ReadString(".env")
 	if !ok {
 		t.Fatalf("Expected .env file to be created")
 	}
-
+	// Database URL
 	if !strings.Contains(envContent, "DATABASE_URL=\"postgresql://postgres:password@localhost:5432/shop-app?schema=public\"") {
 		t.Errorf("Expected Postgres connection string in .env, got: %s", envContent)
 	}
-	if !strings.Contains(envContent, "BETTER_AUTH_SECRET") {
-		t.Errorf("Expected Better Auth secret in .env, got: %s", envContent)
-	}
+	// URLs de API
 	if !strings.Contains(envContent, "NEXT_PUBLIC_API_URL=http://localhost:4000") {
 		t.Errorf("Expected Next.js API url in .env, got: %s", envContent)
+	}
+	// Better-Auth Secret: Verificar que no sea el placeholder estático y tenga formato base64 seguro
+	if strings.Contains(envContent, "supersecret-auth-key") {
+		t.Errorf("Expected generated random secret, but found static placeholder in .env")
+	}
+	if !strings.Contains(envContent, "BETTER_AUTH_SECRET=\"") {
+		t.Errorf("Expected BETTER_AUTH_SECRET in .env, got: %s", envContent)
+	}
+	// Pagos y Email en .env
+	if !strings.Contains(envContent, "STRIPE_SECRET_KEY=\"sk_test_...\"") {
+		t.Errorf("Expected Stripe secret key in .env, got: %s", envContent)
+	}
+	if !strings.Contains(envContent, "RESEND_API_KEY=\"re_...\"") {
+		t.Errorf("Expected Resend API key in .env, got: %s", envContent)
+	}
+	// 2. Validaciones en .env.example (Archivo para Git)
+	exampleContent, ok := v.ReadString(".env.example")
+	if !ok {
+		t.Fatalf("Expected .env.example file to be created")
+	}
+	// En .env.example debe mantenerse el placeholder seguro para Git
+	if !strings.Contains(exampleContent, "BETTER_AUTH_SECRET=\"your-better-auth-secret\"") {
+		t.Errorf("Expected generic placeholder in .env.example, got: %s", exampleContent)
+	}
+	if !strings.Contains(exampleContent, "STRIPE_SECRET_KEY=\"sk_test_...\"") {
+		t.Errorf("Expected Stripe placeholder in .env.example, got: %s", exampleContent)
 	}
 }

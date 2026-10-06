@@ -200,6 +200,16 @@ func initialModel(initialState sessionState, initialProjectName string) mainMode
 			options: compatibility.BaseOptions(compatibility.StepAuth),
 		},
 		{
+			title:   "Select Payment Provider",
+			label:   "Payments",
+			options: compatibility.BaseOptions(compatibility.StepPayments),
+		},
+		{
+			title:   "Select Email Provider",
+			label:   "Email",
+			options: compatibility.BaseOptions(compatibility.StepEmail),
+		},
+		{
 			title:   "Select Addons / Tooling",
 			label:   "Addons",
 			options: compatibility.BaseOptions(compatibility.StepAddons),
@@ -215,7 +225,7 @@ func initialModel(initialState sessionState, initialProjectName string) mainMode
 		state:     initialState,
 		prevState: stateMenu,
 		versionInfo: []views.VersionItem{
-			{Key: "Koko CLI", Val: "v0.1.0"},
+			{Key: "Koko CLI", Val: kokoConfig.CLIVersion},
 			{Key: "OS / Arch", Val: fmt.Sprintf("%s / %s", runtime.GOOS, runtime.GOARCH)},
 			{Key: "Go Runtime", Val: runtime.Version()},
 			{Key: "Build Date", Val: "2026-08-12"},
@@ -474,6 +484,8 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							Database:       m.manualSelections[compatibility.StepDatabase].Value,
 							ORM:            m.manualSelections[compatibility.StepORM].Value,
 							Auth:           m.manualSelections[compatibility.StepAuth].Value,
+							Payments:       m.manualSelections[compatibility.StepPayments].Value,
+							Email:          m.manualSelections[compatibility.StepEmail].Value,
 							Addons:         m.manualSelections[compatibility.StepAddons].Value,
 						}
 

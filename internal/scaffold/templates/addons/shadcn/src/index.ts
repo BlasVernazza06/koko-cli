@@ -16,3 +16,4 @@ export * from './components/ui/tooltip';
 
 export * from './hooks/use-mobile';
 export * from './lib/utils';
+export * from './components/theme-provider';

@@ -6,7 +6,7 @@ router = APIRouter()
 
 class Todo(BaseModel):
     id: int
-    title: string = ""
+    title: str = ""
     done: bool = False
 
 class TodoCreate(BaseModel):

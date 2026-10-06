@@ -22,9 +22,12 @@ var (
 	databaseFlag string
 	ormFlag      string
 	authFlag     string
+	paymentsFlag string
+	emailFlag    string
 	addonsFlag   string
 	apiFlag      string
 	gitFlag      string
+	recipeFlag   string
 	recipieFlag  string
 )
 
@@ -38,19 +41,15 @@ var initCmd = &cobra.Command{
 			projectName = args[0]
 		}
 
-		isDefault, _ := cmd.Flags().GetBool("default")
-		frontend, _ := cmd.Flags().GetString("frontend")
-		backend, _ := cmd.Flags().GetString("backend")
-		pm, _ := cmd.Flags().GetString("package-manager")
-		database, _ := cmd.Flags().GetString("database")
-		orm, _ := cmd.Flags().GetString("orm")
-		auth, _ := cmd.Flags().GetString("auth")
-		addons, _ := cmd.Flags().GetString("addons")
-		api, _ := cmd.Flags().GetString("api")
-		git, _ := cmd.Flags().GetString("git")
-		recipie, _ := cmd.Flags().GetString("recipie")
+		selectedRecipe := recipeFlag
+		if selectedRecipe == "" && recipieFlag != "" {
+			selectedRecipe = recipieFlag
+		}
+		if selectedRecipe == "" {
+			selectedRecipe = "saas"
+		}
 
-		if isDefault {
+		if defaultFlag {
 			if projectName == "" {
 				projectName = "my-project"
 			}
@@ -58,10 +57,11 @@ var initCmd = &cobra.Command{
 				fmt.Printf("\n\033[31m✗ Error: %s\033[0m\n\n", err.Error())
 				os.Exit(1)
 			}
-			runDefaultInit(projectName, recipie)
+			runDefaultInit(projectName, selectedRecipe)
 			return
 		}
-		if frontend != "" || backend != "" || database != "" || orm != "" || auth != "" || addons != "" || api != "" {
+
+		if frontendFlag != "" || backendFlag != "" || databaseFlag != "" || ormFlag != "" || authFlag != "" || paymentsFlag != "" || emailFlag != "" || addonsFlag != "" || apiFlag != "" {
 			if projectName == "" {
 				projectName = "my-project"
 			}
@@ -69,20 +69,22 @@ var initCmd = &cobra.Command{
 				fmt.Printf("\n\033[31m✗ Error: %s\033[0m\n\n", err.Error())
 				os.Exit(1)
 			}
-			if pm == "" {
-				pm = "pnpm"
+			if pmFlag == "" {
+				pmFlag = "pnpm"
 			}
-			initGit := strings.ToLower(git) == "yes" || strings.ToLower(git) == "true" || strings.ToLower(git) == "y"
+			initGit := strings.ToLower(gitFlag) == "yes" || strings.ToLower(gitFlag) == "true" || strings.ToLower(gitFlag) == "y"
 			cfg := scaffold.ScaffoldConfig{
 				ProjectName:    projectName,
-				Frontend:       frontend,
-				Backend:        backend,
-				API:            api,
-				PackageManager: pm,
-				Database:       database,
-				ORM:            orm,
-				Auth:           auth,
-				Addons:         addons,
+				Frontend:       frontendFlag,
+				Backend:        backendFlag,
+				API:            apiFlag,
+				PackageManager: pmFlag,
+				Database:       databaseFlag,
+				ORM:            ormFlag,
+				Auth:           authFlag,
+				Payments:       paymentsFlag,
+				Email:          emailFlag,
+				Addons:         addonsFlag,
 				InitGit:        initGit,
 			}
 			if err := compatibility.ValidateConfig(cfg); err != nil {
@@ -97,46 +99,51 @@ var initCmd = &cobra.Command{
 	},
 }
 
-func runDefaultInit(projectName string, recipie string) {
-	fmt.Printf("\n\033[90m┌\033[0m  \033[1mCreating a new Koko project\033[0m\n")
-	fmt.Printf("\033[90m│\033[0m\n")
-	fmt.Printf("\033[90m│\033[0m  \033[38;2;0;255;127m◆\033[0m  \033[1mProject name\033[0m     \033[90m·\033[0m  \033[38;2;167;139;250m%s\033[0m\n", projectName)
-	fmt.Printf("\033[90m│\033[0m  \033[38;2;0;255;127m◆\033[0m  \033[1mRecipe\033[0m           \033[90m·\033[0m  \033[38;2;167;139;250mSaaS Starter\033[0m\n")
-	fmt.Printf("\033[90m│\033[0m  \033[38;2;0;255;127m◆\033[0m  \033[1mPackage Manager\033[0m  \033[90m·\033[0m  \033[38;2;167;139;250mpnpm\033[0m\n")
-	fmt.Printf("\033[90m│\033[0m\n")
+type initStep struct {
+	name string
+	fn   func() error
+}
 
+func buildAndExecuteSteps(projectName string, cfg scaffold.ScaffoldConfig) {
 	startTime := time.Now()
-
-	cfg := scaffold.ScaffoldConfig{
-		ProjectName: projectName,
-		Recipe:      recipie,
-		InitGit:     true,
-	}
 
 	var cachedVFS *vfs.VFS
 
-	steps := []struct {
-		name string
-		fn   func() error
-	}{
-		{"Generating templates and configuration in memory...", func() error {
-			var err error
-			cachedVFS, err = scaffold.GenerateVFS(cfg)
-			return err
-		}},
-		{"Writing files safely to disk...", func() error {
-			if cachedVFS == nil {
+	steps := []initStep{
+		{
+			name: "Generating templates and configuration in memory...",
+			fn: func() error {
 				var err error
 				cachedVFS, err = scaffold.GenerateVFS(cfg)
-				if err != nil {
-					return err
+				return err
+			},
+		},
+		{
+			name: "Writing files safely to disk...",
+			fn: func() error {
+				if cachedVFS == nil {
+					var err error
+					cachedVFS, err = scaffold.GenerateVFS(cfg)
+					if err != nil {
+						return err
+					}
 				}
-			}
-			return scaffold.WriteTree(cachedVFS, projectName)
-		}},
-		{"Initializing Git repository...", func() error { return scaffold.InitGit(projectName) }},
-		{"Creating koko.config.json manifest...", func() error { return kokoConfig.GenerateConfig(projectName, cfg) }},
+				return scaffold.WriteTree(cachedVFS, projectName)
+			},
+		},
 	}
+
+	if cfg.InitGit {
+		steps = append(steps, initStep{
+			name: "Initializing Git repository...",
+			fn:   func() error { return scaffold.InitGit(projectName) },
+		})
+	}
+
+	steps = append(steps, initStep{
+		name: "Creating koko.config.json manifest...",
+		fn:   func() error { return kokoConfig.GenerateConfig(projectName, cfg) },
+	})
 
 	for _, step := range steps {
 		if err := step.fn(); err != nil {
@@ -151,6 +158,24 @@ func runDefaultInit(projectName string, recipie string) {
 	elapsed := time.Since(startTime)
 	fmt.Printf("\033[90m│\033[0m\n")
 	fmt.Printf("\033[90m└\033[0m  \033[32m\033[1mProject created successfully in %.2fs!\033[0m\n\n", elapsed.Seconds())
+}
+
+func runDefaultInit(projectName string, recipe string) {
+	fmt.Printf("\n\033[90m┌\033[0m  \033[1mCreating a new Koko project\033[0m\n")
+	fmt.Printf("\033[90m│\033[0m\n")
+	fmt.Printf("\033[90m│\033[0m  \033[38;2;0;255;127m◆\033[0m  \033[1mProject name\033[0m     \033[90m·\033[0m  \033[38;2;167;139;250m%s\033[0m\n", projectName)
+	fmt.Printf("\033[90m│\033[0m  \033[38;2;0;255;127m◆\033[0m  \033[1mRecipe\033[0m           \033[90m·\033[0m  \033[38;2;167;139;250m%s\033[0m\n", recipe)
+	fmt.Printf("\033[90m│\033[0m  \033[38;2;0;255;127m◆\033[0m  \033[1mPackage Manager\033[0m  \033[90m·\033[0m  \033[38;2;167;139;250mpnpm\033[0m\n")
+	fmt.Printf("\033[90m│\033[0m\n")
+
+	cfg := scaffold.ScaffoldConfig{
+		ProjectName: projectName,
+		Recipe:      recipe,
+		InitGit:     true,
+	}
+
+	buildAndExecuteSteps(projectName, cfg)
+
 	fmt.Println("  \033[1mNext steps:\033[0m")
 	fmt.Printf("  1. \033[38;2;90;79;196mcd %s\033[0m\n", projectName)
 	fmt.Println("  2. \033[38;2;90;79;196mpnpm install\033[0m")
@@ -159,7 +184,6 @@ func runDefaultInit(projectName string, recipie string) {
 }
 
 func runManualInit(cfg scaffold.ScaffoldConfig) {
-
 	fmt.Printf("\n\033[90m┌\033[0m  \033[1mCreating a new Koko project\033[0m\n")
 	fmt.Printf("\033[90m│\033[0m\n")
 	fmt.Printf("\033[90m│\033[0m  \033[38;2;0;255;127m◆\033[0m  \033[1mProject name\033[0m     \033[90m·\033[0m  \033[38;2;167;139;250m%s\033[0m\n", cfg.ProjectName)
@@ -190,54 +214,8 @@ func runManualInit(cfg scaffold.ScaffoldConfig) {
 	fmt.Printf("\033[90m│\033[0m  \033[38;2;0;255;127m◆\033[0m  \033[1mPackage Manager\033[0m  \033[90m·\033[0m  \033[38;2;167;139;250m%s\033[0m\n", cfg.PackageManager)
 	fmt.Printf("\033[90m│\033[0m\n")
 
-	startTime := time.Now()
+	buildAndExecuteSteps(cfg.ProjectName, cfg)
 
-	var cachedVFS *vfs.VFS
-
-	steps := []struct {
-		name string
-		fn   func() error
-	}{
-		{"Generating templates and configuration in memory...", func() error {
-			var err error
-			cachedVFS, err = scaffold.GenerateVFS(cfg)
-			return err
-		}},
-		{"Writing files safely to disk...", func() error {
-			if cachedVFS == nil {
-				var err error
-				cachedVFS, err = scaffold.GenerateVFS(cfg)
-				if err != nil {
-					return err
-				}
-			}
-			return scaffold.WriteTree(cachedVFS, cfg.ProjectName)
-		}},
-	}
-	if cfg.InitGit {
-		steps = append(steps, struct {
-			name string
-			fn   func() error
-		}{"Initializing Git repository...", func() error { return scaffold.InitGit(cfg.ProjectName) }})
-	}
-	steps = append(steps, struct {
-		name string
-		fn   func() error
-	}{"Creating koko.config.json manifest...", func() error { return kokoConfig.GenerateConfig(cfg.ProjectName, cfg) }})
-	for _, step := range steps {
-		if err := step.fn(); err != nil {
-			fmt.Printf("\033[90m│\033[0m  \033[31m✗\033[0m  \033[31m%s\033[0m\n", step.name)
-			fmt.Printf("\033[90m│\033[0m\n")
-			fmt.Printf("\033[90m└\033[0m  \033[31m\033[1mCreation error: %v\033[0m\n\n", err)
-			os.Exit(1)
-		}
-		fmt.Printf("\033[90m│\033[0m  \033[32m✓\033[0m  %s\n", step.name)
-	}
-
-	elapsed := time.Since(startTime)
-
-	fmt.Printf("\033[90m│\033[0m\n")
-	fmt.Printf("\033[90m└\033[0m  \033[32m\033[1mProject created successfully in %.2fs!\033[0m\n\n", elapsed.Seconds())
 	fmt.Println("  \033[1mNext steps:\033[0m")
 	fmt.Printf("  1. \033[38;2;90;79;196mcd %s\033[0m\n", cfg.ProjectName)
 	fmt.Printf("  2. \033[38;2;90;79;196m%s install\033[0m\n", cfg.PackageManager)
@@ -254,11 +232,14 @@ func init() {
 	initCmd.Flags().StringVarP(&pmFlag, "package-manager", "p", "pnpm", "Package Manager to use (ej: bun, pnpm, npm, yarn)")
 	initCmd.Flags().StringVar(&databaseFlag, "database", "", "Database (ej: postgres, mysql, mongodb)")
 	initCmd.Flags().StringVar(&ormFlag, "orm", "", "ORM (ej: drizzle, prisma, mongoose)")
-	initCmd.Flags().StringVar(&authFlag, "auth", "", "Auth Provider (ej: Better-auth, clerk, NextAuth.js)")
-	initCmd.Flags().StringVar(&addonsFlag, "addons", "", "Addons / Tooling (ej: shadcn, lucide, svgl, motion, stripe, polar, resend, brevo, zod, docker, github_actions)")
+	initCmd.Flags().StringVar(&authFlag, "auth", "", "Auth Provider (ej: Better-auth, clerk, Auth.js)")
+	initCmd.Flags().StringVar(&paymentsFlag, "payments", "", "Payment Service (ej: Stripe, Polar)")
+	initCmd.Flags().StringVar(&emailFlag, "email", "", "Email Service (ej: Resend, Brevo)")
+	initCmd.Flags().StringVar(&addonsFlag, "addons", "", "Addons / Tooling (ej: shadcn, lucide, svgl, motion, zod, docker, github_actions)")
 	initCmd.Flags().StringVar(&gitFlag, "git", "no", "Initialize Git Repository")
 
-	initCmd.Flags().StringVarP(&recipieFlag, "recipie", "r", "saas", "Choose a recipe template (ej: saas, enterprise_nestjs, java_spring, pern, mern, fastapi_react, mobile_expo)")
+	initCmd.Flags().StringVarP(&recipeFlag, "recipe", "r", "saas", "Choose a recipe template (ej: saas, java_spring, mern, fastapi_react, mobile_expo)")
+	initCmd.Flags().StringVar(&recipieFlag, "recipie", "", "Alias for --recipe")
 
 	rootCmd.AddCommand(initCmd)
 }

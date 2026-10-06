@@ -3,7 +3,7 @@ import { defineConfig } from 'drizzle-kit';
 export default defineConfig({
   schema: './schema.ts',
   out: './drizzle',
-  dialect: '[[ if eq .Database "mysql" ]]mysql2[[ else ]]postgresql[[ end ]]',
+  dialect: '[[ if eq .Database "mysql" ]]mysql[[ else if eq .Database "sqlite" ]]sqlite[[ else ]]postgresql[[ end ]]',
   dbCredentials: {
     url: process.env.DATABASE_URL || '',
   },

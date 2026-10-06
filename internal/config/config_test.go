@@ -123,7 +123,9 @@ func TestBuildKokoConfigForManual(t *testing.T) {
 		Database:       "postgres",
 		ORM:            "jpa",
 		Auth:           "none",
-		Addons:         "shadcn,lucide,docker,github_actions,stripe,resend",
+		Payments:       "stripe",
+		Email:          "resend",
+		Addons:         "shadcn,lucide,docker,github_actions",
 	}
 
 	kokoCfg := BuildKokoConfig(cfg)
@@ -152,3 +154,16 @@ func TestBuildKokoConfigForManual(t *testing.T) {
 		t.Errorf("Expected Resend email, got %+v", kokoCfg.Features.Email)
 	}
 }
+
+func TestCLIVersion(t *testing.T) {
+	if CLIVersion != "v2.0" {
+		t.Errorf("Expected CLIVersion constant to be 'v2.0', got %q", CLIVersion)
+	}
+
+	cfg := scaffold.ScaffoldConfig{ProjectName: "version-test"}
+	kokoCfg := BuildKokoConfig(cfg)
+	if kokoCfg.Project.CLIVersion != "v2.0" {
+		t.Errorf("Expected BuildKokoConfig Project.CLIVersion to be 'v2.0', got %q", kokoCfg.Project.CLIVersion)
+	}
+}
+

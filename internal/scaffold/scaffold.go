@@ -11,7 +11,6 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/BlasVernazza06/koko-cli/internal/catalog"
 	"github.com/BlasVernazza06/koko-cli/internal/types"
 )
 
@@ -56,6 +55,8 @@ func walkAndCopy(targetDir string, config ScaffoldConfig, filterFn func(string) 
 	if err != nil {
 		return fmt.Errorf("failed to create destination directory: %w", err)
 	}
+
+	funcMap := createFuncMap(config)
 
 	err = fs.WalkDir(templateFs, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -111,11 +112,6 @@ func walkAndCopy(targetDir string, config ScaffoldConfig, filterFn func(string) 
 
 		// Template Interpolation Engine:
 		// Parse content as Go template and render with config
-		funcMap := template.FuncMap{
-			"version": func(pkg string) string {
-				return catalog.GetVersion(pkg)
-			},
-		}
 		tmpl, err := template.New(path).Delims("[[", "]]").Funcs(funcMap).Parse(string(content))
 		if err != nil {
 			return fmt.Errorf("failed to process template for %s: %w", path, err)
@@ -140,7 +136,6 @@ func walkAndCopy(targetDir string, config ScaffoldConfig, filterFn func(string) 
 		_ = os.Remove(filepath.Join(targetDir, "packages", ".gitkeep"))
 	}
 
-
 	return err
 }
 
@@ -154,17 +149,41 @@ func isDockerOrDBFile(path string) bool {
 		strings.Contains(fullLower, "drizzle.config.ts")
 }
 
+// InitGit initializes a git repository in targetDir and creates an initial commit.
+// If git is not installed on the system PATH, it gracefully skips initialization and returns nil.
 func InitGit(targetDir string) error {
-	_, err := exec.LookPath("git")
-	if err != nil {
+	if _, err := exec.LookPath("git"); err != nil {
+		// Git not available on system; skip repository initialization safely
 		return nil
 	}
 
-	cmd := exec.Command("git", "init")
-	cmd.Dir = targetDir
-
-	if err := cmd.Run(); err != nil {
+	initCmd := exec.Command("git", "init")
+	initCmd.Dir = targetDir
+	if err := initCmd.Run(); err != nil {
 		return fmt.Errorf("failed to initialize git repository: %w", err)
+	}
+
+	addCmd := exec.Command("git", "add", "-A")
+	addCmd.Dir = targetDir
+	if err := addCmd.Run(); err != nil {
+		return fmt.Errorf("failed to stage initial changes: %w", err)
+	}
+
+	commitCmd := exec.Command("git", "commit", "-m", "chore: initial commit from koko-cli")
+	commitCmd.Dir = targetDir
+	if err := commitCmd.Run(); err != nil {
+
+		fallbackCommit := exec.Command(
+			"git",
+			"-c", "user.name=koko-cli",
+			"-c", "user.email=koko@local",
+			"commit",
+			"-m", "chore: initial commit from koko-cli",
+		)
+		fallbackCommit.Dir = targetDir
+		if err := fallbackCommit.Run(); err != nil {
+			return fmt.Errorf("failed to create initial commit: %w", err)
+		}
 	}
 
 	return nil
@@ -188,6 +207,14 @@ func shouldParseAsTemplate(content []byte) bool {
 		strings.Contains(s, "[[ if ") ||
 		strings.Contains(s, "[[- if ") ||
 		strings.Contains(s, "[[-if ") ||
+		strings.Contains(s, "[[else") ||
+		strings.Contains(s, "[[ else") ||
+		strings.Contains(s, "[[- else") ||
+		strings.Contains(s, "[[-else") ||
+		strings.Contains(s, "[[end") ||
+		strings.Contains(s, "[[ end") ||
+		strings.Contains(s, "[[- end") ||
+		strings.Contains(s, "[[-end") ||
 		strings.Contains(s, "[[range ") ||
 		strings.Contains(s, "[[ range ") ||
 		strings.Contains(s, "[[- range ") ||
@@ -196,5 +223,35 @@ func shouldParseAsTemplate(content []byte) bool {
 		strings.Contains(s, "[[- with ") ||
 		strings.Contains(s, "[[define ") ||
 		strings.Contains(s, "[[template ") ||
-		strings.Contains(s, "[[/*")
+		strings.Contains(s, "[[/*") ||
+		strings.Contains(s, "[[eq ") ||
+		strings.Contains(s, "[[ eq ") ||
+		strings.Contains(s, "[[ne ") ||
+		strings.Contains(s, "[[ ne ") ||
+		strings.Contains(s, "[[and ") ||
+		strings.Contains(s, "[[ and ") ||
+		strings.Contains(s, "[[or ") ||
+		strings.Contains(s, "[[ or ") ||
+		strings.Contains(s, "[[not ") ||
+		strings.Contains(s, "[[ not ") ||
+		strings.Contains(s, "[[contains ") ||
+		strings.Contains(s, "[[ contains ") ||
+		strings.Contains(s, "[[hasAddon ") ||
+		strings.Contains(s, "[[ hasAddon ") ||
+		strings.Contains(s, "[[hasAuth ") ||
+		strings.Contains(s, "[[ hasAuth ") ||
+		strings.Contains(s, "[[hasPayment ") ||
+		strings.Contains(s, "[[ hasPayment ") ||
+		strings.Contains(s, "[[hasEmail ") ||
+		strings.Contains(s, "[[ hasEmail ") ||
+		strings.Contains(s, "[[hasDB ") ||
+		strings.Contains(s, "[[ hasDB ") ||
+		strings.Contains(s, "[[isORM ") ||
+		strings.Contains(s, "[[ isORM ") ||
+		strings.Contains(s, "[[isFrontend ") ||
+		strings.Contains(s, "[[ isFrontend ") ||
+		strings.Contains(s, "[[isBackend ") ||
+		strings.Contains(s, "[[ isBackend ") ||
+		strings.Contains(s, "[[isAPI ") ||
+		strings.Contains(s, "[[ isAPI ")
 }

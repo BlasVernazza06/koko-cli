@@ -7,6 +7,6 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   const port = process.env.PORT || 8080;
   await app.listen(port);
-  console.log(`NestJS server running on: http://localhost:${port}/api`);
+  console.log(`[[.ProjectName]] NestJS server running on: http://localhost:${port}/api`);
 }
 bootstrap();

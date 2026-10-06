@@ -1,4 +1,7 @@
-﻿---
+---
+[[ if eq .Auth "better-auth" ]]
+import { authClient } from "../lib/auth-client";
+[[ end ]]
 ---
 
 <html lang="en">
@@ -7,12 +10,12 @@
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Koko + Astro App</title>
+		<title>[[.ProjectName]] | Powered by Koko</title>
 	</head>
 	<body class="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-6">
 		<div class="max-w-md w-full bg-slate-900 border border-slate-800 rounded-xl p-8 shadow-2xl text-center space-y-4">
 			<h1 class="text-3xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
-				Welcome to Astro
+				[[.ProjectName]]
 			</h1>
 			<p class="text-slate-400 text-sm">
 				Built with Koko CLI • Islands architecture & SSR ready.

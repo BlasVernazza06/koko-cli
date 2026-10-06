@@ -8,7 +8,6 @@ import (
 	"github.com/BlasVernazza06/koko-cli/internal/types"
 )
 
-
 // evaluatePath es el enrutador central que orquesta los handlers especializados
 // para determinar si un archivo de plantilla debe incluirse y cuál es su destino final.
 func evaluatePath(path string, config types.ScaffoldConfig) (string, bool) {
@@ -59,7 +58,6 @@ func evaluatePath(path string, config types.ScaffoldConfig) (string, bool) {
 	if dest, ok := handlers.EvaluateAPI(rel, config); ok {
 		return dest, true
 	}
-
 
 	return "", false
 }

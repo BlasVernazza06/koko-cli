@@ -1,0 +1,43 @@
+import type { inferAsyncReturnType } from '@trpc/server';
+[[ if and (ne .Database "") (ne .Database "none") ]]
+[[ if eq .ORM "prisma" ]]
+import { prisma as db } from '@repo/db';
+[[ else if eq .ORM "drizzle" ]]
+import { db } from '@repo/db';
+[[ else if eq .ORM "mongoose" ]]
+import { connectDB } from '@repo/db';
+[[ end ]]
+[[ end ]]
+[[ if eq .Auth "better-auth" ]]
+import { auth } from '@repo/auth';
+[[ end ]]
+
+export interface CreateContextOptions {
+  headers?: Headers;
+  session?: unknown;
+}
+
+export async function createTRPCContext(opts?: CreateContextOptions) {
+[[ if eq .Auth "better-auth" ]]
+  let session = opts?.session;
+  if (!session && opts?.headers) {
+    try {
+      session = await auth.api.getSession({ headers: opts.headers });
+    } catch {
+      session = null;
+    }
+  }
+[[ else ]]
+  const session = opts?.session ?? null;
+[[ end ]]
+
+  return {
+    headers: opts?.headers,
+    session,
+[[ if and (ne .Database "") (ne .Database "none") ]]
+    db,
+[[ end ]]
+  };
+}
+
+export type Context = inferAsyncReturnType<typeof createTRPCContext>;
