@@ -61,6 +61,7 @@ func TestProcessPackageJSONs_PaymentsAndEmail(t *testing.T) {
 	v.WriteString("package.json", `{"name": "placeholder"}`)
 	v.WriteString("apps/web/package.json", `{"name": "placeholder-web", "dependencies": {}}`)
 	v.WriteString("apps/api/package.json", `{"name": "placeholder-api", "dependencies": {}}`)
+	v.WriteString("packages/auth/package.json", `{"name": "placeholder-auth", "dependencies": {}}`)
 
 	cfg := ProcessConfig{
 		ProjectName:    "acme-commerce",
@@ -75,28 +76,34 @@ func TestProcessPackageJSONs_PaymentsAndEmail(t *testing.T) {
 		t.Fatalf("ProcessPackageJSONs failed: %v", err)
 	}
 
-	// Verify web package.json has payments & email deps
+	// Verify web package.json has payments deps
 	var webPkg map[string]interface{}
 	if err := v.ReadJSON("apps/web/package.json", &webPkg); err != nil {
 		t.Fatalf("Failed to read web package.json: %v", err)
 	}
 	webDeps := webPkg["dependencies"].(map[string]interface{})
-	for _, pkgName := range []string{"stripe", "resend"} {
-		if _, ok := webDeps[pkgName]; !ok {
-			t.Errorf("Expected %s in apps/web dependencies, got %+v", pkgName, webDeps)
-		}
+	if _, ok := webDeps["stripe"]; !ok {
+		t.Errorf("Expected stripe in apps/web dependencies, got %+v", webDeps)
 	}
 
-	// Verify api package.json has payments & email deps
+	// Verify api package.json has payments deps
 	var apiPkg map[string]interface{}
 	if err := v.ReadJSON("apps/api/package.json", &apiPkg); err != nil {
 		t.Fatalf("Failed to read api package.json: %v", err)
 	}
 	apiDeps := apiPkg["dependencies"].(map[string]interface{})
-	for _, pkgName := range []string{"stripe", "resend"} {
-		if _, ok := apiDeps[pkgName]; !ok {
-			t.Errorf("Expected %s in apps/api dependencies, got %+v", pkgName, apiDeps)
-		}
+	if _, ok := apiDeps["stripe"]; !ok {
+		t.Errorf("Expected stripe in apps/api dependencies, got %+v", apiDeps)
+	}
+
+	// Verify auth package.json has email deps
+	var authPkg map[string]interface{}
+	if err := v.ReadJSON("packages/auth/package.json", &authPkg); err != nil {
+		t.Fatalf("Failed to read auth package.json: %v", err)
+	}
+	authDeps := authPkg["dependencies"].(map[string]interface{})
+	if _, ok := authDeps["resend"]; !ok {
+		t.Errorf("Expected resend in packages/auth dependencies, got %+v", authDeps)
 	}
 }
 

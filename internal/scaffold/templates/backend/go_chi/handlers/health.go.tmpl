@@ -3,19 +3,39 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+[[ if eq .ORM "gorm" ]]
+	"api/db"
+[[ end ]]
 )
 
 type HealthResponse struct {
-	Status  string `json:"status"`
-	Project string `json:"project"`
-	Service string `json:"service"`
+	Status   string `json:"status"`
+	Project  string `json:"project"`
+	Service  string `json:"service"`
+[[ if eq .ORM "gorm" ]]
+	Database string `json:"database,omitempty"`
+[[ end ]]
 }
 
 func HealthCheck(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+[[ if eq .ORM "gorm" ]]
+	dbStatus := "connected"
+	if db.DB != nil {
+		if sqlDB, err := db.DB.DB(); err != nil || sqlDB.Ping() != nil {
+			dbStatus = "disconnected"
+		}
+	} else {
+		dbStatus = "not_initialized"
+	}
+[[ end ]]
+
 	json.NewEncoder(w).Encode(HealthResponse{
 		Status:  "ok",
 		Project: "[[.ProjectName]]-backend",
 		Service: "Go Chi",
+[[ if eq .ORM "gorm" ]]
+		Database: dbStatus,
+[[ end ]]
 	})
 }

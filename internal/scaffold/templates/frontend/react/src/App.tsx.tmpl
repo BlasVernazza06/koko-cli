@@ -1,9 +1,15 @@
 import { useState } from "react";
-[[ if hasAddon "lucide" ]]
+[[ if contains .Addons "lucide" ]]
 import { Sparkles } from "lucide-react";
 [[ end ]]
-[[ if hasAuth "better-auth" ]]
+[[ if eq .Auth "clerk" ]]
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
+[[ end ]]
+[[ if eq .Auth "better-auth" ]]
 import { authClient } from "./lib/auth-client";
+[[ end ]]
+[[ if contains .Addons "motion" ]]
+import * as motion from "framer-motion";
 [[ end ]]
 
 export default function App() {
@@ -12,8 +18,22 @@ export default function App() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-8 text-center bg-[#09090b] text-[#fafafa]">
       <div className="max-w-2xl space-y-6">
+[[ if eq .Auth "clerk" ]]
+        <div className="flex justify-center gap-4">
+          <SignedOut>
+            <SignInButton mode="modal">
+              <button className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-cyan-500">
+                Sign In
+              </button>
+            </SignInButton>
+          </SignedOut>
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
+        </div>
+[[ end ]]
         <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-1 text-sm text-cyan-400">
-          [[ if hasAddon "lucide" ]]<Sparkles className="h-4 w-4" />[[ else ]]<span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />[[ end ]]
+          [[ if contains .Addons "lucide" ]]<Sparkles className="h-4 w-4" />[[ else ]]<span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />[[ end ]]
           React + Vite SPA
         </div>
         <h1 className="text-4xl sm:text-6xl font-bold tracking-tight bg-gradient-to-r from-white via-cyan-200 to-cyan-400 bg-clip-text text-transparent">

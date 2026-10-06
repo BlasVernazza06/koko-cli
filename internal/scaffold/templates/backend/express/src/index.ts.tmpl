@@ -14,12 +14,27 @@ import { db } from '@repo/db';
 import { connectDB } from '@repo/db';
 [[ end ]]
 [[ end ]]
+[[ if eq .Auth "better-auth" ]]
+import { auth } from '@repo/auth';
+import { toNodeHandler } from 'better-auth/node';
+[[ else if eq .Auth "clerk" ]]
+import { clerkMiddleware } from '@clerk/express';
+[[ end ]]
 
 const app = express();
 const port = process.env.PORT || 8080;
 
 app.use(cors());
 app.use(express.json());
+
+[[ if eq .Auth "clerk" ]]
+app.use(clerkMiddleware());
+[[ end ]]
+
+[[ if eq .Auth "better-auth" ]]
+// Mount Better-Auth handler
+app.all('/api/auth/*', toNodeHandler(auth));
+[[ end ]]
 
 [[ if eq .API "trpc" ]]
 // Mount tRPC router middleware

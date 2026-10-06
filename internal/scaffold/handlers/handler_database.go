@@ -23,8 +23,8 @@ func EvaluateDatabase(rel string, config types.ScaffoldConfig) (string, bool) {
 			dest := "packages/db/src/" + strings.TrimPrefix(rel, drizzleDbPrefix)
 			return dest, true
 		}
-		if rel == "templates/db/drizzle/drizzle.config.ts" {
-			return "packages/db/drizzle.config.ts", true
+		if rel == "templates/db/drizzle/drizzle.config.ts" || rel == "templates/db/drizzle/drizzle.config.ts.tmpl" {
+			return "packages/db/drizzle.config.ts.tmpl", true
 		}
 		if rel == "templates/db/drizzle/package.json" {
 			return "packages/db/package.json", true

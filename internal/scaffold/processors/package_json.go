@@ -193,6 +193,23 @@ func updateWorkspacePackageJSONs(v *vfs.VFS, cfg ProcessConfig) {
 		replaceRepoReferences(pkg, cfg.ProjectName)
 
 		// Inyección dinámica de dependencias opcionales
+		if wp.file == "packages/auth/package.json" {
+			if cfg.ORM == "drizzle" || cfg.ORM == "prisma" {
+				deps, ok := pkg["dependencies"].(map[string]interface{})
+				if !ok {
+					deps = make(map[string]interface{})
+				}
+				deps[fmt.Sprintf("@%s/db", cfg.ProjectName)] = "workspace:*"
+				pkg["dependencies"] = deps
+			}
+			if strings.Contains(strings.ToLower(cfg.Email), "resend") || strings.Contains(addons, "resend") {
+				AddDependency(pkg, "resend", false)
+			}
+			if strings.Contains(strings.ToLower(cfg.Email), "brevo") || strings.Contains(addons, "brevo") {
+				AddDependency(pkg, "@getbrevo/brevo", false)
+			}
+		}
+
 		if wp.file == "packages/api/package.json" {
 			if cfg.Database != "" && cfg.Database != "none" && cfg.ORM != "" && cfg.ORM != "none" {
 				deps, ok := pkg["dependencies"].(map[string]interface{})
@@ -217,27 +234,32 @@ func updateWorkspacePackageJSONs(v *vfs.VFS, cfg ProcessConfig) {
 				AddDependency(pkg, "postgres", false)
 			} else if cfg.Database == "mysql" {
 				AddDependency(pkg, "mysql2", false)
+			} else if cfg.Database == "sqlite" {
+				AddDependency(pkg, "better-sqlite3", false)
 			}
 		}
 
 		if wp.file == "apps/api/package.json" {
 			if strings.Contains(cfg.Auth, "better") {
+				deps, ok := pkg["dependencies"].(map[string]interface{})
+				if !ok {
+					deps = make(map[string]interface{})
+				}
+				deps[fmt.Sprintf("@%s/auth", cfg.ProjectName)] = "workspace:*"
+				pkg["dependencies"] = deps
 				AddDependency(pkg, "better-auth", false)
+			}
+			if cfg.Backend == "express" && strings.Contains(cfg.Auth, "clerk") {
+				AddDependency(pkg, "@clerk/express", false)
 			}
 			if strings.Contains(addons, "zod") {
 				AddDependency(pkg, "zod", false)
 			}
-			if strings.Contains(strings.ToLower(cfg.Payments), "stripe") {
+			if strings.Contains(strings.ToLower(cfg.Payments), "stripe") || strings.Contains(addons, "stripe") {
 				AddDependency(pkg, "stripe", false)
 			}
-			if strings.Contains(strings.ToLower(cfg.Payments), "polar") {
+			if strings.Contains(strings.ToLower(cfg.Payments), "polar") || strings.Contains(addons, "polar") {
 				AddDependency(pkg, "@polar-sh/sdk", false)
-			}
-			if strings.Contains(strings.ToLower(cfg.Email), "resend") {
-				AddDependency(pkg, "resend", false)
-			}
-			if strings.Contains(strings.ToLower(cfg.Email), "brevo") {
-				AddDependency(pkg, "@getbrevo/brevo", false)
 			}
 			if cfg.API == "trpc" || cfg.API == "orpc" {
 				deps, ok := pkg["dependencies"].(map[string]interface{})
@@ -303,7 +325,11 @@ func updateWorkspacePackageJSONs(v *vfs.VFS, cfg ProcessConfig) {
 			}
 
 			if strings.Contains(addons, "lucide") {
-				AddDependency(pkg, "lucide-react", false)
+				if cfg.Frontend == "native" {
+					AddDependency(pkg, "lucide-react-native", false)
+				} else {
+					AddDependency(pkg, "lucide-react", false)
+				}
 			}
 
 			if strings.Contains(addons, "svgl") {
@@ -318,20 +344,12 @@ func updateWorkspacePackageJSONs(v *vfs.VFS, cfg ProcessConfig) {
 				AddDependency(pkg, "zod", false)
 			}
 
-			if strings.Contains(strings.ToLower(cfg.Payments), "stripe") {
+			if strings.Contains(strings.ToLower(cfg.Payments), "stripe") || strings.Contains(addons, "stripe") {
 				AddDependency(pkg, "stripe", false)
 			}
 
-			if strings.Contains(strings.ToLower(cfg.Payments), "polar") {
+			if strings.Contains(strings.ToLower(cfg.Payments), "polar") || strings.Contains(addons, "polar") {
 				AddDependency(pkg, "@polar-sh/sdk", false)
-			}
-
-			if strings.Contains(strings.ToLower(cfg.Email), "resend") {
-				AddDependency(pkg, "resend", false)
-			}
-
-			if strings.Contains(strings.ToLower(cfg.Email), "brevo") {
-				AddDependency(pkg, "@getbrevo/brevo", false)
 			}
 		}
 
