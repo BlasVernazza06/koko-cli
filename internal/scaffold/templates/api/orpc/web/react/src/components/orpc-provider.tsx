@@ -5,7 +5,7 @@ interface ORPCProviderProps {
   children: ReactNode;
 }
 
-export function ORPCProvider({ children }: ORPCProviderProps) {
+export function ORPCReactProvider({ children }: ORPCProviderProps) {
   const [queryClient] = useState(() => new QueryClient());
 
   return (
@@ -14,3 +14,5 @@ export function ORPCProvider({ children }: ORPCProviderProps) {
     </QueryClientProvider>
   );
 }
+
+export const ORPCProvider = ORPCReactProvider;

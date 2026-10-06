@@ -13,5 +13,7 @@ type ScaffoldConfig struct {
 	Database       string
 	ORM            string
 	Auth           string
+	Payments       string
+	Email          string
 	Addons         string
 }

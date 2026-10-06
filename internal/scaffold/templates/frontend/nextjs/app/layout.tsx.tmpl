@@ -1,5 +1,19 @@
 import type { Metadata } from "next";
 import "./globals.css";
+[[ if eq .Auth "clerk" ]]
+import { ClerkProvider } from "@clerk/nextjs";
+[[ end ]]
+[[ if eq .Auth "next-auth" ]]
+import { SessionProvider } from "next-auth/react";
+[[ end ]]
+[[ if eq .API "trpc" ]]
+import { TRPCReactProvider } from "@/trpc/provider";
+[[ else if eq .API "orpc" ]]
+import { ORPCReactProvider } from "@/orpc/provider";
+[[ end ]]
+[[ if contains .Addons "shadcn" ]]
+import { ThemeProvider } from "@repo/ui";
+[[ end ]]
 
 export const metadata: Metadata = {
   title: "[[.ProjectName]] | Powered by Koko",
@@ -12,10 +26,38 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="antialiased min-h-screen bg-[#09090b] text-[#fafafa]">
-        {children}
-      </body>
-    </html>
+[[ if eq .Auth "clerk" ]]
+    <ClerkProvider>
+[[ end ]]
+      <html lang="en" suppressHydrationWarning>
+        <body className="antialiased min-h-screen bg-[#09090b] text-[#fafafa]">
+[[ if eq .Auth "next-auth" ]]
+          <SessionProvider>
+[[ end ]]
+[[ if contains .Addons "shadcn" ]]
+            <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+[[ end ]]
+[[ if eq .API "trpc" ]]
+              <TRPCReactProvider>
+                {children}
+              </TRPCReactProvider>
+[[ else if eq .API "orpc" ]]
+              <ORPCReactProvider>
+                {children}
+              </ORPCReactProvider>
+[[ else ]]
+              {children}
+[[ end ]]
+[[ if contains .Addons "shadcn" ]]
+            </ThemeProvider>
+[[ end ]]
+[[ if eq .Auth "next-auth" ]]
+          </SessionProvider>
+[[ end ]]
+        </body>
+      </html>
+[[ if eq .Auth "clerk" ]]
+    </ClerkProvider>
+[[ end ]]
   );
 }

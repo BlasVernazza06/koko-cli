@@ -18,11 +18,7 @@ import (
 // y procesadores de package.json y .env.
 func GenerateVFS(config ScaffoldConfig) (*vfs.VFS, error) {
 
-	funcMap := template.FuncMap{
-		"version": func(pkg string) string {
-			return catalog.GetVersion(pkg)
-		},
-	}
+	funcMap := createFuncMap(config)
 
 	v := vfs.New()
 
@@ -85,7 +81,6 @@ func GenerateVFS(config ScaffoldConfig) (*vfs.VFS, error) {
 	v.DeleteFile("apps/.gitkeep")
 	v.DeleteFile("packages/.gitkeep")
 
-
 	// Fase de Post-procesamiento en memoria (ajuste de package.json y .env)
 	procCfg := processors.ProcessConfig{
 		ProjectName:    config.ProjectName,
@@ -96,9 +91,10 @@ func GenerateVFS(config ScaffoldConfig) (*vfs.VFS, error) {
 		Database:       config.Database,
 		ORM:            config.ORM,
 		Auth:           config.Auth,
+		Payments:       config.Payments,
+		Email:          config.Email,
 		Addons:         config.Addons,
 	}
-
 
 	if err := processors.ProcessPackageJSONs(v, procCfg); err != nil {
 		return nil, errors.NewPostProcessError("package.json", "Fallo al configurar scripts y dependencias", err)
@@ -109,4 +105,54 @@ func GenerateVFS(config ScaffoldConfig) (*vfs.VFS, error) {
 	}
 
 	return v, nil
+}
+
+func createFuncMap(cfg ScaffoldConfig) template.FuncMap {
+	return template.FuncMap{
+		// 1. Catálogo de versiones
+		"version": func(pkg string) string {
+			return catalog.GetVersion(pkg)
+		},
+
+		// 2. Utilidades estándar de manipulación de texto
+		"contains":  strings.Contains,
+		"hasPrefix": strings.HasPrefix,
+		"hasSuffix": strings.HasSuffix,
+		"lower":     strings.ToLower,
+		"upper":     strings.ToUpper,
+
+		// 3. Helpers semánticos del Stack Koko (Seguros y Case-Insensitive)
+		"hasAddon": func(addon string) bool {
+			for _, a := range strings.Split(cfg.Addons, ",") {
+				if strings.EqualFold(strings.TrimSpace(a), addon) {
+					return true
+				}
+			}
+			return false
+		},
+		"hasAuth": func(auth string) bool {
+			return strings.EqualFold(cfg.Auth, auth)
+		},
+		"hasPayment": func(provider string) bool {
+			return strings.EqualFold(cfg.Payments, provider)
+		},
+		"hasEmail": func(provider string) bool {
+			return strings.EqualFold(cfg.Email, provider)
+		},
+		"hasDB": func(db string) bool {
+			return strings.EqualFold(cfg.Database, db)
+		},
+		"isORM": func(orm string) bool {
+			return strings.EqualFold(cfg.ORM, orm)
+		},
+		"isFrontend": func(fw string) bool {
+			return strings.EqualFold(cfg.Frontend, fw)
+		},
+		"isBackend": func(bk string) bool {
+			return strings.EqualFold(cfg.Backend, bk)
+		},
+		"isAPI": func(api string) bool {
+			return strings.EqualFold(cfg.API, api)
+		},
+	}
 }

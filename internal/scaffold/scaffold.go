@@ -115,6 +115,11 @@ func walkAndCopy(targetDir string, config ScaffoldConfig, filterFn func(string) 
 			"version": func(pkg string) string {
 				return catalog.GetVersion(pkg)
 			},
+			"contains":  strings.Contains,
+			"hasPrefix": strings.HasPrefix,
+			"hasSuffix": strings.HasSuffix,
+			"lower":     strings.ToLower,
+			"upper":     strings.ToUpper,
 		}
 		tmpl, err := template.New(path).Delims("[[", "]]").Funcs(funcMap).Parse(string(content))
 		if err != nil {
@@ -209,6 +214,14 @@ func shouldParseAsTemplate(content []byte) bool {
 		strings.Contains(s, "[[ if ") ||
 		strings.Contains(s, "[[- if ") ||
 		strings.Contains(s, "[[-if ") ||
+		strings.Contains(s, "[[else") ||
+		strings.Contains(s, "[[ else") ||
+		strings.Contains(s, "[[- else") ||
+		strings.Contains(s, "[[-else") ||
+		strings.Contains(s, "[[end") ||
+		strings.Contains(s, "[[ end") ||
+		strings.Contains(s, "[[- end") ||
+		strings.Contains(s, "[[-end") ||
 		strings.Contains(s, "[[range ") ||
 		strings.Contains(s, "[[ range ") ||
 		strings.Contains(s, "[[- range ") ||
@@ -217,5 +230,35 @@ func shouldParseAsTemplate(content []byte) bool {
 		strings.Contains(s, "[[- with ") ||
 		strings.Contains(s, "[[define ") ||
 		strings.Contains(s, "[[template ") ||
-		strings.Contains(s, "[[/*")
+		strings.Contains(s, "[[/*") ||
+		strings.Contains(s, "[[eq ") ||
+		strings.Contains(s, "[[ eq ") ||
+		strings.Contains(s, "[[ne ") ||
+		strings.Contains(s, "[[ ne ") ||
+		strings.Contains(s, "[[and ") ||
+		strings.Contains(s, "[[ and ") ||
+		strings.Contains(s, "[[or ") ||
+		strings.Contains(s, "[[ or ") ||
+		strings.Contains(s, "[[not ") ||
+		strings.Contains(s, "[[ not ") ||
+		strings.Contains(s, "[[contains ") ||
+		strings.Contains(s, "[[ contains ") ||
+		strings.Contains(s, "[[hasAddon ") ||
+		strings.Contains(s, "[[ hasAddon ") ||
+		strings.Contains(s, "[[hasAuth ") ||
+		strings.Contains(s, "[[ hasAuth ") ||
+		strings.Contains(s, "[[hasPayment ") ||
+		strings.Contains(s, "[[ hasPayment ") ||
+		strings.Contains(s, "[[hasEmail ") ||
+		strings.Contains(s, "[[ hasEmail ") ||
+		strings.Contains(s, "[[hasDB ") ||
+		strings.Contains(s, "[[ hasDB ") ||
+		strings.Contains(s, "[[isORM ") ||
+		strings.Contains(s, "[[ isORM ") ||
+		strings.Contains(s, "[[isFrontend ") ||
+		strings.Contains(s, "[[ isFrontend ") ||
+		strings.Contains(s, "[[isBackend ") ||
+		strings.Contains(s, "[[ isBackend ") ||
+		strings.Contains(s, "[[isAPI ") ||
+		strings.Contains(s, "[[ isAPI ")
 }

@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-export function ORPCProvider({ children }: { children: ReactNode }) {
+export function ORPCReactProvider({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
 
   return (
@@ -12,3 +12,5 @@ export function ORPCProvider({ children }: { children: ReactNode }) {
     </QueryClientProvider>
   );
 }
+
+export const ORPCProvider = ORPCReactProvider;

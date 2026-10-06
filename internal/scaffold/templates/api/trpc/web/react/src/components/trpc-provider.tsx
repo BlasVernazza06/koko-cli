@@ -7,7 +7,7 @@ interface TRPCProviderProps {
   children: ReactNode;
 }
 
-export function TRPCProvider({ children }: TRPCProviderProps) {
+export function TRPCReactProvider({ children }: TRPCProviderProps) {
   const [queryClient] = useState(() => new QueryClient());
   const [trpcClient] = useState(() =>
     trpc.createClient({
@@ -29,3 +29,5 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
     </trpc.Provider>
   );
 }
+
+export const TRPCProvider = TRPCReactProvider;

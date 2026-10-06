@@ -1,0 +1,74 @@
+import React from 'react';
+import { StyleSheet, Text, View, StatusBar } from 'react-native';
+[[ if contains .Addons "lucide" ]]
+import { Sparkles } from 'lucide-react-native';
+[[ end ]]
+[[ if eq .Auth "clerk" ]]
+import { ClerkProvider, SignedIn, SignedOut } from '@clerk/clerk-expo';
+[[ end ]]
+[[ if eq .Auth "better-auth" ]]
+import { authClient } from './src/lib/auth-client';
+[[ end ]]
+
+export default function App() {
+  const content = (
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      <View style={styles.card}>
+        [[ if contains .Addons "lucide" ]]
+        <Sparkles size={28} color="#38bdf8" style={styles.icon} />
+        [[ end ]]
+        <Text style={styles.title}>[[.ProjectName]]</Text>
+        <Text style={styles.subtitle}>Welcome to Expo & React Native</Text>
+        <Text style={styles.footer}>Scaffolded with Koko CLI</Text>
+      </View>
+    </View>
+  );
+
+  return (
+[[ if eq .Auth "clerk" ]]
+    <ClerkProvider publishableKey={process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY || ""}>
+      {content}
+    </ClerkProvider>
+[[ else ]]
+    content
+[[ end ]]
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#090d16',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  card: {
+    backgroundColor: '#131b2e',
+    borderColor: '#1e293b',
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+  },
+  icon: {
+    marginBottom: 12,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#f8fafc',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#38bdf8',
+    marginBottom: 4,
+  },
+  footer: {
+    fontSize: 12,
+    color: '#94a3b8',
+    marginTop: 8,
+  },
+});

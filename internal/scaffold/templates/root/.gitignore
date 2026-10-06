@@ -5,26 +5,26 @@ node_modules/
 # Production outputs
 dist/
 build/
-[[- if eq .Frontend "nextjs" ]]
+[[- if isFrontend "nextjs" ]]
 .next/
 out/
 [[- end ]]
-[[- if eq .Frontend "nuxt" ]]
+[[- if isFrontend "nuxt" ]]
 .nuxt/
 .output/
 [[- end ]]
-[[- if eq .Frontend "svelte" ]]
+[[- if isFrontend "svelte" ]]
 .svelte-kit/
 [[- end ]]
-[[- if eq .Frontend "astro" ]]
+[[- if isFrontend "astro" ]]
 .astro/
 [[- end ]]
-[[- if eq .Frontend "native" ]]
+[[- if isFrontend "native" ]]
 .expo/
 .expo-shared/
 web-build/
 [[- end ]]
-[[- if eq .Frontend "react" ]]
+[[- if isFrontend "react" ]]
 .vite/
 [[- end ]]
 
@@ -56,7 +56,7 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
-[[- if eq .Backend "fastapi" ]]
+[[- if isBackend "fastapi" ]]
 
 # Python
 __pycache__/
@@ -67,7 +67,7 @@ __pycache__/
 venv/
 env/
 [[- end ]]
-[[- if eq .Backend "go_chi" ]]
+[[- if isBackend "go_chi" ]]
 
 # Go
 bin/
@@ -79,7 +79,7 @@ bin/
 *.test
 *.out
 [[- end ]]
-[[- if eq .Database "sqlite" ]]
+[[- if hasDB "sqlite" ]]
 
 # Database / SQLite
 *.sqlite
