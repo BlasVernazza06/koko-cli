@@ -139,7 +139,7 @@ func BaseOptions(stepIdx int) []views.SelectOption {
 		return []views.SelectOption{
 			{Value: "drizzle", Label: "Drizzle ORM", Hint: "Lightweight, type-safe with native SQL support"},
 			{Value: "prisma", Label: "Prisma", Hint: "Next-gen ORM with auto type generation"},
-			{Value: "moongose", Label: "Mongoose", Hint: "Elegant object modeling tool for MongoDB"},
+			{Value: "mongoose", Label: "Mongoose", Hint: "Elegant object modeling tool for MongoDB"},
 			{Value: "sqlalchemy", Label: "SQLAlchemy / SQLModel", Hint: "Standard ORM for Python"},
 			{Value: "gorm", Label: "GORM", Hint: "Feature-rich ORM for Go"},
 			{Value: "jpa", Label: "Spring Data JPA / Hibernate", Hint: "Standard persistence layer for Java / Spring"},
@@ -313,7 +313,7 @@ func GetStepOptions(stepIdx int, currentSelections []views.SelectOption) []views
 					options[i].Disabled = true
 					options[i].DisabledReason = "Incompatible: Spring Data JPA is exclusively for Java / Spring Boot"
 				}
-			case "moongose":
+			case "mongoose", "moongose":
 				if !IsNoSQLDatabase(db) {
 					options[i].Disabled = true
 					options[i].DisabledReason = "Incompatible: Mongoose is exclusively for MongoDB"

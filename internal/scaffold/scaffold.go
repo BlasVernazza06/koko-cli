@@ -11,7 +11,6 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/BlasVernazza06/koko-cli/internal/catalog"
 	"github.com/BlasVernazza06/koko-cli/internal/types"
 )
 
@@ -56,6 +55,8 @@ func walkAndCopy(targetDir string, config ScaffoldConfig, filterFn func(string) 
 	if err != nil {
 		return fmt.Errorf("failed to create destination directory: %w", err)
 	}
+
+	funcMap := createFuncMap(config)
 
 	err = fs.WalkDir(templateFs, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -111,16 +112,6 @@ func walkAndCopy(targetDir string, config ScaffoldConfig, filterFn func(string) 
 
 		// Template Interpolation Engine:
 		// Parse content as Go template and render with config
-		funcMap := template.FuncMap{
-			"version": func(pkg string) string {
-				return catalog.GetVersion(pkg)
-			},
-			"contains":  strings.Contains,
-			"hasPrefix": strings.HasPrefix,
-			"hasSuffix": strings.HasSuffix,
-			"lower":     strings.ToLower,
-			"upper":     strings.ToUpper,
-		}
 		tmpl, err := template.New(path).Delims("[[", "]]").Funcs(funcMap).Parse(string(content))
 		if err != nil {
 			return fmt.Errorf("failed to process template for %s: %w", path, err)
@@ -158,9 +149,11 @@ func isDockerOrDBFile(path string) bool {
 		strings.Contains(fullLower, "drizzle.config.ts")
 }
 
+// InitGit initializes a git repository in targetDir and creates an initial commit.
+// If git is not installed on the system PATH, it gracefully skips initialization and returns nil.
 func InitGit(targetDir string) error {
-	_, err := exec.LookPath("git")
-	if err != nil {
+	if _, err := exec.LookPath("git"); err != nil {
+		// Git not available on system; skip repository initialization safely
 		return nil
 	}
 

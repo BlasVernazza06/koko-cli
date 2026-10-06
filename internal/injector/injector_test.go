@@ -21,7 +21,7 @@ func createDummyProject(t *testing.T) string {
 		Schema: "https://koko-cli.dev/schema.json",
 		Project: config.ProjectInfo{
 			Name:       "dummy-app",
-			CLIVersion: "v1.0.0",
+			CLIVersion: config.CLIVersion,
 		},
 		Architecture: config.ArchitectureInfo{
 			Layout:         "monorepo",

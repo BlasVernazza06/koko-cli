@@ -225,7 +225,7 @@ func initialModel(initialState sessionState, initialProjectName string) mainMode
 		state:     initialState,
 		prevState: stateMenu,
 		versionInfo: []views.VersionItem{
-			{Key: "Koko CLI", Val: "v0.1.0"},
+			{Key: "Koko CLI", Val: kokoConfig.CLIVersion},
 			{Key: "OS / Arch", Val: fmt.Sprintf("%s / %s", runtime.GOOS, runtime.GOARCH)},
 			{Key: "Go Runtime", Val: runtime.Version()},
 			{Key: "Build Date", Val: "2026-08-12"},

@@ -12,7 +12,7 @@ import (
 	"github.com/BlasVernazza06/koko-cli/internal/vfs"
 )
 
-const CLIVersion = "v1.0.0"
+const CLIVersion = "v2.0"
 
 type KokoConfig struct {
 	Schema       string           `json:"$schema"`

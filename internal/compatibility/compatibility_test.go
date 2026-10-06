@@ -278,7 +278,7 @@ func TestGetStepOptions_ORM_MongoDB(t *testing.T) {
 	opts := GetStepOptions(StepORM, selections)
 	for _, opt := range opts {
 		switch opt.Value {
-		case "moongose", "prisma", "none":
+		case "mongoose", "moongose", "prisma", "none":
 			if opt.Disabled {
 				t.Errorf("Expected ORM '%s' to be enabled for Node.js + MongoDB", opt.Value)
 			}

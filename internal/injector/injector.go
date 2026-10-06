@@ -34,31 +34,31 @@ func AddAddon(projectDir string, addonArg string) error {
 	switch addon {
 	case "stripe":
 		if kokoCfg.Features.Payments != nil && kokoCfg.Features.Payments.Provider == "stripe" {
-			return fmt.Errorf("Stripe payment provider is already configured in this project")
+			return fmt.Errorf("stripe payment provider is already configured in this project")
 		}
 		kokoCfg.Features.Payments = &config.PaymentInfo{Provider: "stripe"}
 
 	case "polar":
 		if kokoCfg.Features.Payments != nil && kokoCfg.Features.Payments.Provider == "polar" {
-			return fmt.Errorf("Polar payment provider is already configured in this project")
+			return fmt.Errorf("polar payment provider is already configured in this project")
 		}
 		kokoCfg.Features.Payments = &config.PaymentInfo{Provider: "polar"}
 
 	case "resend":
 		if kokoCfg.Features.Email != nil && kokoCfg.Features.Email.Provider == "resend" {
-			return fmt.Errorf("Resend email provider is already configured in this project")
+			return fmt.Errorf("resend email provider is already configured in this project")
 		}
 		kokoCfg.Features.Email = &config.EmailInfo{Provider: "resend"}
 
 	case "brevo":
 		if kokoCfg.Features.Email != nil && kokoCfg.Features.Email.Provider == "brevo" {
-			return fmt.Errorf("Brevo email provider is already configured in this project")
+			return fmt.Errorf("brevo email provider is already configured in this project")
 		}
 		kokoCfg.Features.Email = &config.EmailInfo{Provider: "brevo"}
 
 	case "docker":
 		if kokoCfg.Features.Infrastructure != nil && kokoCfg.Features.Infrastructure.DockerCompose {
-			return fmt.Errorf("Docker Compose is already configured in this project")
+			return fmt.Errorf("docker Compose is already configured in this project")
 		}
 		if kokoCfg.Features.Infrastructure == nil {
 			kokoCfg.Features.Infrastructure = &config.Infrastructure{}
@@ -67,7 +67,7 @@ func AddAddon(projectDir string, addonArg string) error {
 
 	case "github_actions":
 		if kokoCfg.Features.Infrastructure != nil && kokoCfg.Features.Infrastructure.CICD == "github-actions" {
-			return fmt.Errorf("GitHub Actions CI is already configured in this project")
+			return fmt.Errorf("gitHub Actions CI is already configured in this project")
 		}
 		if kokoCfg.Features.Infrastructure == nil {
 			kokoCfg.Features.Infrastructure = &config.Infrastructure{}
@@ -84,7 +84,7 @@ func AddAddon(projectDir string, addonArg string) error {
 
 	case "lucide":
 		if kokoCfg.Stack.Frontend != nil && kokoCfg.Stack.Frontend.Icons == "lucide" {
-			return fmt.Errorf("Lucide Icons is already configured in this project")
+			return fmt.Errorf("lucide Icons is already configured in this project")
 		}
 		if kokoCfg.Stack.Frontend != nil {
 			kokoCfg.Stack.Frontend.Icons = "lucide"

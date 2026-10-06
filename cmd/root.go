@@ -10,7 +10,7 @@ import (
 var rootCmd = &cobra.Command{
 	Use:     "koko",
 	Short:   "Koko CLI - Modern project initialization and scaffolding tool",
-	Version: "v0.1.0",
+	Version: "v2.0",
 	Run: func(cmd *cobra.Command, args []string) {
 		RunTUI()
 	},
@@ -18,7 +18,7 @@ var rootCmd = &cobra.Command{
 
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
