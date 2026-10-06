@@ -129,13 +129,44 @@ func ProcessEnvVariables(v *vfs.VFS, cfg ProcessConfig) error {
 		exampleLines = append(exampleLines, "# Brevo Email", "BREVO_API_KEY=\"xkeysib-...\"", "")
 	}
 
-	// 5. Escritura independiente en VFS
-	if !v.Exists(".env") {
-		v.WriteString(".env", strings.Join(envLines, "\n"))
-	}
-	if !v.Exists(".env.example") {
-		v.WriteString(".env.example", strings.Join(exampleLines, "\n"))
-	}
+	// 5. Escritura e inyección inteligente en VFS
+	ensureEnvContent(v, ".env", envLines)
+	ensureEnvContent(v, ".env.example", exampleLines)
 
 	return nil
+}
+
+func ensureEnvContent(v *vfs.VFS, fileName string, lines []string) {
+	if !v.Exists(fileName) {
+		v.WriteString(fileName, strings.Join(lines, "\n"))
+		return
+	}
+
+	existing, ok := v.ReadString(fileName)
+	if !ok || strings.TrimSpace(existing) == "" {
+		v.WriteString(fileName, strings.Join(lines, "\n"))
+		return
+	}
+
+	var toAdd []string
+	for _, line := range lines {
+		if strings.HasPrefix(line, "#") || strings.TrimSpace(line) == "" {
+			continue
+		}
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) > 0 {
+			key := parts[0]
+			if key != "" && !strings.Contains(existing, key+"=") {
+				toAdd = append(toAdd, line)
+			}
+		}
+	}
+
+	if len(toAdd) > 0 {
+		if !strings.HasSuffix(existing, "\n") {
+			existing += "\n"
+		}
+		newContent := existing + strings.Join(toAdd, "\n") + "\n"
+		v.WriteString(fileName, newContent)
+	}
 }
