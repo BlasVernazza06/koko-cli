@@ -13,6 +13,7 @@ import (
 	"github.com/BlasVernazza06/koko-cli/internal/injector"
 	"github.com/BlasVernazza06/koko-cli/internal/scaffold"
 	"github.com/BlasVernazza06/koko-cli/internal/types"
+	"github.com/BlasVernazza06/koko-cli/internal/validator"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
@@ -78,6 +79,23 @@ func registerTools(s *server.MCPServer) {
 		),
 		handleDoctor,
 	)
+
+	// 6. Tool: koko_set_default_directory
+	s.AddTool(
+		mcp.NewTool("koko_set_default_directory",
+			mcp.WithDescription("Configures the persistent default target directory where new Koko projects will be created if not explicitly specified"),
+			mcp.WithString("directory", mcp.Required(), mcp.Description("The absolute path to the directory (e.g. C:\\Projects or /home/user/projects)")),
+		),
+		handleSetDefaultDirectory,
+	)
+
+	// 7. Tool: koko_get_default_directory
+	s.AddTool(
+		mcp.NewTool("koko_get_default_directory",
+			mcp.WithDescription("Returns the currently configured default target directory for project scaffolding"),
+		),
+		handleGetDefaultDirectory,
+	)
 }
 
 func handleGetOptions(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -137,10 +155,13 @@ func handleInitProject(ctx context.Context, request mcp.CallToolRequest) (*mcp.C
 		return mcp.NewToolResultError("projectName is required"), nil
 	}
 
-	targetDir, _ := request.RequireString("targetDirectory")
-	if targetDir == "" {
-		targetDir = "."
+	// 1. Validar nombre de proyecto con reglas estrictas de Koko
+	if err := validator.ValidateProjectName(projectName); err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Invalid project name '%s': %v", projectName, err)), nil
 	}
+
+	rawTargetDir, _ := request.RequireString("targetDirectory")
+	targetDir := kokoConfig.ResolveDefaultTargetDirectory(rawTargetDir)
 
 	recipe, _ := request.RequireString("recipe")
 	frontend, _ := request.RequireString("frontend")
@@ -148,26 +169,40 @@ func handleInitProject(ctx context.Context, request mcp.CallToolRequest) (*mcp.C
 	database, _ := request.RequireString("database")
 	orm, _ := request.RequireString("orm")
 	auth, _ := request.RequireString("auth")
+	api, _ := request.RequireString("api")
 	pm, _ := request.RequireString("packageManager")
 	addons, _ := request.RequireString("addons")
 	initGit, _ := request.RequireBool("initGit")
-
-	fullPath := filepath.Join(targetDir, projectName)
-	if _, err := os.Stat(fullPath); !os.IsNotExist(err) {
-		return mcp.NewToolResultError(fmt.Sprintf("Target directory '%s' already exists", fullPath)), nil
-	}
 
 	scaffoldCfg := types.ScaffoldConfig{
 		ProjectName:    projectName,
 		Recipe:         recipe,
 		Frontend:       frontend,
 		Backend:        backend,
+		API:            api,
 		Database:       database,
 		ORM:            orm,
 		Auth:           auth,
 		PackageManager: pm,
 		Addons:         addons,
 		InitGit:        initGit,
+	}
+
+	// 2. Validar compatibilidad tecnológica cuando no se use una receta predefinida completa
+	if recipe == "" {
+		if err := compatibility.ValidateConfig(scaffoldCfg); err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Incompatible stack configuration: %v", err)), nil
+		}
+	} else if frontend != "" || backend != "" || api != "" || database != "" || orm != "" || auth != "" {
+		// Si se especifica receta pero además se sobreescriben flags personalizados
+		if err := compatibility.ValidateConfig(scaffoldCfg); err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Incompatible stack configuration: %v", err)), nil
+		}
+	}
+
+	fullPath := filepath.Join(targetDir, projectName)
+	if _, err := os.Stat(fullPath); !os.IsNotExist(err) {
+		return mcp.NewToolResultError(fmt.Sprintf("Target directory '%s' already exists", fullPath)), nil
 	}
 
 	if err := scaffold.RunScaffold(fullPath, scaffoldCfg); err != nil {
@@ -248,3 +283,40 @@ func handleDoctor(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallTo
 	bytes, _ := json.MarshalIndent(summary, "", "  ")
 	return mcp.NewToolResultText(string(bytes)), nil
 }
+
+func handleSetDefaultDirectory(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	dir, err := request.RequireString("directory")
+	if err != nil || dir == "" {
+		return mcp.NewToolResultError("directory path is required"), nil
+	}
+
+	cleanDir := filepath.Clean(dir)
+	if err := os.MkdirAll(cleanDir, 0755); err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to create or access directory '%s': %v", cleanDir, err)), nil
+	}
+
+	settings, err := kokoConfig.LoadGlobalSettings()
+	if err != nil {
+		settings = &kokoConfig.GlobalSettings{}
+	}
+	settings.DefaultProjectsDirectory = cleanDir
+
+	if err := kokoConfig.SaveGlobalSettings(settings); err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to save default directory settings: %v", err)), nil
+	}
+
+	return mcp.NewToolResultText(fmt.Sprintf("Default projects directory successfully set to: %s", cleanDir)), nil
+}
+
+func handleGetDefaultDirectory(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	resolved := kokoConfig.ResolveDefaultTargetDirectory("")
+	settings, _ := kokoConfig.LoadGlobalSettings()
+
+	resp := map[string]interface{}{
+		"configuredDirectory": settings.DefaultProjectsDirectory,
+		"activeTargetDirectory": resolved,
+	}
+	bytes, _ := json.MarshalIndent(resp, "", "  ")
+	return mcp.NewToolResultText(string(bytes)), nil
+}
+

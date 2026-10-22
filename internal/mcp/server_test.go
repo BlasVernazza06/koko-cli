@@ -99,6 +99,37 @@ func TestHandleDoctorTool(t *testing.T) {
 	assert.Equal(t, false, docSummary["configExists"])
 }
 
+func TestHandleSetAndGetDefaultDirectory(t *testing.T) {
+	ctx := context.Background()
+	tmpDir, err := os.MkdirTemp("", "koko-mcp-target-test-*")
+	require.NoError(t, err)
+	defer os.RemoveAll(tmpDir)
+
+	// Set
+	setReq := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Arguments: map[string]interface{}{
+				"directory": tmpDir,
+			},
+		},
+	}
+	setRes, err := handleSetDefaultDirectory(ctx, setReq)
+	require.NoError(t, err)
+	assert.False(t, setRes.IsError)
+	assert.Contains(t, setRes.Content[0].(mcp.TextContent).Text, tmpDir)
+
+	// Get
+	getReq := mcp.CallToolRequest{}
+	getRes, err := handleGetDefaultDirectory(ctx, getReq)
+	require.NoError(t, err)
+	assert.False(t, getRes.IsError)
+
+	var resData map[string]interface{}
+	err = json.Unmarshal([]byte(getRes.Content[0].(mcp.TextContent).Text), &resData)
+	require.NoError(t, err)
+	assert.Equal(t, tmpDir, resData["configuredDirectory"])
+}
+
 func TestHandleInitProjectValidation(t *testing.T) {
 	ctx := context.Background()
 	req := mcp.CallToolRequest{
