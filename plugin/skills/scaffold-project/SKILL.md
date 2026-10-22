@@ -35,11 +35,18 @@ Present the architecture plan clearly to the user:
 ```
 
 ### Step 3: Execute the Scaffolding
-Run the command non-interactively in the shell:
+**Preferred (MCP Tool)**: If MCP tools are enabled in the environment, invoke `call_mcp_tool` with `ServerName: "koko"` and `ToolName: "koko_init_project"`.
+```json
+{
+  "projectName": "my-saas-app",
+  "recipe": "saas-next"
+}
+```
 
+**Alternative (Shell CLI)**: If MCP is not available, run non-interactively in shell:
 ```bash
 # Example with recipe:
-koko init my-saas-app --recipe saas --git yes
+koko init my-saas-app -r saas-next --git yes
 
 # Example with manual flags:
 koko init my-app \
