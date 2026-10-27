@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/BlasVernazza06/koko-cli/internal/tui"
 	"fmt"
 	"os"
 
@@ -12,7 +13,7 @@ var rootCmd = &cobra.Command{
 	Short:   "Koko CLI - Modern project initialization and scaffolding tool",
 	Version: "v2.0",
 	Run: func(cmd *cobra.Command, args []string) {
-		RunTUI()
+		tui.RunTUI()
 	},
 }
 
