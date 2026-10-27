@@ -1,27 +1,83 @@
-﻿---
-description: Especialista en Git, guardián del ciclo de vida y operador de GitHub vía MCP para Koko CLI. Analiza, atomiza cambios en Go/TUI/Templates, orquesta ramas temáticas y mantiene un historial impecable.
+---
+description: Reglas y protocolo Git para Koko CLI. Cubre atomización estricta de commits, flujo de ramas (main/next/features), gates de validación pre-merge y releases.
 globs: [".git/**/*", ".github/**/*"]
-alwaysApply: false
+alwaysApply: true
 ---
 
-# 🐙 PERSONALIDAD: GIT ARCHITECT & OPEN-SOURCE RELEASE MANAGER
+# 🐙 PROTOCOLO GIT & RELEASE MANAGEMENT (KOKO CLI)
 
-## Tu Rol y Misión:
-Eres el **Git Architect & Open-Source Release Manager** de **Koko CLI**. Tu misión es mantener el repositorio estructurado, con commits atómicos, mensajes semánticos y ramas limpias orientadas a releases continuas.
+Este protocolo rige de forma estricta la gestión de control de versiones, ramas y lanzamientos en el repositorio de **Koko CLI**.
 
-## 🔍 Atomización de Commits por Capas (Clusters Lógicos):
-Queda **TERMINANTEMENTE PROHIBIDO** hacer un único commit monolítico que mezcle múltiples responsabilidades. Segmenta los cambios en el siguiente orden:
+---
 
-1. **`chore / config` (Tooling & DX)**: `.gitignore`, `go.mod`, `go.sum`, configs de linter, scripts de build.
-2. **`feat / fix (core)`**: Routing Cobra, subcomandos, flag parsing en `cmd/`.
-3. **`feat / fix (tui)`**: Modelos Bubble Tea, vistas interactivas, estilos Lipgloss en `cmd/views/` o `cmd/tui.go`.
-4. **`feat / fix (scaffold)`**: Motores de generación, manejo de VFS, templates embebidos en `internal/scaffold/`.
-5. **`feat / fix (compat & catalog)`**: Reglas de compatibilidad (`internal/compatibility/`) y catálogo de versiones (`internal/catalog/`).
-6. **`feat / fix (dist)`**: Wrapper npm (`npm/`), configs de GoReleaser, workflows de GitHub Actions.
-7. **`test`**: Tests unitarios en Go (`*_test.go`), mocks y suites de compatibilidad.
-8. **`docs`**: README, demo VHS tapes (`demo.tape`), guías de recetas y arquitectura.
+## 🌿 1. Flujo de Ramas & Metodología de Trabajo
 
-## 🌿 Flujo de Ramas y Releases:
-- **Feature Branches**: Nombres claros como `feat/fastapi-recipe`, `fix/windows-path-traversal`, `refactor/bubbletea-views`.
-- **Commits Convencionales**: `feat(tui): add multi-stack selection list`, `fix(scaffold): resolve windows separator bug in template rendering`.
-- **Integración con GitHub MCP**: `create_pull_request`, `list_commits`, `create_issue` para trazabilidad completa.
+Seguimos una variante estructurada de *GitFlow / Trunk-Based con Staging Activo*:
+
+```mermaid
+flowchart LR
+    subgraph Development [Ciclo de Desarrollo]
+        Next["next (Rama Base de Integración)"]
+        F1["feat/nueva-feature"]
+        F2["fix/bug-vfs"]
+        F1 -->|"Merge tras validación"| Next
+        F2 -->|"Merge tras validación"| Next
+    end
+    subgraph Production [Ciclo de Release]
+        Next -->|"Merge final de sprint/versión"| Main["main (Producción & Releases Estables)"]
+        Main -->|"Tag SemVer (v2.x.x)"| Release["GitHub Release / GoReleaser"]
+    end
+```
+
+### Reglas de Ramas:
+1. **`main` (Producción & Estabilidad Absoluta)**:
+   - Representa el código listo para release de distribución pública (npm, Homebrew, binary releases).
+   - **Solo recibe merges desde `next`** (o hotfixes críticos documentados).
+   - Todo commit en `main` debe tener la suite de tests y builds 100% verde.
+2. **`next` (Integración Continua / Staging)**:
+   - Rama base donde convergen todas las características activas del sprint.
+   - Es el punto de partida (`git checkout -b <branch> next`) para toda subrama de desarrollo.
+3. **Subramas de Feature / Fix / Refactor (`feat/*`, `fix/*`, `refactor/*`)**:
+   - Se crean **siempre a partir de `next`**.
+   - Convención de nombres:
+     - `feat/<nombre-kebab-case>` (ej: `feat/koko-skills`, `feat/fastapi-recipe`).
+     - `fix/<problema>` (ej: `fix/windows-path-traversal`).
+     - `refactor/<alcance>` (ej: `refactor/clean-architecture-packages`).
+   - Al finalizar y validar los tests, se mergean a `next`.
+
+---
+
+## 📦 2. Atomización Estricta de Commits
+
+> [!IMPORTANT]
+> **Prohibido el commit monolítico.** Salvo situaciones expresas de inicialización masiva previamente aprobadas, los commits deben ser **atómicos, funcionales y con responsabilidades únicas**.
+
+### Convención de Mensajes (Conventional Commits):
+Formato: `<tipo>(<alcance>): <descripción imperativa en minúsculas>`
+
+### Tipos y Alcances Permitidos:
+- **`chore(config)`**: `.gitignore`, tooling, `go.mod`, scripts locales.
+- **`refactor(architecture)`**: Reestructuración de directorios, imports y movimiento de paquetes internos (`internal/core`, `internal/engine`, etc.).
+- **`docs(rules)` / `docs(architecture)`**: Creación o actualización de reglas (`.cursor/rules/`), bitácoras y documentación (`docs/`).
+- **`feat(core)`**: Comandos Cobra, parsing de flags, validación lógica base (`cmd/`, `internal/core/`).
+- **`feat(scaffold)`**: Motores de generación, manejo de VFS, templates embebidos (`internal/engine/scaffold/`).
+- **`feat(skills)`**: Subcomandos, lógica y catálogos de AI Skills / Plugins (`internal/features/skills/`, `cmd/skills.go`).
+- **`feat(tui)`**: Modelos Bubble Tea, vistas interactivas, componentes Lipgloss (`internal/tui/`).
+- **`test(<scope>)`**: Suites de tests (`*_test.go`), fixtures y validaciones de compatibilidad.
+
+---
+
+## 🛡️ 3. Gates de Validación Pre-Merge & Pre-Commit
+
+Antes de mergear cualquier subrama a `next`, o `next` a `main`, es mandatorio ejecutar:
+
+1. **Gate de Compilación**:
+   ```bash
+   go build -v ./...
+   ```
+2. **Gate de Tests Unitarios y Compatibilidad**:
+   ```bash
+   go test ./cmd/... ./internal/core/... ./internal/engine/... ./internal/features/...
+   ```
+3. **Gate de Limpieza de Archivos**:
+   - Verificar `git status` para evitar commitear archivos de prueba efímeros, binarios locales (`koko.exe`, `koko`) o secretos.
