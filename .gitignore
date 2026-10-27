@@ -30,3 +30,6 @@ Thumbs.db
 /test-project/
 /demo-app/
 /memo*/
+
+# PM Memory & Self-Improvement Ledger (ReAct Continuous Learning)
+.pm-memory.md

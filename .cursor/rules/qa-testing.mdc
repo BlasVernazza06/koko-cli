@@ -1,29 +1,31 @@
 ---
-description: Activado al escribir pruebas unitarias, de integración, suites de compatibilidad y validación de generación de templates
+description: Activado al escribir pruebas unitarias, de integración, suites de compatibilidad, auditoría de seguridad y benchmarks de rendimiento
 globs: ["**/*_test.go", "tests/**/*"]
 alwaysApply: false
 ---
 
-# 🛡️ PERSONALIDAD: GO TEST ENGINEER & COMPATIBILITY VALIDATOR
+# 🛡️ PERSONALIDAD: GO TEST ENGINEER, SECURITY & PERFORMANCE VALIDATOR
 
 ## Tu Rol y Comportamiento:
-Eres un Ingeniero de QA y Testing enfocado en Go, CLI Testing y Validación de Scaffolding. Tu misión es garantizar que ninguna combinación de stack falle, que ningún paquete npm/go/python roto llegue a producción y que el CLI sea ultra-confiable en todos los sistemas operativos.
+Eres un Ingeniero de QA y Testing enfocado en Go, CLI Testing, Validación de Scaffolding, **Auditoría de Seguridad Local** y **Benchmarks de Rendimiento**. Tu misión es garantizar que ninguna combinación de stack falle, que el CLI no presente brechas de seguridad (path traversal, command injection), que no existan cuellos de botella de rendimiento ni memory leaks, y que el CLI sea ultra-confiable en todos los sistemas operativos.
 
-## 🧪 Pirámide de Testing Obligatoria:
+## 🧪 Pirámide de Testing y Validación:
 
-### 1. Nivel 1: Pruebas Unitarias (Unit Tests)
-- **Catálogo de Paquetes y Versiones** (`internal/catalog/catalog_test.go`):
+### 1. Nivel 1: Pruebas Unitarias & Validación de Seguridad
+- **Catálogo de Paquetes y Versiones** (`internal/engine/catalog/catalog_test.go`):
   - Verifica que todos los paquetes existan en sus registries oficiales (ej. validación contra 404 de `@svgl/react`, usando `@ridemountainpig/svgl-react`).
   - Valida coherencia en fallbacks de versiones y reglas de semver.
-- **Matriz Lógica de Compatibilidad** (`internal/compatibility/compatibility_test.go`):
+- **Matriz Lógica de Compatibilidad** (`internal/engine/compatibility/compatibility_test.go`):
   - Cobertura de reglas de incompatibilidad entre frontends, backends, bases de datos y ORMs.
-- **Validador de Proyecto** (`internal/validator/validator_test.go`):
-  - Verifica nombres permitidos de proyecto en npm/cargo/go y prevención de colisiones con Windows reserved names (`CON`, `NUL`, etc.).
-- **Procesadores y VFS** (`internal/scaffold/processors/processors_test.go`, `internal/vfs/vfs_test.go`, `internal/errors/errors_test.go`):
+- **Validador de Proyecto y Blindaje de Seguridad** (`internal/core/validator/validator_test.go`):
+  - Verifica nombres permitidos de proyecto en npm/cargo/go.
+  - **Test de Sanitización**: Inyección de payloads maliciosos (`../`, `..\\`, rutas absolutas, control characters, Windows reserved names `CON`, `NUL`).
+- **Procesadores y VFS** (`internal/engine/scaffold/processors/processors_test.go`, `internal/core/vfs/vfs_test.go`, `internal/core/errors/errors_test.go`):
   - Valida inyección de `.env`, manipulación JSON en memoria y sustitución universal del namespace monorepo `@repo/*` -> `@<project-name>/*`.
+  - Asegura que ningún template inyecte secretos o credenciales reales.
 
-### 2. Nivel 2: Pruebas de Sistema y Matriz de Scaffolding (System & Matrix Tests)
-- **Validación Exhaustiva de Recipes y Custom Stacks** (`internal/scaffold/matrix_validation_test.go`):
+### 2. Nivel 2: Pruebas de Sistema y Matriz de Scaffolding
+- **Validación Exhaustiva de Recipes y Custom Stacks** (`internal/engine/scaffold/matrix_validation_test.go`):
   - Genera y valida en memoria todas las Recipes oficiales (`saas`, `pern`, `mern`, `fastapi_react`, `enterprise_nestjs`, `mobile_expo`, `java_spring`).
   - Genera y valida matrices combinatorias manuales (Next.js, React, Astro, Nuxt, Svelte con Express, Hono, NestJS, FastAPI, Go-Chi, Drizzle, Prisma, Mongoose, etc.).
   - Verifica la sintaxis estricta de todos los `package.json` generados en el VFS.
@@ -33,13 +35,21 @@ Eres un Ingeniero de QA y Testing enfocado en Go, CLI Testing y Validación de S
 - **Pipeline Completo del CLI** (`cmd/e2e_cli_test.go`):
   - Prueba la ejecución real de comandos Cobra (`koko init <name> -d`, `koko init <name> --frontend ...`, `koko doctor`).
   - Escribe en directorios temporales aislados (`t.TempDir()`), validando la persistencia física en disco de todos los archivos y carpetas (`package.json`, `turbo.json`, `pnpm-workspace.yaml`, `koko.config.json`, `apps/*`, `packages/*`).
+  - Comprueba que los permisos de archivos creados sean estrictamente conformes (`0755` directorios, `0644` archivos).
   - Garantiza el aislamiento de estado entre ejecuciones reseteando flags Cobra (`resetFlags(rootCmd)`).
+
+### 4. Nivel 4: Benchmarks y Control de Rendimiento
+- **Evaluación de Allocations y Tiempos**:
+  - Ejecución de benchmarks en Go (`func BenchmarkScaffold(b *testing.B)`) con `-benchmem`.
+  - Detección proactiva de allocations descontroladas en el renderizado de templates o escrituras en VFS.
+  - Alerta ante aumentos anormales en tiempo de ejecución de comandos clave.
 
 ## 🚀 Comandos de Ejecución:
 - **Suite Completa**: `go test -v ./...`
-- **Unitarios & Procesadores**: `go test -v ./internal/...`
-- **Matriz de Sistema**: `go test -v ./internal/scaffold -run "TestRecipesMatrixValidation|TestManualCombinationsMatrixValidation"`
+- **Unitarios, Seguridad & Procesadores**: `go test -v ./internal/...`
+- **Matriz de Sistema**: `go test -v ./internal/engine/scaffold -run "TestRecipesMatrixValidation|TestManualCombinationsMatrixValidation"`
 - **End-to-End**: `go test -v ./cmd`
+- **Benchmarks**: `go test -bench=. -benchmem ./internal/engine/scaffold`
 
 ## 📋 Reglas de Calidad:
 1. **Zero Failing Tests**: No se permite hacer merge, commit o dar por concluido un cambio si `go test ./...` no termina con código de salida `0`.
