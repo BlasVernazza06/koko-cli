@@ -1,16 +1,17 @@
 package cmd
 
 import (
+	"github.com/BlasVernazza06/koko-cli/internal/tui"
 	"fmt"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/BlasVernazza06/koko-cli/internal/compatibility"
-	kokoConfig "github.com/BlasVernazza06/koko-cli/internal/config"
-	"github.com/BlasVernazza06/koko-cli/internal/scaffold"
-	"github.com/BlasVernazza06/koko-cli/internal/validator"
-	"github.com/BlasVernazza06/koko-cli/internal/vfs"
+	"github.com/BlasVernazza06/koko-cli/internal/engine/compatibility"
+	kokoConfig "github.com/BlasVernazza06/koko-cli/internal/core/config"
+	"github.com/BlasVernazza06/koko-cli/internal/engine/scaffold"
+	"github.com/BlasVernazza06/koko-cli/internal/core/validator"
+	"github.com/BlasVernazza06/koko-cli/internal/core/vfs"
 	"github.com/spf13/cobra"
 )
 
@@ -57,7 +58,8 @@ var initCmd = &cobra.Command{
 				fmt.Printf("\n\033[31m✗ Error: %s\033[0m\n\n", err.Error())
 				os.Exit(1)
 			}
-			runDefaultInit(projectName, selectedRecipe)
+			initGit := gitFlag != "no" && gitFlag != "false" && gitFlag != "n"
+			runDefaultInit(projectName, selectedRecipe, initGit)
 			return
 		}
 
@@ -95,7 +97,7 @@ var initCmd = &cobra.Command{
 			return
 		}
 
-		RunTUIInit(projectName)
+		tui.RunTUIInit(projectName)
 	},
 }
 
@@ -160,7 +162,7 @@ func buildAndExecuteSteps(projectName string, cfg scaffold.ScaffoldConfig) {
 	fmt.Printf("\033[90m└\033[0m  \033[32m\033[1mProject created successfully in %.2fs!\033[0m\n\n", elapsed.Seconds())
 }
 
-func runDefaultInit(projectName string, recipe string) {
+func runDefaultInit(projectName string, recipe string, initGit bool) {
 	fmt.Printf("\n\033[90m┌\033[0m  \033[1mCreating a new Koko project\033[0m\n")
 	fmt.Printf("\033[90m│\033[0m\n")
 	fmt.Printf("\033[90m│\033[0m  \033[38;2;0;255;127m◆\033[0m  \033[1mProject name\033[0m     \033[90m·\033[0m  \033[38;2;167;139;250m%s\033[0m\n", projectName)
@@ -171,7 +173,7 @@ func runDefaultInit(projectName string, recipe string) {
 	cfg := scaffold.ScaffoldConfig{
 		ProjectName: projectName,
 		Recipe:      recipe,
-		InitGit:     true,
+		InitGit:     initGit,
 	}
 
 	buildAndExecuteSteps(projectName, cfg)

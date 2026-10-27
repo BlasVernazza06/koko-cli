@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/BlasVernazza06/koko-cli/internal/doctor"
+	"github.com/BlasVernazza06/koko-cli/internal/features/doctor"
 	"github.com/spf13/cobra"
 )
 

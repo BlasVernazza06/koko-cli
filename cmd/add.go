@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/BlasVernazza06/koko-cli/internal/injector"
+	"github.com/BlasVernazza06/koko-cli/internal/engine/injector"
 	"github.com/spf13/cobra"
 )
 
