@@ -121,10 +121,16 @@ func TestSkillsCmdNative_YesFlag(t *testing.T) {
 		t.Fatalf("skills -y failed: %v", err)
 	}
 
-	// Verify tailwindcss rule was injected
+	// Verify tailwindcss rule was injected (.cursor/rules/tailwindcss.mdc)
 	ruleFile := filepath.Join(tmpDir, ".cursor", "rules", "tailwindcss.mdc")
 	if _, err := os.Stat(ruleFile); os.IsNotExist(err) {
 		t.Errorf("expected rule file at %s", ruleFile)
+	}
+
+	// Verify modular skill structure was injected (.cursor/skills/tailwindcss/SKILL.md)
+	modularFile := filepath.Join(tmpDir, ".cursor", "skills", "tailwindcss", "SKILL.md")
+	if _, err := os.Stat(modularFile); os.IsNotExist(err) {
+		t.Errorf("expected modular skill file at %s", modularFile)
 	}
 }
 
