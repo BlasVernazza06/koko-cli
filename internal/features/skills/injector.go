@@ -17,7 +17,10 @@ type InstalledSkillMetadata struct {
 	InstalledAt time.Time `json:"installedAt"`
 }
 
-// InjectSkillToProject inyecta una skill en `.cursor/rules/<skill>.mdc` de forma segura.
+// InjectSkillToProject inyecta una skill de forma modular en:
+// 1. `.cursor/skills/<cleanID>/SKILL.md` (y `references/*.md` opcionales)
+// 2. `.cursor/rules/<cleanID>.mdc` (regla activa para Cursor con frontmatter)
+// Garantiza estricta validación contra Path Traversal.
 func InjectSkillToProject(projectDir string, skill *SkillDefinition) error {
 	cleanProjectDir := filepath.Clean(projectDir)
 
@@ -32,8 +35,66 @@ func InjectSkillToProject(projectDir string, skill *SkillDefinition) error {
 		return fmt.Errorf("invalid skill ID '%s': path traversal detected", skill.ID)
 	}
 
+	// 1. Inyección de estructura modular en .cursor/skills/<cleanID>/
+	skillModularDir := filepath.Join(cleanProjectDir, ".cursor", "skills", cleanID)
+	if !strings.HasPrefix(skillModularDir, cleanProjectDir) {
+		return fmt.Errorf("security violation: skill directory outside project boundary")
+	}
+
+	if err := os.MkdirAll(skillModularDir, 0755); err != nil {
+		return fmt.Errorf("failed to create skill directory '%s': %w", skillModularDir, err)
+	}
+
+	skillMDPath := filepath.Join(skillModularDir, "SKILL.md")
+	if !strings.HasPrefix(skillMDPath, skillModularDir) {
+		return fmt.Errorf("security violation: skill file escapes skill directory")
+	}
+
+	if err := os.WriteFile(skillMDPath, []byte(strings.TrimSpace(skill.Content)+"\n"), 0644); err != nil {
+		return fmt.Errorf("failed to write SKILL.md to '%s': %w", skillMDPath, err)
+	}
+
+	// Inyectar árbol recursivo completo de archivos de soporte (references/, rules/, core/, etc.)
+	if len(skill.Files) > 0 {
+		for relPath, fileContent := range skill.Files {
+			// Prevenir path traversal en cada componente de la ruta
+			cleanRel := filepath.Clean(filepath.ToSlash(relPath))
+			if strings.HasPrefix(cleanRel, "..") || strings.Contains(cleanRel, "/../") || strings.HasPrefix(cleanRel, "/") || strings.HasPrefix(cleanRel, "\\") {
+				continue
+			}
+
+			targetFilePath := filepath.Join(skillModularDir, filepath.FromSlash(cleanRel))
+			if !strings.HasPrefix(targetFilePath, skillModularDir) {
+				continue
+			}
+
+			parentDir := filepath.Dir(targetFilePath)
+			if err := os.MkdirAll(parentDir, 0755); err != nil {
+				continue
+			}
+
+			_ = os.WriteFile(targetFilePath, []byte(strings.TrimSpace(fileContent)+"\n"), 0644)
+		}
+	} else if len(skill.References) > 0 {
+		// Fallback para instancias construidas en tests que solo definan skill.References
+		refDir := filepath.Join(skillModularDir, "references")
+		if strings.HasPrefix(refDir, skillModularDir) {
+			_ = os.MkdirAll(refDir, 0755)
+			for refName, refContent := range skill.References {
+				if strings.Contains(refName, "..") || strings.Contains(refName, "/") || strings.Contains(refName, "\\") {
+					continue
+				}
+				cleanRefName := filepath.Base(filepath.Clean(refName))
+				targetRefFile := filepath.Join(refDir, cleanRefName)
+				if strings.HasPrefix(targetRefFile, refDir) {
+					_ = os.WriteFile(targetRefFile, []byte(strings.TrimSpace(refContent)+"\n"), 0644)
+				}
+			}
+		}
+	}
+
+	// 2. Inyección de regla Cursor en .cursor/rules/<cleanID>.mdc
 	rulesDir := filepath.Join(cleanProjectDir, ".cursor", "rules")
-	// Validar que rulesDir siga perteneciendo al proyecto
 	if !strings.HasPrefix(rulesDir, cleanProjectDir) {
 		return fmt.Errorf("security violation: target directory outside project boundary")
 	}
@@ -64,8 +125,14 @@ func CheckIfSkillInstalled(projectDir string, skillID string) bool {
 	cleanProjectDir := filepath.Clean(projectDir)
 	cleanID := filepath.Base(filepath.Clean(skillID))
 
+	// Verifica regla Cursor o archivo de skill modular
 	mdcPath := filepath.Join(cleanProjectDir, ".cursor", "rules", cleanID+".mdc")
 	if _, err := os.Stat(mdcPath); err == nil {
+		return true
+	}
+
+	modularSkillPath := filepath.Join(cleanProjectDir, ".cursor", "skills", cleanID, "SKILL.md")
+	if _, err := os.Stat(modularSkillPath); err == nil {
 		return true
 	}
 

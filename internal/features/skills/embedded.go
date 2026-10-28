@@ -2,43 +2,91 @@ package skills
 
 import (
 	"embed"
+	"io/fs"
 	"path/filepath"
 	"strings"
 )
 
-//go:embed embedded/*.md
+//go:embed embedded/*
 var embeddedSkillsFS embed.FS
 
 // SkillDefinition representa una habilidad de IA con metadatos y contenido.
 type SkillDefinition struct {
-	ID          string   // Identificador normalizado (ej: "frontend-design", "astro", "turborepo")
-	Name        string   // Nombre descriptivo (ej: "Go Backend Architecture")
-	Category    string   // Categoría para agrupación (ej: "Go", "Web Frameworks", "Databases & ORMs")
-	Description string   // Descripción de la skill
-	Content     string   // Contenido markdown completo de la skill
-	Recommended bool     // Si está recomendada para el proyecto detectado
-	Installed   bool     // Si ya existe instalada en .cursor/rules/
-	Source      string   // Origen: "embedded", "cache", "network"
-	IsCombo     bool     // Si es una habilidad que integra múltiples tecnologías
-	ComboName   string   // Nombre comercial del combo (ej: "React + shadcn/ui")
+	ID          string            // Identificador normalizado (ej: "frontend-design", "astro", "turborepo")
+	Name        string            // Nombre descriptivo (ej: "Go Backend Architecture")
+	Category    string            // Categoría para agrupación (ej: "Go", "Web Frameworks", "Databases & ORMs")
+	Description string            // Descripción de la skill
+	Content     string            // Contenido markdown principal de la skill (SKILL.md)
+	References  map[string]string // Retrocompatibilidad para referencias directas
+	Files       map[string]string // Árbol recursivo de archivos de soporte (ruta relativa slash -> contenido)
+	Recommended bool              // Si está recomendada para el proyecto detectado
+	Installed   bool              // Si ya existe instalada en .cursor/rules/
+	Source      string            // Origen: "embedded", "cache", "network"
+	IsCombo     bool              // Si es una habilidad que integra múltiples tecnologías
+	ComboName   string            // Nombre comercial del combo (ej: "React + shadcn/ui")
 }
 
 // GetEmbeddedSkill obtiene una skill precompilada en el binario si existe.
 func GetEmbeddedSkill(id string) (*SkillDefinition, bool) {
 	normID := strings.ToLower(strings.TrimSpace(id))
-	filename := filepath.ToSlash(filepath.Join("embedded", normID+".md"))
-	data, err := embeddedSkillsFS.ReadFile(filename)
+	// Aliases conocidos
+	if normID == "supabase-postgres-best-practices" {
+		normID = "supabase"
+	}
+
+	mainFile := filepath.ToSlash(filepath.Join("embedded", normID, "SKILL.md"))
+	data, err := embeddedSkillsFS.ReadFile(mainFile)
 	if err != nil {
-		return nil, false
+		// Compatibilidad hacia atrás si se intentara leer archivo plano
+		flatFile := filepath.ToSlash(filepath.Join("embedded", normID+".md"))
+		data, err = embeddedSkillsFS.ReadFile(flatFile)
+		if err != nil {
+			return nil, false
+		}
 	}
 
 	content := strings.TrimPrefix(string(data), "\ufeff")
+
+	// Escaneo recursivo de todo el subárbol de soporte de la skill
+	files := make(map[string]string)
+	refs := make(map[string]string)
+	skillRoot := filepath.ToSlash(filepath.Join("embedded", normID))
+
+	_ = fs.WalkDir(embeddedSkillsFS, skillRoot, func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d == nil || d.IsDir() {
+			return nil
+		}
+
+		// Relativa al directorio raíz de la skill (ej: "references/conn-pooling.md", "core/page-object.md")
+		relPath := strings.TrimPrefix(path, skillRoot+"/")
+		if relPath == "" || relPath == "SKILL.md" {
+			return nil
+		}
+
+		fileData, err := embeddedSkillsFS.ReadFile(path)
+		if err != nil {
+			return nil
+		}
+
+		fileContent := strings.TrimPrefix(string(fileData), "\ufeff")
+		files[relPath] = fileContent
+
+		// Poblar References con el nombre base para compatibilidad hacia atrás si está en references/
+		if strings.HasPrefix(relPath, "references/") {
+			refs[filepath.Base(relPath)] = fileContent
+		}
+
+		return nil
+	})
+
 	return &SkillDefinition{
 		ID:          normID,
 		Name:        FormatSkillTitle(normID),
 		Category:    categorizeSkill(normID),
 		Description: extractDescriptionFromFrontmatter(content),
 		Content:     content,
+		References:  refs,
+		Files:       files,
 		Source:      "embedded",
 	}, true
 }
@@ -52,10 +100,10 @@ func ListEmbeddedSkills() []*SkillDefinition {
 
 	var result []*SkillDefinition
 	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
+		if !entry.IsDir() {
 			continue
 		}
-		id := strings.TrimSuffix(entry.Name(), ".md")
+		id := entry.Name()
 		if skill, ok := GetEmbeddedSkill(id); ok {
 			result = append(result, skill)
 		}
