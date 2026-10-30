@@ -56,7 +56,13 @@ func AddAddon(projectDir string, addonArg string) error {
 		}
 		kokoCfg.Features.Email = &config.EmailInfo{Provider: "brevo"}
 
-	case "docker":
+	
+	case "playwright", "jest", "vitest", "cypress", "pytest":
+		if kokoCfg.Features.Testing != nil && kokoCfg.Features.Testing.Framework == addon {
+			return fmt.Errorf("%s testing framework is already configured in this project", addon)
+		}
+		kokoCfg.Features.Testing = &config.TestingInfo{Framework: addon}
+case "docker":
 		if kokoCfg.Features.Infrastructure != nil && kokoCfg.Features.Infrastructure.DockerCompose {
 			return fmt.Errorf("docker Compose is already configured in this project")
 		}
@@ -150,6 +156,9 @@ func AddAddon(projectDir string, addonArg string) error {
 	}
 	if kokoCfg.Features.Email != nil {
 		procCfg.Email = kokoCfg.Features.Email.Provider
+	}
+	if kokoCfg.Features.Testing != nil {
+		procCfg.Testing = kokoCfg.Features.Testing.Framework
 	}
 
 	// 5. Inyectar dependencias y variables .env

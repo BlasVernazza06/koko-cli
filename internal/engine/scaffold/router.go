@@ -4,8 +4,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/BlasVernazza06/koko-cli/internal/engine/scaffold/handlers"
 	"github.com/BlasVernazza06/koko-cli/internal/core/types"
+	"github.com/BlasVernazza06/koko-cli/internal/engine/scaffold/handlers"
 )
 
 // evaluatePath es el enrutador central que orquesta los handlers especializados
@@ -56,6 +56,11 @@ func evaluatePath(path string, config types.ScaffoldConfig) (string, bool) {
 
 	// G. Capa de API (tRPC, oRPC)
 	if dest, ok := handlers.EvaluateAPI(rel, config); ok {
+		return dest, true
+	}
+
+	// H. Framework de Testing (Playwright, Jest, Vitest, Cypress, Pytest)
+	if dest, ok := handlers.EvaluateTesting(rel, config); ok {
 		return dest, true
 	}
 
