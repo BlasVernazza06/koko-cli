@@ -450,6 +450,10 @@ Esta sección documenta las iniciativas técnicas planificadas para el sprint ac
   - *Contexto*: Verificación de puertos en conflicto, versiones instaladas de Node/Docker y diagnóstico de migraciones pendientes en bases de datos locales.
   - *Archivos a impactar*: `internal/features/doctor/analyzer.go`, `internal/features/doctor/doctor.go`.
 
-- [ ] **5. Koko Skills (autoskills midudev)**:
+- [x] **5. Koko Skills (autoskills midudev)**:
   - *Contexto*: Le permite al usuario la incorporacion de skills para su proyecto y asi obtener un rendimiento mucho mas efectivo y certero para con las tareas realizadas por los agentes. Por debajo estará utilizando el comando de midudev autoskills, que audita el proyecto que estas realizando y busca las skills que mejor se adecuen a tus necesidades.
   - *Archivos a impactar*: Nuevos paquetes en `internal/features/mcp/` y `cmd/mcp.go`.
+
+- [] **6. koko db**:
+  - *Contexto*: Implementar un command wrapper para comandos de database (koko db [migrate|seed|studio|reset]) que lee el koko.config.json y ejecuta el comando apropiado sin importar si el proyecto usa Prisma o Drizzle o Mongoose
+  - *Archivos a impactar*: Nuevos paquetes en `cmd/db.go`.

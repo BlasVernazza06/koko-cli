@@ -11,12 +11,12 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/BlasVernazza06/koko-cli/internal/tui/views"
-	"github.com/BlasVernazza06/koko-cli/internal/engine/compatibility"
 	kokoConfig "github.com/BlasVernazza06/koko-cli/internal/core/config"
-	"github.com/BlasVernazza06/koko-cli/internal/engine/scaffold"
 	"github.com/BlasVernazza06/koko-cli/internal/core/validator"
 	"github.com/BlasVernazza06/koko-cli/internal/core/vfs"
+	"github.com/BlasVernazza06/koko-cli/internal/engine/compatibility"
+	"github.com/BlasVernazza06/koko-cli/internal/engine/scaffold"
+	"github.com/BlasVernazza06/koko-cli/internal/tui/views"
 )
 
 type sessionState int
@@ -193,6 +193,11 @@ func initialModel(initialState sessionState, initialProjectName string) mainMode
 			title:   "Select ORM / Query Builder",
 			label:   "ORM / Tool",
 			options: compatibility.BaseOptions(compatibility.StepORM),
+		},
+		{
+			title:   "Select Testing Framework",
+			label:   "Testing",
+			options: compatibility.BaseOptions(compatibility.StepTesting),
 		},
 		{
 			title:   "Select Auth Provider",
@@ -483,6 +488,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							PackageManager: m.manualSelections[compatibility.StepPackageManager].Value,
 							Database:       m.manualSelections[compatibility.StepDatabase].Value,
 							ORM:            m.manualSelections[compatibility.StepORM].Value,
+							Testing:        m.manualSelections[compatibility.StepTesting].Value,
 							Auth:           m.manualSelections[compatibility.StepAuth].Value,
 							Payments:       m.manualSelections[compatibility.StepPayments].Value,
 							Email:          m.manualSelections[compatibility.StepEmail].Value,
