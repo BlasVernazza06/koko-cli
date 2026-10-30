@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/BlasVernazza06/koko-cli/internal/core/vfs"
 	"github.com/BlasVernazza06/koko-cli/internal/engine/scaffold"
 	"github.com/BlasVernazza06/koko-cli/internal/engine/scaffold/handlers"
-	"github.com/BlasVernazza06/koko-cli/internal/core/vfs"
 )
 
 const CLIVersion = "v2.0"
@@ -68,6 +68,7 @@ type FeaturesInfo struct {
 	Infrastructure *Infrastructure `json:"infrastructure,omitempty"`
 	Payments       *PaymentInfo    `json:"payments,omitempty"`
 	Email          *EmailInfo      `json:"email,omitempty"`
+	Testing        *TestingInfo    `json:"testing,omitempty"`
 }
 
 type PaymentInfo struct {
@@ -76,6 +77,9 @@ type PaymentInfo struct {
 
 type EmailInfo struct {
 	Provider string `json:"provider"` // "resend", "brevo"
+}
+type TestingInfo struct {
+	Framework string `json:"framework"` // "playwright", "jest", "vitest", "cypress", "pytest"
 }
 
 type AuthInfo struct {
@@ -352,6 +356,11 @@ func BuildKokoConfig(scaffoldCfg scaffold.ScaffoldConfig) KokoConfig {
 		email := strings.ToLower(scaffoldCfg.Email)
 		if email != "" && email != "none" {
 			config.Features.Email = &EmailInfo{Provider: email}
+		}
+
+		testing := strings.ToLower(scaffoldCfg.Testing)
+		if testing != "" && testing != "none" {
+			config.Features.Testing = &TestingInfo{Framework: testing}
 		}
 
 		if config.Stack.Frontend != nil {

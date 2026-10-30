@@ -15,5 +15,6 @@ type ScaffoldConfig struct {
 	Auth           string
 	Payments       string
 	Email          string
+	Testing        string
 	Addons         string
 }

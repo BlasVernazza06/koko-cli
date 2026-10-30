@@ -79,7 +79,6 @@ var DependencyVersions = map[string]string{
 	"@orpc/openapi":        "^0.80.0",
 	"@tanstack/react-query": "^5.62.11",
 
-
 	// ----------------------------------------------------
 	// 🗄️ Databases, ORMs & Drivers
 	// ----------------------------------------------------
@@ -118,6 +117,18 @@ var DependencyVersions = map[string]string{
 	// ----------------------------------------------------
 	"resend":          "^4.1.2",
 	"@getbrevo/brevo": "^2.2.0",
+
+	// ----------------------------------------------------
+	// 🧪 Testing Frameworks & Tools
+	// ----------------------------------------------------
+	"@playwright/test": "^1.50.1",
+	"jest":             "^29.7.0",
+	"@types/jest":      "^29.5.14",
+	"ts-jest":          "^29.2.5",
+	"vitest":           "^3.0.5",
+	"cypress":          "^14.0.2",
+	"pytest":           ">=8.3.4",
+	"httpx":            ">=0.28.1",
 
 	// ----------------------------------------------------
 	// 🛠️ Tooling, TypeScript & Types

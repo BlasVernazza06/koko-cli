@@ -16,6 +16,7 @@ const (
 	SectionAuth           SectionType = "auth"
 	SectionPayments       SectionType = "payments"
 	SectionEmail          SectionType = "email"
+	SectionTesting        SectionType = "testing"
 	SectionLanguage       SectionType = "language"
 )
 
@@ -109,6 +110,14 @@ var TechCatalog = map[string]TechRule{
 	// 📧 Email
 	"resend":          {Section: SectionEmail, Value: "resend"},
 	"@getbrevo/brevo": {Section: SectionEmail, Value: "brevo"},
+
+	// 🧪 Testing
+	"@playwright/test": {Section: SectionTesting, Value: "playwright"},
+	"playwright":        {Section: SectionTesting, Value: "playwright"},
+	"jest":              {Section: SectionTesting, Value: "jest"},
+	"vitest":            {Section: SectionTesting, Value: "vitest"},
+	"cypress":           {Section: SectionTesting, Value: "cypress"},
+	"pytest":            {Section: SectionTesting, Value: "pytest", Lang: "python"},
 
 	// 🛠️ Language
 	"typescript": {Section: SectionLanguage, Value: "typescript"},
