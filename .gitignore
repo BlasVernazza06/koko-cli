@@ -1,5 +1,6 @@
 # Go binaries and build outputs
 *.exe
+!npm/bin/*.exe
 *.exe~
 *.dll
 *.so
