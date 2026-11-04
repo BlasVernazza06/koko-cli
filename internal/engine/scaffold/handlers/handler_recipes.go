@@ -1,4 +1,4 @@
-package handlers
+﻿package handlers
 
 import (
 	"strings"
@@ -15,7 +15,7 @@ func NormalizeRecipe(recipe string) string {
 		return "saas"
 	case "java_spring", "spring", "spring_boot", "java":
 		return "java_spring"
-	case "enterprise_nestjs", "nestjs_next", "nestjs":
+	case "enterprise_nestjs", "enterprise_fullstack", "nestjs_next", "nestjs":
 		return "enterprise_nestjs"
 	case "mern":
 		return "mern"
@@ -30,7 +30,7 @@ func NormalizeRecipe(recipe string) string {
 	}
 }
 
-// EvaluateRecipe evalúa las rutas de plantillas cuando el usuario selecciona una receta preconfigurada
+// EvaluateRecipe evalÃºa las rutas de plantillas cuando el usuario selecciona una receta preconfigurada
 func EvaluateRecipe(rel string, config types.ScaffoldConfig) (string, bool) {
 	if config.Recipe == "" {
 		return "", false
