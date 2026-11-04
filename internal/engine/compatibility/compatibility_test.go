@@ -656,6 +656,42 @@ func TestValidateConfig(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "valid pytest on fastapi",
+			cfg: scaffold.ScaffoldConfig{
+				Frontend: "none",
+				Backend:  "fastapi",
+				Testing:  "pytest",
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid pytest on express",
+			cfg: scaffold.ScaffoldConfig{
+				Frontend: "none",
+				Backend:  "express",
+				Testing:  "pytest",
+			},
+			wantErr: true,
+		},
+		{
+			name: "valid playwright on nextjs",
+			cfg: scaffold.ScaffoldConfig{
+				Frontend: "nextjs",
+				Backend:  "self",
+				Testing:  "playwright",
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid playwright on fastapi without frontend",
+			cfg: scaffold.ScaffoldConfig{
+				Frontend: "none",
+				Backend:  "fastapi",
+				Testing:  "playwright",
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -668,3 +704,40 @@ func TestValidateConfig(t *testing.T) {
 	}
 }
 
+func TestGetStepOptions_Testing(t *testing.T) {
+	// For FastAPI backend without frontend, pytest must be enabled and JS/TS frameworks disabled
+	fastapiSelections := []views.SelectOption{
+		{Value: "none"},    // Frontend
+		{Value: "fastapi"}, // Backend
+	}
+	optsFastAPI := GetStepOptions(StepTesting, fastapiSelections)
+	for _, opt := range optsFastAPI {
+		if opt.Value == "pytest" {
+			if opt.Disabled {
+				t.Errorf("Expected pytest to be enabled for FastAPI backend")
+			}
+		} else if opt.Value != "none" {
+			if !opt.Disabled {
+				t.Errorf("Expected JS testing option '%s' to be disabled for FastAPI backend without JS frontend", opt.Value)
+			}
+		}
+	}
+
+	// For Next.js frontend, JS/TS frameworks must be enabled and pytest disabled
+	nextSelections := []views.SelectOption{
+		{Value: "nextjs"}, // Frontend
+		{Value: "self"},   // Backend
+	}
+	optsNext := GetStepOptions(StepTesting, nextSelections)
+	for _, opt := range optsNext {
+		if opt.Value == "pytest" {
+			if !opt.Disabled {
+				t.Errorf("Expected pytest to be disabled for Next.js stack")
+			}
+		} else {
+			if opt.Disabled {
+				t.Errorf("Expected testing option '%s' to be enabled for Next.js stack", opt.Value)
+			}
+		}
+	}
+}

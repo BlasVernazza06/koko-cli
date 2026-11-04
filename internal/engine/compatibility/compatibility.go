@@ -17,6 +17,7 @@ const (
 	StepPackageManager
 	StepDatabase
 	StepORM
+	StepTesting
 	StepAuth
 	StepPayments
 	StepEmail
@@ -144,6 +145,15 @@ func BaseOptions(stepIdx int) []views.SelectOption {
 			{Value: "gorm", Label: "GORM", Hint: "Feature-rich ORM for Go"},
 			{Value: "jpa", Label: "Spring Data JPA / Hibernate", Hint: "Standard persistence layer for Java / Spring"},
 			{Value: "none", Label: "None / Raw SQL", Hint: "Direct driver connection without ORM"},
+		}
+	case StepTesting:
+		return []views.SelectOption{
+			{Value: "playwright", Label: "Playwright", Hint: "End-to-end and integration testing framework"},
+			{Value: "jest", Label: "Jest", Hint: "Delightful JavaScript/TypeScript Testing Framework"},
+			{Value: "vitest", Label: "Vitest", Hint: "Next generation testing framework powered by Vite"},
+			{Value: "cypress", Label: "Cypress", Hint: "Fast, easy and reliable testing for anything that runs in a browser"},
+			{Value: "pytest", Label: "Pytest", Hint: "The pytest framework makes it easy to write small, readable tests in Python"},
+			{Value: "none", Label: "None", Hint: "No testing framework"},
 		}
 	case StepAuth:
 		return []views.SelectOption{
@@ -365,6 +375,27 @@ func GetStepOptions(stepIdx int, currentSelections []views.SelectOption) []views
 			}
 		}
 
+	case StepTesting:
+		isPython := IsPythonBackend(backend)
+		isNode := IsNodeEcosystem(frontend, backend)
+		for i := range options {
+			val := options[i].Value
+			switch val {
+			case "pytest":
+				if !isPython {
+					options[i].Disabled = true
+					options[i].DisabledReason = "Incompatible: Pytest requiere un backend Python (FastAPI)"
+				}
+			case "playwright", "jest", "vitest", "cypress":
+				if !isNode {
+					options[i].Disabled = true
+					options[i].DisabledReason = "Incompatible: Este framework de testing requiere el ecosistema JavaScript/TypeScript"
+				}
+			case "none":
+				// Always available
+			}
+		}
+
 	case StepAuth:
 		isNode := IsNodeEcosystem(frontend, backend)
 		for i := range options {
@@ -407,6 +438,7 @@ func ValidateConfig(cfg scaffold.ScaffoldConfig) error {
 	db := strings.ToLower(cfg.Database)
 	orm := strings.ToLower(cfg.ORM)
 	auth := strings.ToLower(cfg.Auth)
+	testingFw := strings.ToLower(cfg.Testing)
 
 	// 1. Both frontend and backend empty/none
 	if (frontend == "none" || frontend == "") && (backend == "none" || backend == "") {
@@ -582,6 +614,25 @@ func ValidateConfig(cfg scaffold.ScaffoldConfig) error {
 				return errors.NewValidationError(
 					"NextAuth.js es exclusivo para proyectos con frontend Next.js",
 					"Selecciona Next.js como frontend o utiliza Better Auth",
+				)
+			}
+		}
+	}
+
+	// 8. Testing Framework compatibility
+	if testingFw != "" && testingFw != "none" {
+		if testingFw == "pytest" {
+			if !isPython {
+				return errors.NewValidationError(
+					"Pytest requiere un backend en Python (FastAPI)",
+					"Selecciona FastAPI como backend o cambia el framework de testing a Vitest, Jest, Playwright, Cypress o none",
+				)
+			}
+		} else if testingFw == "playwright" || testingFw == "jest" || testingFw == "vitest" || testingFw == "cypress" {
+			if !isNode {
+				return errors.NewValidationError(
+					fmt.Sprintf("El framework de testing '%s' requiere un entorno JavaScript / TypeScript", testingFw),
+					"Selecciona un frontend o backend basado en JavaScript/TypeScript o marca testing como 'none'",
 				)
 			}
 		}

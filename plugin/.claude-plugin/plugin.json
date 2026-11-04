@@ -1,0 +1,37 @@
+{
+  "name": "koko",
+  "version": "2.0.0",
+  "description": "Let your AI scaffold and extend projects with Koko CLI. Bundles commands, skills, and a stack architect agent so the assistant plans a valid stack, generates monorepos via atomic VFS, and injects services seamlessly.",
+  "author": {
+    "name": "Blas Vernazza",
+    "url": "https://github.com/BlasVernazza06"
+  },
+  "homepage": "https://github.com/BlasVernazza06/koko-cli",
+  "repository": "https://github.com/BlasVernazza06/koko-cli",
+  "license": "MIT",
+  "keywords": [
+    "koko",
+    "koko-cli",
+    "scaffold",
+    "starter",
+    "boilerplate",
+    "typescript",
+    "fullstack",
+    "monorepo",
+    "turborepo",
+    "nextjs",
+    "react",
+    "hono",
+    "express",
+    "trpc",
+    "orpc",
+    "better-auth",
+    "drizzle",
+    "prisma",
+    "stripe",
+    "polar",
+    "resend",
+    "brevo",
+    "ai-agent"
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "koko-cli",
+  "description": "Koko CLI plugin marketplace — scaffold and extend fullstack TypeScript monorepos with AI",
+  "owner": {
+    "name": "Blas Vernazza",
+    "url": "https://github.com/BlasVernazza06"
+  },
+  "plugins": [
+    {
+      "name": "koko",
+      "source": "./plugin",
+      "description": "Let your AI scaffold and extend fullstack projects with Koko CLI. Bundles skills, commands, and an agent so the assistant plans a valid stack, generates it with atomic VFS, and injects services without manual wiring.",
+      "author": {
+        "name": "Blas Vernazza",
+        "url": "https://github.com/BlasVernazza06"
+      },
+      "homepage": "https://github.com/BlasVernazza06/koko-cli",
+      "repository": "https://github.com/BlasVernazza06/koko-cli",
+      "license": "MIT",
+      "category": "development",
+      "keywords": [
+        "koko",
+        "koko-cli",
+        "scaffold",
+        "starter",
+        "boilerplate",
+        "typescript",
+        "fullstack",
+        "monorepo",
+        "turborepo",
+        "nextjs",
+        "react",
+        "express",
+        "hono",
+        "fastapi",
+        "go_chi",
+        "trpc",
+        "orpc",
+        "better-auth",
+        "drizzle",
+        "prisma",
+        "stripe",
+        "polar",
+        "resend",
+        "brevo",
+        "ai-agent"
+      ]
+    }
+  ]
+}

@@ -12,3 +12,7 @@ pymysql>=1.1.1
 cryptography>=43.0.1
 [[ end ]]
 [[ end ]]
+[[ if eq .Testing "pytest" ]]
+pytest>=8.3.4
+httpx>=0.28.1
+[[ end ]]

@@ -2,6 +2,7 @@ package doctor
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -16,9 +17,11 @@ type DiagnosticResult struct {
 	ExistingConfig *config.KokoConfig
 	DetectedConfig config.KokoConfig
 	Differences    []Difference
+	HealthReport   *HealthCheckReport
 }
 
-// RunDiagnostics analiza el directorio del proyecto y calcula las diferencias respecto a koko.config.json.
+// RunDiagnostics analiza el directorio del proyecto y calcula las diferencias respecto a koko.config.json,
+// ejecutando además el health check extendido de 5 módulos.
 func RunDiagnostics(projectDir string) (*DiagnosticResult, error) {
 	configPath := filepath.Join(projectDir, "koko.config.json")
 	var existing *config.KokoConfig
@@ -39,16 +42,19 @@ func RunDiagnostics(projectDir string) (*DiagnosticResult, error) {
 
 	detected := AnalyzeProject(projectDir)
 	diffs := ComputeDifferences(existing, detected)
+	healthReport := RunFullHealthCheck(context.Background(), projectDir, detected)
 
 	return &DiagnosticResult{
 		ConfigExists:   existing != nil,
 		ExistingConfig: existing,
 		DetectedConfig: detected,
 		Differences:    diffs,
+		HealthReport:   healthReport,
 	}, nil
 }
 
-// ApplyFixes actualiza o crea el archivo koko.config.json con la configuración detectada.
+// ApplyFixes actualiza o crea el archivo koko.config.json con la configuración detectada
+// y repara archivos faltantes como .env a partir de .env.example.
 func ApplyFixes(projectDir string, detected config.KokoConfig, existing *config.KokoConfig) error {
 	finalConfig := detected
 	finalConfig.Schema = "https://koko-cli.dev/schema.json"
@@ -73,5 +79,12 @@ func ApplyFixes(projectDir string, detected config.KokoConfig, existing *config.
 	}
 
 	targetFile := filepath.Join(projectDir, "koko.config.json")
-	return os.WriteFile(targetFile, data, 0644)
+	if err := os.WriteFile(targetFile, data, 0644); err != nil {
+		return err
+	}
+
+	// Auto-fix de archivos .env a partir de .env.example si aplica
+	_, _ = FixEnvFiles(projectDir)
+
+	return nil
 }

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "koko": {
+      "command": "koko",
+      "args": ["mcp"]
+    }
+  }
+}
