@@ -156,14 +156,14 @@ func TestBuildKokoConfigForManual(t *testing.T) {
 }
 
 func TestCLIVersion(t *testing.T) {
-	if CLIVersion != "v2.0" {
-		t.Errorf("Expected CLIVersion constant to be 'v2.0', got %q", CLIVersion)
+	if CLIVersion != "v2.1.0" {
+		t.Errorf("Expected CLIVersion constant to be 'v2.1.0', got %q", CLIVersion)
 	}
 
 	cfg := scaffold.ScaffoldConfig{ProjectName: "version-test"}
 	kokoCfg := BuildKokoConfig(cfg)
-	if kokoCfg.Project.CLIVersion != "v2.0" {
-		t.Errorf("Expected BuildKokoConfig Project.CLIVersion to be 'v2.0', got %q", kokoCfg.Project.CLIVersion)
+	if kokoCfg.Project.CLIVersion != "v2.1.0" {
+		t.Errorf("Expected BuildKokoConfig Project.CLIVersion to be 'v2.1.0', got %q", kokoCfg.Project.CLIVersion)
 	}
 }
 

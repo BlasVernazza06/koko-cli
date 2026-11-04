@@ -11,7 +11,7 @@ import (
 var rootCmd = &cobra.Command{
 	Use:     "koko",
 	Short:   "Koko CLI - Modern project initialization and scaffolding tool",
-	Version: "v2.0",
+	Version: "v2.1.0",
 	Run: func(cmd *cobra.Command, args []string) {
 		tui.RunTUI()
 	},

@@ -148,7 +148,7 @@ Koko records your stack specification in a root manifest to automate Day-2 maint
   "$schema": "https://koko-cli.dev/schema.json",
   "project": {
     "name": "my-modern-stack",
-    "cliVersion": "v2.0.0",
+    "cliVersion": "v2.1.0",
     "createdAt": "2026-09-17T20:50:00Z"
   },
   "architecture": {

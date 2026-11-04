@@ -175,8 +175,8 @@ func TestE2ECLIDoctorCommand(t *testing.T) {
 }
 
 func TestE2ECLIVersionCommand(t *testing.T) {
-	if rootCmd.Version != "v2.0" {
-		t.Errorf("Expected rootCmd.Version to be 'v2.0', got %q", rootCmd.Version)
+	if rootCmd.Version != "v2.1.0" {
+		t.Errorf("Expected rootCmd.Version to be 'v2.1.0', got %q", rootCmd.Version)
 	}
 
 	resetFlags(rootCmd)
@@ -191,8 +191,8 @@ func TestE2ECLIVersionCommand(t *testing.T) {
 	}
 
 	output := outBuf.String()
-	if !bytes.Contains(outBuf.Bytes(), []byte("v2.0")) {
-		t.Errorf("Expected version output to contain 'v2.0', got %q", output)
+	if !bytes.Contains(outBuf.Bytes(), []byte("v2.1.0")) {
+		t.Errorf("Expected version output to contain 'v2.1.0', got %q", output)
 	}
 }
 

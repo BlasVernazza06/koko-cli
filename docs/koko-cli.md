@@ -1,6 +1,6 @@
 # 🐾 Koko CLI — Documentación Técnica de Arquitectura y Referencia
 
-> **Versión**: v2.0  
+> **Versión**: v2.1.0  
 > **Estado**: Producción / Sprint Activo  
 > **Autor / Maintainer**: Blas Vernazza ([@BlasVernazza06](https://github.com/BlasVernazza06))  
 
@@ -155,7 +155,7 @@ Todo proyecto gestionado por Koko posee un archivo de metadatos tipado en su ra�
   "$schema": "https://koko-cli.dev/schema.json",
   "project": {
     "name": "my-saas-app",
-    "cliVersion": "v2.0",
+    "cliVersion": "v2.1.0",
     "createdAt": "2026-10-27T10:00:00Z"
   },
   "architecture": {

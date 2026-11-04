@@ -12,7 +12,7 @@ import (
 	"github.com/BlasVernazza06/koko-cli/internal/engine/scaffold/handlers"
 )
 
-const CLIVersion = "v2.0"
+const CLIVersion = "v2.1.0"
 
 type KokoConfig struct {
 	Schema       string           `json:"$schema"`

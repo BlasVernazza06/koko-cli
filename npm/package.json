@@ -1,6 +1,6 @@
 {
   "name": "koko-app",
-  "version": "1.0.0",
+  "version": "2.1.0",
   "description": "Interactive CLI wizard to bootstrap production-ready monorepos",
   "main": "index.js",
   "bin": {
