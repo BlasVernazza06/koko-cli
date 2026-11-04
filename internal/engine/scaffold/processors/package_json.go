@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/BlasVernazza06/koko-cli/internal/engine/catalog"
 	"github.com/BlasVernazza06/koko-cli/internal/core/vfs"
+	"github.com/BlasVernazza06/koko-cli/internal/engine/catalog"
 )
 
 type PackageJSON struct {
@@ -31,6 +31,7 @@ type ProcessConfig struct {
 	Auth           string
 	Payments       string
 	Email          string
+	Testing        string
 	Addons         string
 }
 
@@ -137,6 +138,21 @@ func updateRootPackageJSON(v *vfs.VFS, cfg ProcessConfig) {
 		scripts["docker:up"] = "docker compose up -d"
 		scripts["docker:down"] = "docker compose down"
 		scripts["docker:logs"] = "docker compose logs -f"
+	}
+
+	// 4. Scripts de testing si está activo
+	testing := strings.ToLower(cfg.Testing)
+	if testing != "" && testing != "none" {
+		switch pm {
+		case "bun":
+			scripts["test"] = "bun run --filter '*' test"
+		case "npm":
+			scripts["test"] = "npm run test --workspaces --if-present"
+		case "pnpm":
+			fallthrough
+		default:
+			scripts["test"] = "pnpm -r test"
+		}
 	}
 
 	pkg["scripts"] = scripts
@@ -276,6 +292,31 @@ func updateWorkspacePackageJSONs(v *vfs.VFS, cfg ProcessConfig) {
 					AddDependency(pkg, "@orpc/openapi", false)
 				}
 			}
+
+			testing := strings.ToLower(cfg.Testing)
+			b := strings.ToLower(cfg.Backend)
+			isNodeBackend := b == "express" || b == "hono" || b == "nestjs"
+			if isNodeBackend {
+				if testing == "jest" {
+					AddDependency(pkg, "jest", true)
+					AddDependency(pkg, "@types/jest", true)
+					AddDependency(pkg, "ts-jest", true)
+					scripts, ok := pkg["scripts"].(map[string]interface{})
+					if !ok {
+						scripts = make(map[string]interface{})
+					}
+					scripts["test"] = "jest"
+					pkg["scripts"] = scripts
+				} else if testing == "vitest" {
+					AddDependency(pkg, "vitest", true)
+					scripts, ok := pkg["scripts"].(map[string]interface{})
+					if !ok {
+						scripts = make(map[string]interface{})
+					}
+					scripts["test"] = "vitest run"
+					pkg["scripts"] = scripts
+				}
+			}
 		}
 
 		if wp.file == "apps/web/package.json" {
@@ -350,6 +391,34 @@ func updateWorkspacePackageJSONs(v *vfs.VFS, cfg ProcessConfig) {
 
 			if strings.Contains(strings.ToLower(cfg.Payments), "polar") || strings.Contains(addons, "polar") {
 				AddDependency(pkg, "@polar-sh/sdk", false)
+			}
+
+			testing := strings.ToLower(cfg.Testing)
+			if testing != "" && testing != "none" {
+				scripts, ok := pkg["scripts"].(map[string]interface{})
+				if !ok {
+					scripts = make(map[string]interface{})
+				}
+				switch testing {
+				case "playwright":
+					AddDependency(pkg, "@playwright/test", true)
+					scripts["test:e2e"] = "playwright test"
+					scripts["test"] = "playwright test"
+				case "cypress":
+					AddDependency(pkg, "cypress", true)
+					scripts["test:e2e"] = "cypress run"
+					scripts["cypress:open"] = "cypress open"
+					scripts["test"] = "cypress run"
+				case "jest":
+					AddDependency(pkg, "jest", true)
+					AddDependency(pkg, "@types/jest", true)
+					AddDependency(pkg, "ts-jest", true)
+					scripts["test"] = "jest"
+				case "vitest":
+					AddDependency(pkg, "vitest", true)
+					scripts["test"] = "vitest run"
+				}
+				pkg["scripts"] = scripts
 			}
 		}
 

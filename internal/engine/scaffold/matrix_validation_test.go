@@ -12,11 +12,11 @@ import (
 )
 
 type pkgJSON struct {
-	Name                 string            `json:"name"`
-	Dependencies         map[string]string `json:"dependencies"`
-	DevDependencies      map[string]string `json:"devDependencies"`
-	PeerDependencies     map[string]string `json:"peerDependencies"`
-	TranspilePackages    []string          `json:"transpilePackages"`
+	Name              string            `json:"name"`
+	Dependencies      map[string]string `json:"dependencies"`
+	DevDependencies   map[string]string `json:"devDependencies"`
+	PeerDependencies  map[string]string `json:"peerDependencies"`
+	TranspilePackages []string          `json:"transpilePackages"`
 }
 
 type tsConfigJSON struct {
@@ -247,6 +247,28 @@ func TestManualCombinationsMatrixValidation(t *testing.T) {
 				ORM:         "prisma",
 				Auth:        "better-auth",
 				Addons:      "docker,shadcn,motion",
+			},
+		},
+		{
+			name: "NextJS_Express_Postgres_Drizzle_Playwright",
+			cfg: types.ScaffoldConfig{
+				ProjectName: "koko-fullstack-playwright",
+				Frontend:    "nextjs",
+				Backend:     "express",
+				Database:    "postgres",
+				ORM:         "drizzle",
+				Testing:     "playwright",
+			},
+		},
+		{
+			name: "React_FastAPI_Postgres_SQLAlchemy_Pytest",
+			cfg: types.ScaffoldConfig{
+				ProjectName: "koko-fullstack-pytest",
+				Frontend:    "react",
+				Backend:     "fastapi",
+				Database:    "postgres",
+				ORM:         "sqlalchemy",
+				Testing:     "pytest",
 			},
 		},
 	}

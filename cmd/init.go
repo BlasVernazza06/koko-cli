@@ -1,17 +1,18 @@
 package cmd
 
 import (
-	"github.com/BlasVernazza06/koko-cli/internal/tui"
 	"fmt"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/BlasVernazza06/koko-cli/internal/engine/compatibility"
+	"github.com/BlasVernazza06/koko-cli/internal/tui"
+
 	kokoConfig "github.com/BlasVernazza06/koko-cli/internal/core/config"
-	"github.com/BlasVernazza06/koko-cli/internal/engine/scaffold"
 	"github.com/BlasVernazza06/koko-cli/internal/core/validator"
 	"github.com/BlasVernazza06/koko-cli/internal/core/vfs"
+	"github.com/BlasVernazza06/koko-cli/internal/engine/compatibility"
+	"github.com/BlasVernazza06/koko-cli/internal/engine/scaffold"
 	"github.com/spf13/cobra"
 )
 
@@ -25,6 +26,7 @@ var (
 	authFlag     string
 	paymentsFlag string
 	emailFlag    string
+	testingFlag  string
 	addonsFlag   string
 	apiFlag      string
 	gitFlag      string
@@ -63,7 +65,7 @@ var initCmd = &cobra.Command{
 			return
 		}
 
-		if frontendFlag != "" || backendFlag != "" || databaseFlag != "" || ormFlag != "" || authFlag != "" || paymentsFlag != "" || emailFlag != "" || addonsFlag != "" || apiFlag != "" {
+		if frontendFlag != "" || backendFlag != "" || databaseFlag != "" || ormFlag != "" || authFlag != "" || paymentsFlag != "" || emailFlag != "" || testingFlag != "" || addonsFlag != "" || apiFlag != "" {
 			if projectName == "" {
 				projectName = "my-project"
 			}
@@ -86,6 +88,7 @@ var initCmd = &cobra.Command{
 				Auth:           authFlag,
 				Payments:       paymentsFlag,
 				Email:          emailFlag,
+				Testing:        testingFlag,
 				Addons:         addonsFlag,
 				InitGit:        initGit,
 			}
@@ -237,6 +240,7 @@ func init() {
 	initCmd.Flags().StringVar(&authFlag, "auth", "", "Auth Provider (ej: Better-auth, clerk, Auth.js)")
 	initCmd.Flags().StringVar(&paymentsFlag, "payments", "", "Payment Service (ej: Stripe, Polar)")
 	initCmd.Flags().StringVar(&emailFlag, "email", "", "Email Service (ej: Resend, Brevo)")
+	initCmd.Flags().StringVar(&testingFlag, "testing", "", "Testing Framework (ej: Playwright, Jest, Vitest, Cypress, Pytest)")
 	initCmd.Flags().StringVar(&addonsFlag, "addons", "", "Addons / Tooling (ej: shadcn, lucide, svgl, motion, zod, docker, github_actions)")
 	initCmd.Flags().StringVar(&gitFlag, "git", "no", "Initialize Git Repository")
 

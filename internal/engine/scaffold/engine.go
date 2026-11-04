@@ -7,10 +7,10 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/BlasVernazza06/koko-cli/internal/engine/catalog"
 	"github.com/BlasVernazza06/koko-cli/internal/core/errors"
-	"github.com/BlasVernazza06/koko-cli/internal/engine/scaffold/processors"
 	"github.com/BlasVernazza06/koko-cli/internal/core/vfs"
+	"github.com/BlasVernazza06/koko-cli/internal/engine/catalog"
+	"github.com/BlasVernazza06/koko-cli/internal/engine/scaffold/processors"
 )
 
 // GenerateVFS orquesta todo el proceso de generación del proyecto en memoria RAM (VFS).
@@ -93,6 +93,7 @@ func GenerateVFS(config ScaffoldConfig) (*vfs.VFS, error) {
 		Auth:           config.Auth,
 		Payments:       config.Payments,
 		Email:          config.Email,
+		Testing:        config.Testing,
 		Addons:         config.Addons,
 	}
 
