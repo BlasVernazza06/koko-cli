@@ -323,26 +323,36 @@ koko add <addon> [--dir <path>]
 ---
 
 ### 4.4. `koko doctor`
-Herramienta de introspección y observabilidad del stack. Realiza un análisis estático profundo del código fuente, dependencias en `package.json`, variables de entorno y esquemas para detectar desviaciones respecto al manifiesto original.
+Herramienta de introspección, diagnóstico de salud del entorno local y observabilidad del stack. Realiza un health check integral en 5 módulos organizado al estilo `flutter doctor` / `brew doctor`, respondiendo de forma clara si la máquina tiene las herramientas necesarias, si faltan variables de entorno o si existen puertos en conflicto antes de iniciar el desarrollo.
 
 ```bash
 koko doctor [--fix] [--dir <path>]
 ```
 
 #### Flags
-- `-f`, `--fix`: Sincroniza y repara automáticamente el archivo `koko.config.json` agregando, modificando o eliminando los nodos que hayan cambiado.
+- `-f`, `--fix`: Sincroniza y repara automáticamente `koko.config.json` con el stack detectado en disco, y copia archivos `.env.example` a `.env` automáticamente si están ausentes.
 - `-d`, `--dir`: Directorio destino a inspeccionar (por defecto `.`).
 
-#### Flujo de Diagnóstico
-1. Lee `koko.config.json` si existe (si no existe, lo planifica para creación).
-2. Inspecciona el sistema de archivos real identificando si es un monorrepo Turborepo o standalone.
-3. Detecta la presencia de frameworks (Next.js, Vite, Nuxt, Svelte, Express, Hono, FastAPI, etc.).
-4. Detecta proveedores de base de datos (PostgreSQL, Mongo, MySQL) y ORM configurado (Drizzle, Prisma, etc.).
-5. Calcula las diferencias categorizadas:
-   - `+ [ADDED]`: Módulos o dependencias agregadas manualmente por el desarrollador.
-   - `~ [MODIFIED]`: Cambios de versiones o configuraciones de frameworks.
-   - `- [REMOVED]`: Módulos eliminados.
-6. Si se proporciona `--fix`, actualiza el manifiesto sin alterar la fecha de creación del proyecto.
+#### Los 5 Módulos de Diagnóstico
+1. **[1/5] Entorno & Herramientas Locales**:
+   - **Node.js**: Verifica disponibilidad en `$PATH` y valida que la versión satisfaga `>= 18.0.0`.
+   - **Package Manager**: Valida el gestor configurado (`pnpm`, `npm`, `bun`, `yarn`) y su versión.
+   - **Git**: Comprueba si el directorio está inicializado como repositorio (`.git`) o sugiere `git init`.
+   - **Docker**: Si el stack cuenta con compose/docker, audita si el daemon está activo (`docker info` con timeout estricto) para prevenir fallos al levantar bases de datos locales.
+2. **[2/5] Stack & Arquitectura Detectada**:
+   - Inspecciona Layout (`monorepo` Turborepo vs `standalone`), Framework Frontend (Next, React, Svelte, Nuxt, Astro), Backend (Express, Hono, FastAPI, etc.) y Base de Datos / ORM.
+3. **[3/5] Configuración & Variables (`.env`)**:
+   - Escanea `.env.example` en la raíz y subcarpetas (`apps/web`, `apps/api`, `packages/db`).
+   - Compara claves requeridas contra `.env` y `.env.local`.
+   - Alerta sobre claves ausentes o placeholders obvios (`your_secret_here`, `change_me`, valores vacíos).
+4. **[4/5] Base de Datos & Puertos Locales**:
+   - **Esquema de DB**: Verifica la presencia de `schema.prisma` o `drizzle.config.ts`.
+   - **Conectividad Local**: Realiza un dial TCP ultrarrápido (timeout 150ms) a puertos estándar de bases de datos locales (Postgres 5432, Mongo 27017, MySQL 3306).
+   - **Detección de Puertos en Conflicto**: Evalúa si los puertos de desarrollo por defecto del proyecto (`3000`, `5173`, `4321`, `3001`, `8000`, `8080`) están ocupados por otro proceso antes de hacer `dev`.
+   - **AI Skills**: Audita si las tecnologías detectadas cuentan con sus reglas de IA instaladas en `.cursor/rules` o `.cursor/skills`.
+5. **[5/5] Sincronización de Manifiesto (`koko.config.json`)**:
+   - Calcula discrepancias categorizadas (`+ [ADDED]`, `~ [MODIFIED]`, `- [REMOVED]`).
+   - Al ejecutar con `--fix`, sincroniza el manifiesto sin alterar metadatos originales y auto-genera los archivos `.env` faltantes desde sus plantillas de ejemplo.
 
 ---
 
@@ -461,19 +471,15 @@ Esta sección documenta las iniciativas técnicas planificadas para el sprint ac
   - *Contexto*: Integración nativa del orquestador de AI Agent Skills (Cursor, Claude Code, Copilot) con catálogo embebido `go:embed`, caché local offline, detección heurística de stack/file-tree y motor de Combo Skills inteligentes.
   - *Archivos impactados*: `cmd/skills.go`, `internal/features/skills/*`, `internal/tui/views/skills.go`.
 
-- [ ] **2. Soporte de GraphQL y Apollo Server / Yoga en la Capa de API**:
-  - *Contexto*: Proveer una alternativa a tRPC/oRPC para stacks que demandan schemas federados o consultas GraphQL flexibles.
-  - *Archivos a impactar*: `internal/engine/compatibility/compatibility.go`, `internal/engine/scaffold/handlers/api.go`, `internal/engine/scaffold/templates/api/`.
-
 - [x] **2. Plugin Koko MCP Server (Model Context Protocol)**:
   - *Contexto*: Permitir que modelos LLM y agentes autónomos utilicen herramientas nativas de Koko directamente para consultar opciones, validar stacks e inicializar proyectos programáticamente.
   - *Archivos a impactar*: Nuevos paquetes en `internal/features/mcp/` y `cmd/mcp.go`.
 
-- [ ] **3. Inyección de Módulos de Testing Automatizado**:
+- [x] **3. Inyección de Módulos de Testing Automatizado**:
   - *Contexto*: Agregar soporte desatendido para Vitest, Playwright y Jest durante el scaffolding inicial o vía `koko add vitest` / `koko add playwright`.
   - *Archivos a impactar*: `internal/engine/injector/injector.go`, `internal/engine/scaffold/templates/addons/`.
 
-- [ ] **4. Telemetría Local y Health Check Extendido en `koko doctor`**:
+- [x] **4. Telemetría Local y Health Check Extendido en `koko doctor`**:
   - *Contexto*: Verificación de puertos en conflicto, versiones instaladas de Node/Docker y diagnóstico de migraciones pendientes en bases de datos locales.
   - *Archivos a impactar*: `internal/features/doctor/analyzer.go`, `internal/features/doctor/doctor.go`.
 
