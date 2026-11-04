@@ -13,6 +13,7 @@ claw-cli
 builds/
 /dist/
 /out/
+dist-release/
 
 # Logs and debug files
 *.log
