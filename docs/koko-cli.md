@@ -367,6 +367,33 @@ koko skills [flags] [args...]
 
 ---
 
+### 4.6. `koko db`
+Command wrapper inteligente y unificado para la gestión y ciclo de vida de bases de datos. Lee `koko.config.json` (con fallback dinámico a análisis de `package.json` y sistema de archivos), detecta automáticamente el ORM (`drizzle`, `prisma`, `mongoose`), el gestor de paquetes (`pnpm`, `npm`, `bun`) y la arquitectura (`monorepo` con `@repo/db` vs `standalone`), despachando la acción correspondiente de forma fluida y con completa interactividad terminal (`os.Stdin`/`Stdout`/`Stderr`).
+
+```bash
+koko db [command] [flags] [-- extra args]
+```
+
+#### Invocación Raíz
+Si se ejecuta `koko db` sin subcomandos, muestra un panel formateado con el stack detectado (Directorio, Manifiesto, Layout, Package Manager, Database Provider y ORM) y lista los subcomandos disponibles.
+
+#### Subcomandos Soportados
+| Subcomando | Descripción | Drizzle (`drizzle-kit`) | Prisma (`prisma`) | Monorepo (`package.json`) |
+| :--- | :--- | :--- | :--- | :--- |
+| `migrate` | Aplica migraciones de esquema pendientes | `drizzle-kit migrate` | `prisma migrate dev` | `pnpm --filter @repo/db db:migrate` |
+| `push` | Empuja el esquema directamente a la DB (desarrollo) | `drizzle-kit push` | `prisma db push` | `pnpm --filter @repo/db db:push` |
+| `generate` | Genera cliente tipado y artefactos | `drizzle-kit generate` | `prisma generate` | `pnpm --filter @repo/db db:generate` |
+| `studio` | Abre la interfaz visual de base de datos | `drizzle-kit studio` | `prisma studio` | `pnpm --filter @repo/db db:studio` |
+| `seed` | Puebla la base de datos con fixtures de prueba | Requiere script `db:seed` | `prisma db seed` | `pnpm run db:seed` |
+| `reset` | Reinicia la base de datos y borra tablas | Requiere script `db:reset` | `prisma migrate reset` | `pnpm run db:reset` |
+
+#### Flags
+- `-d`, `--dir <path>`: Directorio destino del proyecto (por defecto `.`).
+- `--dry-run`: Inspecciona el proyecto, resuelve la estrategia y muestra el comando exacto en consola sin ejecutarlo.
+- `-h`, `--help`: Mensaje de ayuda contextual de Cobra.
+
+---
+
 ## 5. 🧱 Servicios, Stacks y Presets Soportados
 
 ### 5.1. Presets y Recetas Incluidas (`--recipe`)
@@ -454,6 +481,6 @@ Esta sección documenta las iniciativas técnicas planificadas para el sprint ac
   - *Contexto*: Le permite al usuario la incorporacion de skills para su proyecto y asi obtener un rendimiento mucho mas efectivo y certero para con las tareas realizadas por los agentes. Por debajo estará utilizando el comando de midudev autoskills, que audita el proyecto que estas realizando y busca las skills que mejor se adecuen a tus necesidades.
   - *Archivos a impactar*: Nuevos paquetes en `internal/features/mcp/` y `cmd/mcp.go`.
 
-- [] **6. koko db**:
+- [x] **6. koko db**:
   - *Contexto*: Implementar un command wrapper para comandos de database (koko db [migrate|seed|studio|reset]) que lee el koko.config.json y ejecuta el comando apropiado sin importar si el proyecto usa Prisma o Drizzle o Mongoose
   - *Archivos a impactar*: Nuevos paquetes en `cmd/db.go`.
